@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Usuarios — Jessica Peña Nails Spa</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --c-deep:    #1a0030;
+    --c-dark:    #3a006f;
+    --c-mid:     #6A0DAD;
+    --c-accent:  #9b59b6;
+    --c-light:   #c39bd3;
+    --c-soft:    #e8d5f5;
+    --c-muted:   rgba(195,155,211,0.55);
+    --c-white:   #ffffff;
+    --c-success: #2ecc71;
+    --c-danger:  #e74c3c;
+    --c-warn:    #f39c12;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    background: var(--c-deep);
+    color: var(--c-white);
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Fondo difuminado */
+  .bg-orb {
+    position: fixed; border-radius: 50%;
+    filter: blur(90px); pointer-events: none; z-index: 0;
+  }
+  .orb1 { width:500px;height:500px; background:radial-gradient(circle,rgba(106,13,173,0.3) 0%,transparent 70%); top:-100px;left:-100px; }
+  .orb2 { width:400px;height:400px; background:radial-gradient(circle,rgba(155,89,182,0.2) 0%,transparent 70%); bottom:-80px;right:-80px; }
+  .bg-dots {
+    position: fixed; inset: 0; z-index: 0;
+    background-image: radial-gradient(circle, rgba(195,155,211,0.06) 1px, transparent 1px);
+    background-size: 28px 28px; pointer-events: none;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    height: 56px;
+    background: rgba(26,0,48,0.9);
+    border-bottom: 1px solid rgba(195,155,211,0.18);
+    display: flex; align-items: center;
+    padding: 0 24px; gap: 14px;
+    backdrop-filter: blur(12px);
+  }
+  .topbar::after {
+    content:''; position:absolute; bottom:0;left:0;right:0;height:1px;
+    background: linear-gradient(90deg,transparent,rgba(195,155,211,0.35),transparent);
+  }
+  .brand-ring {
+    width:32px;height:32px; border-radius:50%;
+    background: linear-gradient(135deg,var(--c-mid),var(--c-light));
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px; flex-shrink:0;
+    box-shadow: 0 0 14px rgba(155,89,182,0.4);
+  }
+  .topbar h1 {
+    font-family:'Cinzel',serif; font-size:15px; font-weight:600;
+    letter-spacing:0.05em; color:var(--c-white); flex:1;
+  }
+  .topbar-back {
+    background: rgba(195,155,211,0.08);
+    border: 1px solid rgba(195,155,211,0.22);
+    border-radius:8px; color:var(--c-light);
+    font-family:'Nunito',sans-serif; font-size:12px; font-weight:600;
+    padding:6px 14px; cursor:pointer;
+    transition: background 0.2s;
+  }
+  .topbar-back:hover { background: rgba(195,155,211,0.16); }
+
+  /* ── CONTENIDO ── */
+  .page {
+    position: relative; z-index: 1;
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media(max-width:700px) { .page { grid-template-columns:1fr; } }
+
+  /* ── CARD ── */
+  .card {
+    background: rgba(30,5,55,0.7);
+    border: 1px solid rgba(195,155,211,0.2);
+    border-radius: 16px;
+    padding: 28px 26px;
+    backdrop-filter: blur(14px);
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content:''; position:absolute;
+    top:0;left:15%;right:15%;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(195,155,211,0.35),transparent);
+  }
+
+  .card-title {
+    font-family:'Cinzel',serif;
+    font-size:14px; font-weight:600;
+    letter-spacing:0.06em;
+    color:var(--c-soft);
+    margin-bottom:22px;
+    display:flex; align-items:center; gap:9px;
+  }
+  .card-title span { font-size:18px; }
+
+  /* ── FORM ── */
+  .form-group { margin-bottom:16px; }
+  .form-label {
+    display:block;
+    font-size:10.5px; font-weight:700;
+    letter-spacing:0.14em; text-transform:uppercase;
+    color:rgba(195,155,211,0.65);
+    margin-bottom:6px;
+  }
+  .input-wrap { position:relative; }
+  .input-icon {
+    position:absolute; left:12px; top:50%;
+    transform:translateY(-50%);
+    font-size:14px; opacity:0.5; pointer-events:none;
+  }
+  .fi {
+    width:100%; height:44px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(195,155,211,0.2);
+    border-radius:10px;
+    color:var(--c-white);
+    font-family:'Nunito',sans-serif;
+    font-size:13px; font-weight:600;
+    padding:0 40px 0 38px;
+    outline:none;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  }
+  .fi::placeholder { color:rgba(195,155,211,0.3); font-weight:400; }
+  .fi:focus {
+    border-color:rgba(155,89,182,0.6);
+    background: rgba(255,255,255,0.08);
+    box-shadow: 0 0 0 3px rgba(106,13,173,0.22);
+  }
+  .fi.err { border-color:rgba(231,76,60,0.55); box-shadow:0 0 0 3px rgba(231,76,60,0.12); }
+  .fi.ok  { border-color:rgba(46,204,113,0.45); box-shadow:0 0 0 3px rgba(46,204,113,0.1); }
+
+  /* Ojo contraseña */
+  .eye-btn {
+    position:absolute; right:10px; top:50%;
+    transform:translateY(-50%);
+    background:none;border:none;
+    color:rgba(195,155,211,0.45);
+    cursor:pointer; font-size:15px; padding:4px;
+    transition:color 0.15s;
+  }
+  .eye-btn:hover { color:var(--c-light); }
+
+  /* Select de rol */
+  .fi-select {
+    width:100%; height:44px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(195,155,211,0.2);
+    border-radius:10px;
+    color:var(--c-white);
+    font-family:'Nunito',sans-serif;
+    font-size:13px; font-weight:600;
+    padding:0 12px;
+    outline:none;
+    cursor:pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c39bd3' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;
+    background-position:right 14px center;
+    padding-right:36px;
+  }
+  .fi-select:focus { border-color:rgba(155,89,182,0.6); box-shadow:0 0 0 3px rgba(106,13,173,0.22); }
+  .fi-select option { background:#2d0050; color:#fff; }
+
+  /* Hint debajo del input */
+  .hint {
+    font-size:10.5px; color:rgba(195,155,211,0.4);
+    margin-top:4px; padding-left:2px;
+  }
+
+  /* ── BOTONES ── */
+  .btn-primary {
+    width:100%; height:46px;
+    background: linear-gradient(135deg,var(--c-mid),var(--c-accent));
+    border:none; border-radius:10px;
+    color:#fff; font-family:'Nunito',sans-serif;
+    font-size:13px; font-weight:700;
+    letter-spacing:0.05em; cursor:pointer;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 18px rgba(106,13,173,0.35);
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    margin-top:4px;
+  }
+  .btn-primary:hover:not(:disabled) { opacity:0.9; transform:translateY(-1px); box-shadow:0 8px 24px rgba(106,13,173,0.5); }
+  .btn-primary:active:not(:disabled) { transform:translateY(0); }
+  .btn-primary:disabled { opacity:0.45; cursor:not-allowed; }
+
+  .btn-danger {
+    background: linear-gradient(135deg,#c0392b,#e74c3c);
+    box-shadow: 0 4px 18px rgba(231,76,60,0.3);
+  }
+  .btn-danger:hover:not(:disabled) { box-shadow:0 8px 24px rgba(231,76,60,0.45); }
+
+  .btn-warn {
+    background: linear-gradient(135deg,#d68910,#f39c12);
+    box-shadow: 0 4px 18px rgba(243,156,18,0.3);
+  }
+
+  /* Spinner */
+  .spin {
+    display:none; width:16px;height:16px;
+    border:2px solid rgba(255,255,255,0.3);
+    border-top-color:#fff; border-radius:50%;
+    animation:spin 0.7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading .btn-lbl{display:none}
+  .loading .spin{display:block}
+
+  /* ── LISTA DE USUARIOS ── */
+  .user-list { display:flex; flex-direction:column; gap:10px; }
+  .user-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(195,155,211,0.15);
+    border-radius:10px;
+    padding:12px 14px;
+    display:flex; align-items:center; gap:12px;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .user-item:hover { background:rgba(195,155,211,0.07); border-color:rgba(195,155,211,0.28); }
+  .user-avatar {
+    width:38px;height:38px; border-radius:50%;
+    background:linear-gradient(135deg,var(--c-mid),var(--c-accent));
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:700; flex-shrink:0;
+    box-shadow:0 0 10px rgba(106,13,173,0.3);
+  }
+  .user-info { flex:1; min-width:0; }
+  .user-name { font-size:13px; font-weight:700; color:var(--c-white); }
+  .user-meta { font-size:11px; color:rgba(195,155,211,0.5); margin-top:1px; }
+  .user-role {
+    font-size:9.5px; font-weight:700;
+    letter-spacing:0.1em; text-transform:uppercase;
+    padding:3px 9px; border-radius:12px;
+    flex-shrink:0;
+  }
+  .role-admin  { background:rgba(106,13,173,0.3);  color:var(--c-light); border:1px solid rgba(195,155,211,0.25); }
+  .role-user   { background:rgba(46,204,113,0.15); color:#82e6a4;        border:1px solid rgba(46,204,113,0.2); }
+  .role-viewer { background:rgba(243,156,18,0.15); color:#f8c471;        border:1px solid rgba(243,156,18,0.2); }
+
+  .user-actions { display:flex; gap:6px; flex-shrink:0; }
+  .icon-btn {
+    width:30px;height:30px; border-radius:7px;
+    border:1px solid rgba(195,155,211,0.18);
+    background:rgba(195,155,211,0.07);
+    color:var(--c-light); font-size:14px;
+    cursor:pointer; display:flex;align-items:center;justify-content:center;
+    transition:background 0.15s,border-color 0.15s;
+  }
+  .icon-btn:hover { background:rgba(195,155,211,0.18); border-color:rgba(195,155,211,0.4); }
+  .icon-btn.del { color:#f1948a; border-color:rgba(231,76,60,0.2); background:rgba(231,76,60,0.07); }
+  .icon-btn.del:hover { background:rgba(231,76,60,0.18); border-color:rgba(231,76,60,0.4); }
+
+  .empty-list {
+    text-align:center; padding:28px 12px;
+    color:rgba(195,155,211,0.4); font-size:13px;
+  }
+  .empty-list .icon { font-size:32px; margin-bottom:8px; }
+
+  /* Loading list */
+  .list-loading {
+    text-align:center; padding:24px;
+    color:rgba(195,155,211,0.45); font-size:13px;
+    display:flex;align-items:center;justify-content:center;gap:10px;
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position:fixed; bottom:28px; left:50%;
+    transform:translateX(-50%) translateY(60px);
+    background:rgba(30,5,55,0.97);
+    border:1px solid rgba(195,155,211,0.3);
+    border-radius:10px; padding:11px 22px;
+    font-size:13px; color:var(--c-soft);
+    z-index:200; white-space:nowrap;
+    transition:transform 0.35s cubic-bezier(.2,.8,.3,1), opacity 0.35s;
+    opacity:0; pointer-events:none;
+  }
+  .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+  .toast.ok  { border-color:rgba(46,204,113,0.4);  color:#82e6a4; }
+  .toast.err { border-color:rgba(231,76,60,0.4);   color:#f1948a; }
+  .toast.wrn { border-color:rgba(243,156,18,0.4);  color:#f8c471; }
+
+  /* ── MODAL CONFIRMAR ELIMINAR ── */
+  .modal-ov {
+    display:none; position:fixed; inset:0; z-index:100;
+    background:rgba(10,0,20,0.78); backdrop-filter:blur(6px);
+    align-items:center; justify-content:center;
+  }
+  .modal-ov.show { display:flex; }
+  .modal-box {
+    background:rgba(30,5,55,0.97);
+    border:1px solid rgba(195,155,211,0.28);
+    border-radius:16px; padding:30px 28px;
+    width:100%;max-width:340px;margin:20px;
+    box-shadow:0 24px 48px rgba(0,0,0,0.5);
+    animation:cardIn 0.28s ease both;
+  }
+  @keyframes cardIn { from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)} }
+  .modal-title { font-family:'Cinzel',serif; font-size:15px; color:var(--c-white); margin-bottom:10px; }
+  .modal-desc  { font-size:13px; color:rgba(195,155,211,0.6); line-height:1.55; margin-bottom:22px; }
+  .modal-btns  { display:flex;gap:10px; }
+  .modal-btns button {
+    flex:1;height:40px;border-radius:8px;
+    font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;
+    cursor:pointer;border:none;transition:opacity 0.15s;
+  }
+  .modal-btns button:hover{opacity:0.85}
+  .m-cancel { background:rgba(255,255,255,0.08);color:rgba(195,155,211,0.75); border:1px solid rgba(195,155,211,0.2)!important; }
+  .m-del    { background:linear-gradient(135deg,#c0392b,#e74c3c); color:#fff; }
+
+  /* ── MODAL EDITAR ── */
+  .modal-edit { max-width:400px; }
+</style>
+</head>
+<body>
+
+<div class="bg-dots"></div>
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+
+<!-- ── TOPBAR ── -->
+<header class="topbar">
+  <div class="brand-ring">💅</div>
+  <h1>Gestión de Usuarios</h1>
+  <button class="topbar-back" onclick="history.back()">← Volver</button>
+</header>
+
+<!-- ── PÁGINA ── -->
+<div class="page">
+
+  <!-- ════ COL IZQUIERDA: CREAR / CAMBIAR ════ -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <!-- CREAR USUARIO -->
+    <div class="card">
+      <div class="card-title"><span>👤</span> Crear nuevo usuario</div>
+
+      <div class="form-group">
+        <label class="form-label">Usuario</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input class="fi" type="text" id="c-user" placeholder="ej: jessica" autocomplete="off"
+            onkeydown="enterNext(event,'c-pass')">
+        </div>
+        <div class="hint">Sin espacios ni caracteres especiales</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Contraseña</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input class="fi" type="password" id="c-pass" placeholder="Mínimo 4 caracteres"
+            onkeydown="enterNext(event,'c-pass2')">
+          <button class="eye-btn" onclick="toggleEye('c-pass',this)">👁️</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirmar contraseña</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔑</span>
+          <input class="fi" type="password" id="c-pass2" placeholder="Repite la contraseña"
+            onkeydown="enterNext(event,'c-rol')">
+          <button class="eye-btn" onclick="toggleEye('c-pass2',this)">👁️</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Rol</label>
+        <select class="fi-select" id="c-rol" onkeydown="enterNext(event,'btn-crear')">
+          <option value="admin">Administrador</option>
+          <option value="usuario" selected>Usuario</option>
+          <option value="viewer">Solo lectura</option>
+        </select>
+      </div>
+
+      <button class="btn-primary" id="btn-crear" onclick="crearUsuario()">
+        <span class="btn-lbl">✦ Crear Usuario</span>
+        <div class="spin"></div>
+      </button>
+    </div>
+
+    <!-- CAMBIAR CONTRASEÑA -->
+    <div class="card">
+      <div class="card-title"><span>🔑</span> Cambiar contraseña</div>
+
+      <div class="form-group">
+        <label class="form-label">Usuario</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input class="fi" type="text" id="ch-user" placeholder="Usuario a modificar" autocomplete="off"
+            onkeydown="enterNext(event,'ch-old')">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Contraseña actual</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input class="fi" type="password" id="ch-old" placeholder="Contraseña actual"
+            onkeydown="enterNext(event,'ch-new')">
+          <button class="eye-btn" onclick="toggleEye('ch-old',this)">👁️</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nueva contraseña</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔑</span>
+          <input class="fi" type="password" id="ch-new" placeholder="Nueva contraseña (mín. 4)"
+            onkeydown="enterNext(event,'ch-confirm')">
+          <button class="eye-btn" onclick="toggleEye('ch-new',this)">👁️</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Confirmar nueva contraseña</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔑</span>
+          <input class="fi" type="password" id="ch-confirm" placeholder="Repite la nueva contraseña"
+            onkeydown="enterNext(event,'btn-cambiar')">
+          <button class="eye-btn" onclick="toggleEye('ch-confirm',this)">👁️</button>
+        </div>
+      </div>
+
+      <button class="btn-primary btn-warn" id="btn-cambiar" onclick="cambiarContrasena()">
+        <span class="btn-lbl">🔑 Cambiar Contraseña</span>
+        <div class="spin"></div>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ════ COL DERECHA: LISTA USUARIOS ════ -->
+  <div class="card" style="min-height:400px;">
+    <div class="card-title" style="justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:9px;">
+        <span>👥</span> Usuarios registrados
+      </div>
+      <button onclick="cargarUsuarios()" style="background:none;border:none;color:var(--c-muted);cursor:pointer;font-size:16px;" title="Recargar">↻</button>
+    </div>
+
+    <div id="userList">
+      <div class="list-loading">
+        <div class="spin" style="display:block;border-color:rgba(195,155,211,0.3);border-top-color:var(--c-light)"></div>
+        Cargando usuarios...
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal confirmar eliminar -->
+<div class="modal-ov" id="delModal">
+  <div class="modal-box">
+    <div class="modal-title">⚠️ Eliminar usuario</div>
+    <div class="modal-desc" id="delDesc">¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.</div>
+    <div class="modal-btns">
+      <button class="m-cancel" onclick="closeDelModal()">Cancelar</button>
+      <button class="m-del" onclick="confirmarEliminar()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal editar usuario -->
+<div class="modal-ov" id="editModal">
+  <div class="modal-box modal-edit">
+    <div class="modal-title" style="margin-bottom:18px;">✏️ Editar usuario</div>
+
+    <div class="form-group">
+      <label class="form-label">Nuevo rol</label>
+      <select class="fi-select" id="edit-rol">
+        <option value="admin">Administrador</option>
+        <option value="usuario">Usuario</option>
+        <option value="viewer">Solo lectura</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nueva contraseña (opcional)</label>
+      <div class="input-wrap">
+        <span class="input-icon">🔒</span>
+        <input class="fi" type="password" id="edit-pass" placeholder="Dejar vacío para no cambiar">
+        <button class="eye-btn" onclick="toggleEye('edit-pass',this)">👁️</button>
+      </div>
+    </div>
+
+    <div class="modal-btns" style="margin-top:18px;">
+      <button class="m-cancel" onclick="closeEditModal()">Cancelar</button>
+      <button class="m-del" style="background:linear-gradient(135deg,var(--c-mid),var(--c-accent));" onclick="guardarEdicion()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ════ FIREBASE SDK ════ -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, get, set, remove, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  // ── CONFIGURACIÓN — reemplaza con los datos de tu proyecto ──
+  const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "jessicapenabeautystudio.firebaseapp.com",
+    databaseURL: "https://jessicapenabeautystudio-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "jessicapenabeautystudio",
+    storageBucket: "jessicapenabeautystudio.appspot.com",
+    messagingSenderId: "TU_SENDER_ID",
+    appId: "TU_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  // ── HELPERS ──
+  let pendingDelete = null;
+  let pendingEdit   = null;
+
+  window.showToast = function(msg, type='') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast show ${type}`;
+    setTimeout(() => { t.className = 'toast'; }, 3400);
+  };
+
+  window.toggleEye = function(id, btn) {
+    const inp = document.getElementById(id);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    btn.textContent = inp.type === 'password' ? '👁️' : '🙈';
+  };
+
+  // ENTER navega al siguiente campo o dispara botón
+  window.enterNext = function(e, nextId) {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const el = document.getElementById(nextId);
+    if (!el) return;
+    if (el.tagName === 'BUTTON') el.click();
+    else el.focus();
+  };
+
+  // ── SANITIZAR clave Firebase (no permite . # $ / [ ]) ──
+  function sanitizeKey(s) {
+    return s.replace(/[.#$\/\[\]]/g, '_').trim();
+  }
+
+  // ══════════════════════════════════
+  //   CREAR USUARIO
+  // ══════════════════════════════════
+  window.crearUsuario = async function() {
+    const user    = sanitizeKey(document.getElementById('c-user').value.trim());
+    const pass    = document.getElementById('c-pass').value;
+    const pass2   = document.getElementById('c-pass2').value;
+    const rol     = document.getElementById('c-rol').value;
+    const btn     = document.getElementById('btn-crear');
+
+    // Validaciones
+    if (!user) { markErr('c-user'); showToast('Escribe un nombre de usuario','err'); return; }
+    if (pass.length < 4) { markErr('c-pass'); showToast('La contraseña debe tener al menos 4 caracteres','err'); return; }
+    if (pass !== pass2)  { markErr('c-pass2'); showToast('Las contraseñas no coinciden','err'); return; }
+
+    btn.classList.add('loading'); btn.disabled = true;
+
+    try {
+      // Verificar si ya existe
+      const snap = await get(ref(db, `usuarios/${user}`));
+      if (snap.exists()) {
+        showToast(`⚠️ El usuario "${user}" ya existe`,'wrn');
+        btn.classList.remove('loading'); btn.disabled = false;
+        return;
+      }
+
+      // Crear nodo en Firebase
+      await set(ref(db, `usuarios/${user}`), {
+        contrasena: pass,
+        rol: rol,
+        creadoEn: new Date().toISOString(),
+        ultimoAcceso: ''
+      });
+
+      showToast(`✅ Usuario "${user}" creado correctamente`,'ok');
+      // Limpiar
+      ['c-user','c-pass','c-pass2'].forEach(id => {
+        document.getElementById(id).value = '';
+        document.getElementById(id).classList.remove('err','ok');
+      });
+      cargarUsuarios();
+
+    } catch(err) {
+      console.error(err);
+      showToast('Error al guardar en Firebase','err');
+    }
+
+    btn.classList.remove('loading'); btn.disabled = false;
+  };
+
+  function markErr(id) {
+    const el = document.getElementById(id);
+    el.classList.add('err');
+    el.focus();
+    setTimeout(() => el.classList.remove('err'), 3000);
+  }
+
+  // ══════════════════════════════════
+  //   CAMBIAR CONTRASEÑA
+  // ══════════════════════════════════
+  window.cambiarContrasena = async function() {
+    const user    = sanitizeKey(document.getElementById('ch-user').value.trim());
+    const oldPass = document.getElementById('ch-old').value;
+    const newPass = document.getElementById('ch-new').value;
+    const confirm = document.getElementById('ch-confirm').value;
+    const btn     = document.getElementById('btn-cambiar');
+
+    if (!user || !oldPass || !newPass || !confirm) {
+      showToast('Completa todos los campos','err'); return;
+    }
+    if (newPass.length < 4) { markErr('ch-new'); showToast('Mínimo 4 caracteres','err'); return; }
+    if (newPass !== confirm) { markErr('ch-confirm'); showToast('Las contraseñas nuevas no coinciden','err'); return; }
+
+    btn.classList.add('loading'); btn.disabled = true;
+
+    try {
+      const snap = await get(ref(db, `usuarios/${user}`));
+      if (!snap.exists()) {
+        showToast(`Usuario "${user}" no encontrado`,'err');
+        btn.classList.remove('loading'); btn.disabled = false; return;
+      }
+      const data = snap.val();
+      if (data.contrasena !== oldPass) {
+        showToast('La contraseña actual es incorrecta','err');
+        markErr('ch-old');
+        btn.classList.remove('loading'); btn.disabled = false; return;
+      }
+
+      await update(ref(db, `usuarios/${user}`), { contrasena: newPass });
+      showToast(`✅ Contraseña de "${user}" actualizada`,'ok');
+      ['ch-user','ch-old','ch-new','ch-confirm'].forEach(id => document.getElementById(id).value = '');
+
+    } catch(err) {
+      console.error(err);
+      showToast('Error al actualizar en Firebase','err');
+    }
+
+    btn.classList.remove('loading'); btn.disabled = false;
+  };
+
+  // ══════════════════════════════════
+  //   CARGAR LISTA DE USUARIOS
+  // ══════════════════════════════════
+  window.cargarUsuarios = async function() {
+    const list = document.getElementById('userList');
+    list.innerHTML = `<div class="list-loading"><div class="spin" style="display:block;border-color:rgba(195,155,211,0.3);border-top-color:var(--c-light)"></div>Cargando...</div>`;
+
+    try {
+      const snap = await get(ref(db, 'usuarios'));
+      if (!snap.exists()) {
+        list.innerHTML = `<div class="empty-list"><div class="icon">👤</div>No hay usuarios registrados aún</div>`;
+        return;
+      }
+
+      const data = snap.val();
+      const users = Object.entries(data);
+      list.innerHTML = '';
+
+      const ul = document.createElement('div');
+      ul.className = 'user-list';
+
+      users.forEach(([username, info]) => {
+        const initials = username.substring(0,2).toUpperCase();
+        const rol = info.rol || 'usuario';
+        const roleClass = rol === 'admin' ? 'role-admin' : rol === 'viewer' ? 'role-viewer' : 'role-user';
+        const roleLabel = rol === 'admin' ? 'Admin' : rol === 'viewer' ? 'Viewer' : 'Usuario';
+        const acceso = info.ultimoAcceso
+          ? new Date(info.ultimoAcceso).toLocaleDateString('es-PE', {day:'2-digit',month:'short',year:'numeric'})
+          : 'Nunca';
+
+        const item = document.createElement('div');
+        item.className = 'user-item';
+        item.innerHTML = `
+          <div class="user-avatar">${initials}</div>
+          <div class="user-info">
+            <div class="user-name">${username}</div>
+            <div class="user-meta">Último acceso: ${acceso}</div>
+          </div>
+          <span class="user-role ${roleClass}">${roleLabel}</span>
+          <div class="user-actions">
+            <button class="icon-btn" title="Editar" onclick="openEditModal('${username}','${rol}')">✏️</button>
+            <button class="icon-btn del" title="Eliminar" onclick="openDelModal('${username}')">🗑️</button>
+          </div>
+        `;
+        ul.appendChild(item);
+      });
+
+      list.appendChild(ul);
+
+    } catch(err) {
+      console.error(err);
+      list.innerHTML = `<div class="empty-list"><div class="icon">⚠️</div>Error al cargar usuarios</div>`;
+    }
+  };
+
+  // ══════════════════════════════════
+  //   ELIMINAR USUARIO
+  // ══════════════════════════════════
+  window.openDelModal = function(username) {
+    pendingDelete = username;
+    document.getElementById('delDesc').textContent =
+      `¿Estás seguro de que deseas eliminar al usuario "${username}"? Esta acción no se puede deshacer.`;
+    document.getElementById('delModal').classList.add('show');
+  };
+  window.closeDelModal = function() {
+    pendingDelete = null;
+    document.getElementById('delModal').classList.remove('show');
+  };
+  window.confirmarEliminar = async function() {
+    if (!pendingDelete) return;
+    try {
+      await remove(ref(db, `usuarios/${pendingDelete}`));
+      showToast(`🗑️ Usuario "${pendingDelete}" eliminado`,'ok');
+      closeDelModal();
+      cargarUsuarios();
+    } catch(err) {
+      showToast('Error al eliminar usuario','err');
+    }
+  };
+
+  // ══════════════════════════════════
+  //   EDITAR USUARIO
+  // ══════════════════════════════════
+  window.openEditModal = function(username, rol) {
+    pendingEdit = username;
+    document.getElementById('edit-rol').value = rol;
+    document.getElementById('edit-pass').value = '';
+    document.getElementById('editModal').classList.add('show');
+  };
+  window.closeEditModal = function() {
+    pendingEdit = null;
+    document.getElementById('editModal').classList.remove('show');
+  };
+  window.guardarEdicion = async function() {
+    if (!pendingEdit) return;
+    const newRol  = document.getElementById('edit-rol').value;
+    const newPass = document.getElementById('edit-pass').value;
+
+    const updates = { rol: newRol };
+    if (newPass) {
+      if (newPass.length < 4) { showToast('Contraseña mínimo 4 caracteres','err'); return; }
+      updates.contrasena = newPass;
+    }
+
+    try {
+      await update(ref(db, `usuarios/${pendingEdit}`), updates);
+      showToast(`✅ Usuario "${pendingEdit}" actualizado`,'ok');
+      closeEditModal();
+      cargarUsuarios();
+    } catch(err) {
+      showToast('Error al actualizar usuario','err');
+    }
+  };
+
+  // Cargar al iniciar
+  cargarUsuarios();
+</script>
+
+</body>
+</html>

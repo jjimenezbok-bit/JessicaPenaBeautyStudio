@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jessica Peña Nails Spa — Sistema</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --c-deep:    #1a0030;
+    --c-dark:    #3a006f;
+    --c-mid:     #6A0DAD;
+    --c-accent:  #9b59b6;
+    --c-light:   #c39bd3;
+    --c-soft:    #e8d5f5;
+    --c-muted:   rgba(195,155,211,0.55);
+    --c-white:   #ffffff;
+    --c-danger:  #e74c3c;
+    --menu-w:    238px;
+    --menu-col:  58px;
+    --title-h:   58px;
+    --transition: 0.28s cubic-bezier(.4,0,.2,1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--c-deep);
+    color: var(--c-white);
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    height: var(--title-h);
+    background: rgba(26,0,48,0.92);
+    border-bottom: 1px solid rgba(195,155,211,0.18);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    flex-shrink: 0;
+    z-index: 50;
+    position: relative;
+    backdrop-filter: blur(10px);
+  }
+  .topbar::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(195,155,211,0.4), transparent);
+  }
+
+  .btn-toggle {
+    width: 36px; height: 36px;
+    background: rgba(195,155,211,0.08);
+    border: 1px solid rgba(195,155,211,0.22);
+    border-radius: 8px;
+    color: var(--c-light);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .btn-toggle:hover { background: rgba(195,155,211,0.16); border-color: rgba(195,155,211,0.4); }
+
+  .brand {
+    display: flex; align-items: center; gap: 10px; flex: 1;
+  }
+  .brand-ring {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--c-mid), var(--c-light));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    box-shadow: 0 0 14px rgba(155,89,182,0.45);
+  }
+  .brand-name {
+    font-family: 'Cinzel', serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--c-white);
+  }
+  .brand-tag {
+    font-size: 9.5px;
+    color: rgba(195,155,211,0.5);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .topbar-right {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .user-pill {
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(195,155,211,0.07);
+    border: 1px solid rgba(195,155,211,0.2);
+    border-radius: 20px;
+    padding: 4px 12px 4px 5px;
+    font-size: 12px;
+    color: var(--c-soft);
+  }
+  .user-dot {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--c-mid), var(--c-accent));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+  }
+
+  /* ── LAYOUT ── */
+  .layout {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--menu-w);
+    background: rgba(18, 0, 36, 0.95);
+    border-right: 1px solid rgba(195,155,211,0.14);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width var(--transition);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .sidebar.collapsed { width: var(--menu-col); }
+
+  /* Línea decorativa derecha */
+  .sidebar::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 20%; bottom: 20%;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(195,155,211,0.3), transparent);
+    pointer-events: none;
+  }
+
+  .sidebar-inner {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 10px 0 14px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(195,155,211,0.2) transparent;
+  }
+  .sidebar-inner::-webkit-scrollbar { width: 3px; }
+  .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(195,155,211,0.2); border-radius: 2px; }
+
+  /* Etiqueta de grupo */
+  .g-label {
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(195,155,211,0.4);
+    padding: 10px 16px 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity var(--transition), height var(--transition), padding var(--transition);
+  }
+  .collapsed .g-label { opacity: 0; height: 0; padding: 0; }
+
+  /* Botón menú */
+  .mb {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    height: 40px;
+    padding: 0 10px;
+    background: none;
+    border: none;
+    color: rgba(232,213,245,0.65);
+    font-family: 'Nunito', sans-serif;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.18s, color 0.15s;
+    position: relative;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .mb::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 20%; bottom: 20%;
+    width: 2.5px;
+    background: var(--c-light);
+    border-radius: 0 2px 2px 0;
+    transform: scaleY(0);
+    transition: transform 0.2s;
+  }
+  .mb:hover { background: rgba(195,155,211,0.1); color: var(--c-white); }
+  .mb:hover::before { transform: scaleY(0.55); }
+  .mb.active { background: rgba(195,155,211,0.14); color: var(--c-white); }
+  .mb.active::before { transform: scaleY(1); }
+
+  .mi {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: rgba(195,155,211,0.08);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .mb:hover .mi { background: rgba(195,155,211,0.18); }
+  .mb.active .mi { background: rgba(195,155,211,0.22); }
+
+  .mt {
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity var(--transition), max-width var(--transition);
+    max-width: 160px;
+  }
+  .collapsed .mt { opacity: 0; max-width: 0; }
+
+  /* Tooltip colapsado */
+  .sidebar.collapsed .mb { justify-content: center; padding: 0; }
+  .sidebar.collapsed .mi { margin: 0; }
+  .sidebar.collapsed .mb::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: calc(var(--menu-col) + 8px);
+    top: 50%; transform: translateY(-50%);
+    background: rgba(40,5,70,0.97);
+    border: 1px solid rgba(195,155,211,0.3);
+    color: var(--c-soft);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 7px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 999;
+  }
+  .sidebar.collapsed .mb:hover::after { opacity: 1; }
+
+  /* Divisor */
+  .mdiv {
+    height: 1px;
+    background: rgba(195,155,211,0.1);
+    margin: 5px 12px;
+  }
+
+  /* Footer sidebar */
+  .sidebar-foot {
+    flex-shrink: 0;
+    padding: 10px;
+    border-top: 1px solid rgba(195,155,211,0.1);
+  }
+  .btn-logout {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; height: 36px;
+    padding: 0 8px;
+    background: rgba(231,76,60,0.08);
+    border: 1px solid rgba(231,76,60,0.2);
+    border-radius: 8px;
+    color: rgba(255,140,120,0.8);
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap; overflow: hidden;
+  }
+  .btn-logout:hover { background: rgba(231,76,60,0.16); color: #ff9070; }
+  .sidebar.collapsed .btn-logout { justify-content: center; padding: 0; }
+
+  /* ── ÁREA CENTRAL ── */
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    overflow: hidden;
+    position: relative;
+    background:
+      radial-gradient(ellipse 70% 55% at 50% 0%, rgba(106,13,173,0.14) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 80% 100%, rgba(155,89,182,0.08) 0%, transparent 60%),
+      linear-gradient(180deg, #1a0030 0%, #100020 100%);
+  }
+
+  /* Patrón de puntos sutil */
+  .content::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, rgba(195,155,211,0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    pointer-events: none;
+  }
+
+  /* Orbe central difuminado */
+  .content::after {
+    content: '';
+    position: absolute;
+    width: 480px; height: 480px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(106,13,173,0.1) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    animation: breathe 8s ease-in-out infinite;
+  }
+  @keyframes breathe {
+    0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+    50%      { transform: translate(-50%,-50%) scale(1.12); opacity: 0.7; }
+  }
+
+  /* Bloque principal */
+  .day-block {
+    position: relative; z-index: 1;
+    text-align: center;
+    animation: fadeUp 0.6s cubic-bezier(.2,.8,.3,1) both;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Saludo */
+  .greeting {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--c-muted);
+    margin-bottom: 10px;
+  }
+
+  /* Hora grande */
+  .big-time {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(52px, 8vw, 86px);
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    color: var(--c-white);
+    line-height: 1;
+    margin-bottom: 6px;
+    text-shadow: 0 0 60px rgba(155,89,182,0.35);
+  }
+
+  /* Segundos */
+  .big-secs {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(18px, 3vw, 30px);
+    font-weight: 400;
+    color: rgba(195,155,211,0.45);
+    letter-spacing: 0.08em;
+    margin-bottom: 18px;
+  }
+
+  /* Fecha */
+  .day-date {
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(232,213,245,0.55);
+    letter-spacing: 0.08em;
+    margin-bottom: 36px;
+  }
+
+  /* Separador decorativo */
+  .sep {
+    display: flex; align-items: center; gap: 14px;
+    width: 100%; max-width: 340px;
+    margin-bottom: 32px;
+  }
+  .sep-line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(195,155,211,0.25), transparent);
+  }
+  .sep-diamond {
+    width: 6px; height: 6px;
+    border: 1px solid rgba(195,155,211,0.4);
+    transform: rotate(45deg);
+    flex-shrink: 0;
+  }
+
+  /* Frase motivacional */
+  .quote-wrap {
+    max-width: 420px;
+    text-align: center;
+    padding: 0 10px;
+  }
+  .quote-text {
+    font-size: 14px;
+    font-style: italic;
+    color: rgba(232,213,245,0.55);
+    line-height: 1.65;
+    transition: opacity 0.6s;
+  }
+  .quote-author {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(195,155,211,0.38);
+    margin-top: 8px;
+    transition: opacity 0.6s;
+  }
+
+  /* Indicador de estado Firebase */
+  .status-dot {
+    position: absolute;
+    bottom: 20px; right: 20px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10.5px;
+    color: rgba(195,155,211,0.4);
+    z-index: 2;
+  }
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: rgba(46,204,113,0.7);
+    box-shadow: 0 0 6px rgba(46,204,113,0.5);
+    animation: blink 2.5s ease-in-out infinite;
+  }
+  .dot.offline { background: rgba(231,76,60,0.7); box-shadow: 0 0 6px rgba(231,76,60,0.5); animation: none; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
+</style>
+</head>
+<body>
+
+<!-- ══ TOPBAR ══ -->
+<header class="topbar">
+  <button class="btn-toggle" id="toggleBtn">☰</button>
+  <div class="brand">
+    <div class="brand-ring">💅</div>
+    <div>
+      <div class="brand-name">Jessica Peña Nails Spa</div>
+      <div class="brand-tag">Sistema de Gestión</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="user-pill">
+      <div class="user-dot" id="userInitials">AD</div>
+      <span id="userDisplay">admin</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══ LAYOUT ══ -->
+<div class="layout">
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-inner">
+
+      <!-- OPERACIONES -->
+      <div class="g-label">Operaciones</div>
+      <button class="mb" data-tip="Ventas" onclick="go('modules/ventas.html','Ventas')">
+        <span class="mi">💰</span><span class="mt">Ventas</span>
+      </button>
+      <button class="mb" data-tip="Compras" onclick="go('modules/compras.html','Compras')">
+        <span class="mi">📋</span><span class="mt">Compras</span>
+      </button>
+      <button class="mb" data-tip="Tickets" onclick="go('modules/tickets.html','Tickets')">
+        <span class="mi">🎫</span><span class="mt">Tickets</span>
+      </button>
+
+      <div class="mdiv"></div>
+
+      <!-- REPORTES -->
+      <div class="g-label">Reportes</div>
+      <button class="mb" data-tip="Reporte Ventas" onclick="go('modules/reporte-ventas.html','Reporte Ventas')">
+        <span class="mi">📊</span><span class="mt">Reporte Ventas</span>
+      </button>
+      <button class="mb" data-tip="Reporte Compras" onclick="go('modules/reporte-compras.html','Reporte Compras')">
+        <span class="mi">📈</span><span class="mt">Reporte Compras</span>
+      </button>
+      <button class="mb" data-tip="Financiero" onclick="go('modules/financiero.html','Financiero')">
+        <span class="mi">📊</span><span class="mt">Financiero</span>
+      </button>
+
+      <div class="mdiv"></div>
+
+      <!-- MAESTROS -->
+      <div class="g-label">Maestros</div>
+      <button class="mb" data-tip="Clientes" onclick="go('modules/clientes.html','Clientes')">
+        <span class="mi">👥</span><span class="mt">Clientes</span>
+      </button>
+      <button class="mb" data-tip="Servicios" onclick="go('modules/servicios.html','Servicios')">
+        <span class="mi">💅</span><span class="mt">Servicios</span>
+      </button>
+      <button class="mb" data-tip="Inventario" onclick="go('modules/inventario.html','Inventario')">
+        <span class="mi">📦</span><span class="mt">Inventario</span>
+      </button>
+      <button class="mb" data-tip="Productos" onclick="go('modules/productos.html','Productos')">
+        <span class="mi">💎</span><span class="mt">Productos</span>
+      </button>
+      <button class="mb" data-tip="Proveedores" onclick="go('modules/proveedores.html','Proveedores')">
+        <span class="mi">🏢</span><span class="mt">Proveedores</span>
+      </button>
+
+      <div class="mdiv"></div>
+
+      <!-- FINANZAS -->
+      <div class="g-label">Finanzas</div>
+      <button class="mb" data-tip="Créditos" onclick="go('modules/creditos.html','Créditos')">
+        <span class="mi">💳</span><span class="mt">Créditos</span>
+      </button>
+
+      <div class="mdiv"></div>
+
+      <!-- SISTEMA -->
+      <div class="g-label">Sistema</div>
+      <button class="mb" data-tip="Cargas Masivas" onclick="go('modules/cargas.html','Cargas Masivas')">
+        <span class="mi">⚡</span><span class="mt">Cargas Masivas</span>
+      </button>
+
+    </div>
+
+    <div class="sidebar-foot">
+      <button class="btn-logout" data-tip="Salir" onclick="logout()">
+        <span class="mi" style="background:rgba(231,76,60,0.12)">🚪</span>
+        <span class="mt">Cerrar Sesión</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ══ CONTENIDO CENTRAL ══ -->
+  <main class="content">
+    <div class="day-block">
+      <div class="greeting" id="greeting">Bienvenida</div>
+      <div class="big-time" id="bigHour">00:00</div>
+      <div class="big-secs" id="bigSecs">:00</div>
+      <div class="day-date" id="dayDate">—</div>
+
+      <div class="sep">
+        <div class="sep-line"></div>
+        <div class="sep-diamond"></div>
+        <div class="sep-line"></div>
+      </div>
+
+      <div class="quote-wrap">
+        <div class="quote-text" id="quoteText"></div>
+        <div class="quote-author" id="quoteAuthor"></div>
+      </div>
+    </div>
+
+    <!-- Indicador estado -->
+    <div class="status-dot">
+      <div class="dot" id="statusDot"></div>
+      <span id="statusLabel">Conectado</span>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  // ── PROTECCIÓN: si no hay sesión → login ──
+  const loggedUser = sessionStorage.getItem('loggedUser');
+  if (!loggedUser) {
+    window.location.href = 'login.html';
+  }
+
+  // ── USUARIO ──
+  const userDisplay = document.getElementById('userDisplay');
+  const userInitials = document.getElementById('userInitials');
+  if (loggedUser) {
+    userDisplay.textContent = loggedUser;
+    userInitials.textContent = loggedUser.substring(0,2).toUpperCase();
+  }
+
+  // ── TOGGLE SIDEBAR ──
+  const sidebar = document.getElementById('sidebar');
+  document.getElementById('toggleBtn').addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+  });
+
+  // ── RELOJ GRANDE ──
+  const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  function pad(n) { return String(n).padStart(2,'0'); }
+
+  function updateClock() {
+    const now = new Date();
+    const h = pad(now.getHours());
+    const m = pad(now.getMinutes());
+    const s = pad(now.getSeconds());
+    document.getElementById('bigHour').textContent = `${h}:${m}`;
+    document.getElementById('bigSecs').textContent  = `:${s}`;
+    document.getElementById('dayDate').textContent  =
+      `${DIAS[now.getDay()]}, ${now.getDate()} de ${MESES[now.getMonth()]} de ${now.getFullYear()}`;
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ── SALUDO POR HORA ──
+  function updateGreeting() {
+    const h = new Date().getHours();
+    const name = loggedUser || '';
+    let g = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+    document.getElementById('greeting').textContent = `${g}, ${name}`;
+  }
+  updateGreeting();
+  setInterval(updateGreeting, 60000);
+
+  // ── FRASES ROTATIVAS ──
+  const QUOTES = [
+    { text: "El éxito es la suma de pequeños esfuerzos repetidos día tras día.", author: "Robert Collier" },
+    { text: "Cada cliente que atiendes es una oportunidad de crear algo hermoso.", author: "" },
+    { text: "La belleza comienza cuando decides ser tú misma.", author: "Coco Chanel" },
+    { text: "El trabajo con pasión transforma el esfuerzo en arte.", author: "" },
+    { text: "Una clienta satisfecha es la mejor publicidad.", author: "" },
+    { text: "La excelencia no es un destino, es una forma continua de viajar.", author: "Brian Tracy" },
+    { text: "Cuida a tus clientes y ellos cuidarán tu negocio.", author: "" },
+    { text: "La disciplina es el puente entre metas y logros.", author: "Jim Rohn" },
+    { text: "Cada día es una nueva oportunidad de hacer algo extraordinario.", author: "" },
+    { text: "El talento gana partidos, pero el trabajo en equipo gana campeonatos.", author: "Michael Jordan" },
+  ];
+
+  let qIndex = 0;
+  function showQuote(idx) {
+    const q = QUOTES[idx % QUOTES.length];
+    const qt = document.getElementById('quoteText');
+    const qa = document.getElementById('quoteAuthor');
+    qt.style.opacity = '0'; qa.style.opacity = '0';
+    setTimeout(() => {
+      qt.textContent = `"${q.text}"`;
+      qa.textContent = q.author ? `— ${q.author}` : '';
+      qt.style.opacity = '1'; qa.style.opacity = '1';
+    }, 350);
+  }
+  showQuote(qIndex);
+  setInterval(() => { qIndex++; showQuote(qIndex); }, 12000);
+
+  // ── ABRIR MÓDULO EN NUEVA PESTAÑA ──
+  function go(url, name) {
+    document.querySelectorAll('.mb').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.mb').forEach(b => {
+      if (b.getAttribute('data-tip') === name) b.classList.add('active');
+    });
+    window.open(url, '_blank');
+  }
+
+  // ── LOGOUT ──
+  function logout() {
+    if (confirm('¿Deseas cerrar sesión?')) {
+      sessionStorage.clear();
+      window.location.href = 'login.html';
+    }
+  }
+</script>
+
+</body>
+</html>
