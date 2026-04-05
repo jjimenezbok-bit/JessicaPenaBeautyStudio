@@ -143,7 +143,6 @@
   .tmpl-cols{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
   .tmpl-col{font-size:10px;font-weight:700;background:rgba(195,155,211,.1);border:1px solid rgba(195,155,211,.2);border-radius:5px;padding:2px 7px;color:rgba(195,155,211,.7)}
 
-  /* Barra de búsqueda */
   .hist-search{margin-bottom:12px; display:flex; gap:8px; align-items:center}
   .hist-search input{flex:1; height:36px; background:rgba(255,255,255,.06); border:1px solid rgba(195,155,211,.2); border-radius:9px; color:#fff; font-family:'Nunito',sans-serif; font-size:13px; padding:0 12px; outline:none}
   .hist-search input:focus{border-color:rgba(155,89,182,.6); box-shadow:0 0 0 2px rgba(106,13,173,.2)}
@@ -319,7 +318,7 @@
 
     <div class="tbl-wrap">
       <table id="tabla-lista">
-        <thead id="lista-thead"></tr></thead>
+        <thead id="lista-thead"><tr></thead>
         <tbody id="lista-body">
           <tr class="empty-row"><td colspan="20">Sin productos agregados</td></tr>
         </tbody>
@@ -353,7 +352,6 @@
       <div class="tab" id="tab-todo" onclick="setTab('todo')">Todo</div>
     </div>
 
-    <!-- Barra de búsqueda global en el historial -->
     <div class="hist-search">
       <input type="text" id="hist-search-input" placeholder="🔍 Buscar en cualquier columna (fecha, producto, proveedor...)" oninput="filtrarHistorialPorTexto()">
       <button class="btn-clear-search" onclick="limpiarBusquedaHistorial()">✕ Limpiar</button>
@@ -366,7 +364,7 @@
 
     <div class="tbl-wrap">
       <table id="tabla-hist">
-        <thead id="hist-thead"></table></thead>
+        <thead id="hist-thead"><tr></thead>
         <tbody id="hist-body">
           <tr class="empty-row"><td colspan="20">Cargando...</td></tr>
         </tbody>
@@ -475,6 +473,7 @@ document.getElementById('modal-upload').addEventListener('click', e=>{
 
 function renderColConfig(containerId, visState) {
   const el = document.getElementById(containerId);
+  if(!el) return;
   el.innerHTML = COLUMNAS.map(col => `
     <div class="col-chip ${visState[col.key]?'active':''}" onclick="toggleCol('${containerId}','${col.key}')">
       <span class="col-chip-dot"></span>${col.label}
@@ -507,6 +506,7 @@ window.enFieldAddList = (e) => {
 
 function acRender(type, labels, dataArr) {
   const drop = document.getElementById(`ac-${type}-drop`);
+  if(!drop) return;
   acState[type].list = labels;
   acState[type].data = dataArr;
   if(!labels.length){drop.classList.remove('open');return;}
@@ -539,6 +539,7 @@ window.acOpen = type => {
 window.acKey = (e, type) => {
   const st = acState[type];
   const drop = document.getElementById(`ac-${type}-drop`);
+  if(!drop) return;
   if(e.key==='ArrowDown'){
     e.preventDefault();
     st.idx=Math.min(st.idx+1,st.list.length-1);
@@ -565,7 +566,8 @@ window.acSelect = (type, idx) => {
   const label = acState[type].list[idx];
   const data  = acState[type].data[idx];
   document.getElementById(`ac-${type}-input`).value = label;
-  document.getElementById(`ac-${type}-drop`).classList.remove('open');
+  const drop = document.getElementById(`ac-${type}-drop`);
+  if(drop) drop.classList.remove('open');
 
   if(type==='producto' && data){
     document.getElementById('c-categoria').value = data.categoria||'';
@@ -652,11 +654,15 @@ window.agregarALista = () => {
 };
 
 function renderLista() {
-  const thead = document.querySelector('#lista-thead tr');
+  const thead = document.getElementById('lista-thead');
+  if(!thead) return;
+  let tr = thead.querySelector('tr');
+  if(!tr) { tr = document.createElement('tr'); thead.appendChild(tr); }
   const visibles = COLUMNAS.filter(c=>colVisLista[c.key]);
-  thead.innerHTML = '<th>#</th>' + visibles.map(c=>`<th>${c.label}</th>`).join('') + '<th></th>';
+  tr.innerHTML = '<th>#</th>' + visibles.map(c=>`<th>${c.label}</th>`).join('') + '<th></th>';
 
   const tbody = document.getElementById('lista-body');
+  if(!tbody) return;
   if(!listaTemp.length){
     tbody.innerHTML=`<tr class="empty-row"><td colspan="${visibles.length+2}">Sin productos agregados</td></tr>`;
     document.getElementById('total-val').textContent='S/ 0.00';
@@ -710,7 +716,7 @@ function limpiarCampos(){
   const prodInput = document.getElementById('ac-producto-input');
   prodInput.value=''; prodInput.dataset.prodKey='';
   ['c-categoria','c-cantidad','c-precio','c-total-display','c-pventa-pct','c-pventa-precio']
-    .forEach(id=>{ document.getElementById(id).value=''; });
+    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   editandoIdx=null;
   document.getElementById('ac-producto-input').focus();
 }
@@ -720,17 +726,17 @@ window.cancelarLista = () => {
     listaTemp=[]; editandoIdx=null; renderLista();
     const provInput = document.getElementById('ac-proveedor-input');
     const prodInput = document.getElementById('ac-producto-input');
-    provInput.value=''; provInput.dataset.provKey=''; provInput.dataset.provId=''; provInput.dataset.provNombre='';
-    prodInput.value=''; prodInput.dataset.prodKey='';
+    if(provInput) { provInput.value=''; provInput.dataset.provKey=''; provInput.dataset.provId=''; provInput.dataset.provNombre=''; }
+    if(prodInput) { prodInput.value=''; prodInput.dataset.prodKey=''; }
     ['c-doc','c-categoria','c-cantidad','c-precio','c-total-display','c-pventa-pct','c-pventa-precio']
-      .forEach(id=>{ document.getElementById(id).value=''; });
+      .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   }
 };
 
 window.guardarCompra = async () => {
   if(!listaTemp.length){showToast('Agrega al menos un producto','wrn');return;}
   const btn = document.getElementById('btn-guardar-compra');
-  btn.disabled=true;
+  if(btn) btn.disabled=true;
   document.getElementById('lbl-gc').style.display='none';
   document.getElementById('sp-gc').style.display='block';
   try {
@@ -761,15 +767,15 @@ window.guardarCompra = async () => {
     listaTemp=[]; editandoIdx=null; renderLista();
     const provInput = document.getElementById('ac-proveedor-input');
     const prodInput = document.getElementById('ac-producto-input');
-    provInput.value=''; provInput.dataset.provKey=''; provInput.dataset.provId=''; provInput.dataset.provNombre='';
-    prodInput.value=''; prodInput.dataset.prodKey='';
+    if(provInput) { provInput.value=''; provInput.dataset.provKey=''; provInput.dataset.provId=''; provInput.dataset.provNombre=''; }
+    if(prodInput) { prodInput.value=''; prodInput.dataset.prodKey=''; }
     ['c-doc','c-categoria','c-cantidad','c-precio','c-total-display','c-pventa-pct','c-pventa-precio']
-      .forEach(id=>{ document.getElementById(id).value=''; });
+      .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     cargarHistorial();
   } catch(err){
     console.error(err); showToast('Error al guardar en Firebase','err');
   }
-  btn.disabled=false;
+  if(btn) btn.disabled=false;
   document.getElementById('lbl-gc').style.display='inline';
   document.getElementById('sp-gc').style.display='none';
 };
@@ -780,17 +786,34 @@ window.setTab = tab => {
   renderHistorial();
 };
 
+// CORRECCIÓN PRINCIPAL: ahora carga TODOS los hijos sin importar la estructura
 window.cargarHistorial = async () => {
   try {
     const snap = await get(ref(db,'compras'));
-    historialAll=[];
-    if(snap.exists()) snap.forEach(c=>historialAll.push({key:c.key,...c.val()}));
-    historialAll.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+    historialAll = [];
+    if(snap.exists()) {
+      const data = snap.val();
+      // Recorremos cada clave hija (cada compra individual)
+      for(let key in data) {
+        if(data.hasOwnProperty(key)) {
+          const compra = data[key];
+          // Aseguramos que sea un objeto con los campos esperados
+          if(compra && typeof compra === 'object') {
+            historialAll.push({ key, ...compra });
+          }
+        }
+      }
+    }
+    // Ordenar por fecha descendente
+    historialAll.sort((a,b)=> (b.fecha||'').localeCompare(a.fecha||''));
     renderHistorial();
-  } catch(err){ console.error(err); showToast('Error al cargar historial','err'); }
+    console.log(`Cargadas ${historialAll.length} compras`);
+  } catch(err){ 
+    console.error(err); 
+    showToast('Error al cargar historial','err');
+  }
 };
 
-// Función auxiliar para filtrar por término de búsqueda
 function filtrarHistorialPorTexto() {
   histSearchTerm = document.getElementById('hist-search-input').value.trim().toLowerCase();
   renderHistorial();
@@ -798,12 +821,13 @@ function filtrarHistorialPorTexto() {
 window.filtrarHistorialPorTexto = filtrarHistorialPorTexto;
 
 window.limpiarBusquedaHistorial = () => {
-  document.getElementById('hist-search-input').value = '';
+  const searchInput = document.getElementById('hist-search-input');
+  if(searchInput) searchInput.value = '';
   histSearchTerm = '';
   renderHistorial();
 };
 
-function renderHistorial(){
+function renderHistorial() {
   const now      = new Date();
   const todayStr = now.toISOString().split('T')[0];
   const lunes    = new Date(now); lunes.setDate(now.getDate()-now.getDay()+1);
@@ -817,16 +841,13 @@ function renderHistorial(){
     return true;
   });
 
-  // Aplicar búsqueda global si hay término
   if(histSearchTerm.trim() !== '') {
     filtered = filtered.filter(row => {
-      // Recorrer todas las propiedades del objeto y ver si alguna contiene el término
       for(let key in row) {
         if(row.hasOwnProperty(key)) {
           let val = row[key];
           if(val !== undefined && val !== null) {
-            const strVal = val.toString().toLowerCase();
-            if(strVal.includes(histSearchTerm)) return true;
+            if(val.toString().toLowerCase().includes(histSearchTerm)) return true;
           }
         }
       }
@@ -835,10 +856,14 @@ function renderHistorial(){
   }
 
   const visibles = COLUMNAS.filter(c=>colVisHist[c.key]);
-  const thead = document.querySelector('#hist-thead tr');
-  thead.innerHTML = visibles.map(c=>`<th>${c.label}</th>`).join('') + '<th></th>';
+  const thead = document.getElementById('hist-thead');
+  if(!thead) return;
+  let tr = thead.querySelector('tr');
+  if(!tr) { tr = document.createElement('tr'); thead.appendChild(tr); }
+  tr.innerHTML = visibles.map(c=>`<th>${c.label}</th>`).join('') + '<th></th>';
 
   const tbody = document.getElementById('hist-body');
+  if(!tbody) return;
   if(!filtered.length){
     tbody.innerHTML=`<tr class="empty-row"><td colspan="${visibles.length+1}">Sin registros</td></tr>`;
     return;
@@ -917,7 +942,7 @@ window.descargarPlantillaCompras = () => {
     { COLUMNA:'categoria',    DESCRIPCIÓN:'Categoría del producto',                                OBLIGATORIO:'No',  EJEMPLO:'MANICURA'},
     { COLUMNA:'marca',        DESCRIPCIÓN:'Nombre de la marca',                                    OBLIGATORIO:'No',  EJEMPLO:'NOYUS'},
     { COLUMNA:'unidad',       DESCRIPCIÓN:'Unidad de medida (ej: 30 GR, 100 UN)',                  OBLIGATORIO:'No',  EJEMPLO:'30 GR'},
-    { COLUMNA:'proveedor_id', DESCRIPCIÓN:'ID del proveedor en el sistema (ej: PROV0001)',         OBLIGATORIO:'No',  EJEMPLO:'PROV0001'},
+    { COLUMNA:'proveedor_id', DESCRIPCIÓN:'ID del proveedor de la compra (si es distinto)',        OBLIGATORIO:'No',  EJEMPLO:'PROV0001'},
     { COLUMNA:'igv_pct',      DESCRIPCIÓN:'% de IGV (si se omite, usa el IGV configurado)',        OBLIGATORIO:'No',  EJEMPLO:'18'},
   ];
   const wsInstr = XLSX.utils.json_to_sheet(instrucciones);
@@ -947,49 +972,80 @@ async function procesarArchivoCompra(file) {
       document.getElementById('up-txt').textContent=`Procesando ${i+1} de ${rows.length}...`;
       const r = rows[i];
       const g = (keys) => { for(const k of keys){ const v=(r[k]||'').toString().trim(); if(v) return v; } return ''; };
-      const fecha     = g(['fecha','Fecha']);
-      const doc       = g(['documento','Documento','doc','Doc.','n_documento']);
-      const provNom   = g(['proveedor','Proveedor']);
-      const prodNom   = g(['producto','Producto','descripcion','Descripción']);
-      const cantRaw   = parseFloat(g(['cantidad','Cantidad','cant','Cant.']))||0;
-      const precioRaw = parseFloat(g(['precio','Precio','p_unit','P.Unit.']))||0;
-      if(!fecha||!doc||!provNom||!prodNom||!cantRaw||!precioRaw){errs++;continue;}
-      const igvPctRow   = parseFloat(g(['igv_pct','IGV%','igv']))||igvPct;
-      const pVentaPct   = parseFloat(g(['pventa_pct','P.Venta%','pventa']))||0;
-      const precioConIGV= +(precioRaw*(1+igvPctRow/100)).toFixed(2);
-      const total       = +(cantRaw*precioRaw).toFixed(2);
-      const pVentaP     = +(precioConIGV*(1+pVentaPct/100)).toFixed(2);
-      const prodObj = productos.find(p=>(p.descripcion||'').toLowerCase()===prodNom.toLowerCase() ||
-                                        (p.codigo||'').toLowerCase()===g(['codigo_prod','Código Prod.']).toLowerCase() ||
-                                        (p.upc||'')===g(['upc','UPC']));
-      const provObj = proveedores.find(p=>(p.nombre||'').toLowerCase()===provNom.toLowerCase() ||
-                                          (p.proveedorId||'').toLowerCase()===provNom.toLowerCase());
+      
+      const fecha       = g(['fecha','Fecha']);
+      const documento   = g(['documento','Documento','doc','Doc.','n_documento']);
+      const proveedorCompra = g(['proveedor','Proveedor']);
+      const productoDesc = g(['producto','Producto','descripcion','Descripción']);
+      const cantidad     = parseFloat(g(['cantidad','Cantidad','cant','Cant.'])) || 0;
+      const precioUnit   = parseFloat(g(['precio','Precio','p_unit','P.Unit.'])) || 0;
+      
+      if(!fecha || !documento || !proveedorCompra || !productoDesc || !cantidad || !precioUnit){
+        errs++; continue;
+      }
+      
+      const igvRow     = parseFloat(g(['igv_pct','IGV%','igv'])) || igvPct;
+      const pVentaPct  = parseFloat(g(['pventa_pct','P.Venta%','pventa'])) || 0;
+      const precioConIGV = +(precioUnit * (1 + igvRow/100)).toFixed(2);
+      const totalItem    = +(cantidad * precioUnit).toFixed(2);
+      const pVentaP      = +(precioConIGV * (1 + pVentaPct/100)).toFixed(2);
+      
+      // Buscar producto en catálogo
+      let prodObj = null;
+      const codigoExcel = g(['codigo_prod','Código Prod.']);
+      const upcExcel    = g(['upc','UPC']);
+      if(codigoExcel) prodObj = productos.find(p => p.codigo === codigoExcel);
+      if(!prodObj && upcExcel) prodObj = productos.find(p => p.upc === upcExcel);
+      if(!prodObj) prodObj = productos.find(p => p.descripcion.toLowerCase() === productoDesc.toLowerCase());
+      
+      // Buscar proveedor
+      let provObj = proveedores.find(p => p.nombre.toLowerCase() === proveedorCompra.toLowerCase() ||
+                                          p.proveedorId.toLowerCase() === proveedorCompra.toLowerCase());
+      const proveedorCompraId = provObj ? provObj.proveedorId : (g(['proveedor_id']) || '');
+      
+      const prodCodigo   = prodObj ? prodObj.codigo : codigoExcel;
+      const prodTipo     = prodObj ? prodObj.tipo   : g(['tipo','Tipo']);
+      const prodDescripcion = prodObj ? prodObj.descripcion : productoDesc;
+      const prodUpc      = prodObj ? prodObj.upc    : upcExcel;
+      const prodUnidad   = prodObj ? prodObj.unidad : g(['unidad','Unidad']);
+      const prodCategoria= prodObj ? prodObj.categoria : g(['categoria','Categoría']);
+      const prodMarca    = prodObj ? prodObj.marcaNombre : g(['marca','Marca']);
+      const prodMarcaId  = prodObj ? prodObj.marcaId : '';
+      const prodProveedorId = prodObj ? prodObj.proveedorId : '';
+      const prodProveedor   = prodObj ? prodObj.proveedorNombre : '';
+      const prodFirebaseKey = prodObj ? prodObj.key : '';
+      
       try {
         await push(ref(db,'compras'),{
-          fecha, documento:doc,
-          proveedorCompra:    provObj ? provObj.nombre   : provNom,
-          proveedorCompraId:  provObj ? provObj.proveedorId : g(['proveedor_id']),
-          prodFirebaseKey:  prodObj ? prodObj.key         : '',
-          prodCodigo:       prodObj ? prodObj.codigo      : g(['codigo_prod','Código Prod.']),
-          prodTipo:         prodObj ? prodObj.tipo        : g(['tipo','Tipo']),
-          prodDescripcion:  prodObj ? prodObj.descripcion : prodNom,
-          prodUpc:          prodObj ? prodObj.upc         : g(['upc','UPC']),
-          prodUnidad:       prodObj ? prodObj.unidad      : g(['unidad','Unidad']),
-          prodCategoria:    prodObj ? prodObj.categoria   : g(['categoria','Categoría']),
-          prodMarca:        prodObj ? prodObj.marcaNombre : g(['marca','Marca']),
-          prodMarcaId:      prodObj ? prodObj.marcaId     : '',
-          prodProveedorId:  prodObj ? prodObj.proveedorId : '',
-          prodProveedor:    prodObj ? prodObj.proveedorNombre : '',
-          cantidad:cantRaw, precio:precioRaw,
-          igvPct:igvPctRow, precioConIGV, total, pVentaPct, pVentaP,
-          producto:  prodObj ? prodObj.descripcion : prodNom,
-          categoria: prodObj ? prodObj.categoria   : g(['categoria','Categoría']),
-          proveedor: provObj ? provObj.nombre : provNom,
+          fecha, documento,
+          proveedorCompra: provObj ? provObj.nombre : proveedorCompra,
+          proveedorCompraId,
+          prodFirebaseKey,
+          prodCodigo,
+          prodTipo,
+          prodDescripcion,
+          prodUpc,
+          prodUnidad,
+          prodCategoria,
+          prodMarca,
+          prodMarcaId,
+          prodProveedorId,
+          prodProveedor,
+          cantidad,
+          precio: precioUnit,
+          igvPct: igvRow,
+          precioConIGV,
+          total: totalItem,
+          pVentaPct,
+          pVentaP,
+          producto: prodDescripcion,
+          categoria: prodCategoria,
+          proveedor: provObj ? provObj.nombre : proveedorCompra,
           registradoEn: new Date().toISOString()
         });
         ok++;
-      }catch{errs++;}
-      if(i%15===0&&i>0) await new Promise(r=>setTimeout(r,150));
+      } catch(e) { errs++; console.error(e); }
+      if(i%15===0 && i>0) await new Promise(r=>setTimeout(r,150));
     }
     document.getElementById('up-progress').style.display='none';
     document.getElementById('up-result').style.display='block';
@@ -997,7 +1053,7 @@ async function procesarArchivoCompra(file) {
     document.getElementById('r-err').textContent=errs;
     await cargarHistorial();
     showToast(`✅ ${ok} compras importadas · ${errs} errores`,ok?'ok':'wrn');
-  }catch(err){
+  } catch(err){
     console.error(err);
     document.getElementById('up-progress').style.display='none';
     showToast('Error al procesar el archivo','err');
