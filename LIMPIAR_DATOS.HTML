@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpieza Segura - Firebase Database</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+        body {
+            background: #0b1a2f;
+            margin: 0;
+            padding: 20px;
+            color: #eef4ff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #0f212e;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 1.8rem;
+            border-left: 5px solid #ff8c42;
+            padding-left: 16px;
+        }
+        .warning {
+            background: #ff5722;
+            padding: 12px;
+            border-radius: 12px;
+            margin: 20px 0;
+            color: #fff;
+            font-weight: bold;
+        }
+        .node-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+            margin: 24px 0;
+        }
+        .node-item {
+            background: #1e3a5f;
+            padding: 12px 16px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .node-name {
+            font-weight: bold;
+            font-family: monospace;
+        }
+        button {
+            background: #ff8c42;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #0b1a2f;
+        }
+        button.danger {
+            background: #d32f2f;
+            color: white;
+        }
+        button.danger:hover {
+            background: #b71c1c;
+        }
+        button.sec {
+            background: #2c6e9e;
+            color: white;
+        }
+        button:hover {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+        .status {
+            background: #0a2a38;
+            padding: 12px;
+            border-radius: 12px;
+            font-family: monospace;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .rules-section {
+            margin-top: 30px;
+            border-top: 1px solid #3a6b92;
+            padding-top: 20px;
+        }
+        textarea {
+            width: 100%;
+            background: #0d2c3b;
+            color: #eef;
+            border: 1px solid #ff8c42;
+            border-radius: 16px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .flex-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 16px 0;
+        }
+        input {
+            background: #1e3a5f;
+            border: 1px solid #ff8c42;
+            padding: 8px 12px;
+            border-radius: 40px;
+            color: white;
+        }
+        .password-input {
+            background: #0a1a2a;
+            border: 1px solid #ff8c42;
+        }
+        hr {
+            border-color: #3a6b92;
+        }
+        .small {
+            font-size: 0.8rem;
+            color: #bbd4f0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧹 Limpieza de Nodos Firebase</h1>
+    <p>Herramienta para eliminar datos de los nodos principales de tu Realtime Database.<br>
+    ⚠️ <strong>Úsala con precaución</strong>: las eliminaciones son permanentes.</p>
+
+    <div class="warning">
+        🔐 PROTECCIÓN: Antes de limpiar cualquier nodo, deberás ingresar la contraseña de seguridad.
+    </div>
+
+    <div class="flex-row">
+        <label>Contraseña de seguridad:</label>
+        <input type="password" id="adminPass" placeholder="Ingresa la contraseña" class="password-input">
+        <button id="verifyPassBtn" class="sec">Verificar</button>
+        <span id="passStatus" class="small"></span>
+    </div>
+
+    <div class="node-list" id="nodeList"></div>
+
+    <div class="flex-row">
+        <button id="cleanAllBtn" class="danger" disabled>⚠️ LIMPIAR TODOS LOS NODOS SELECCIONADOS</button>
+        <button id="refreshStatusBtn" class="sec">⟳ Refrescar estado</button>
+    </div>
+
+    <div class="status" id="statusArea">
+        Esperando verificación...
+    </div>
+
+    <div class="rules-section">
+        <h3>🛡️ Reglas de Seguridad (recomendadas)</h3>
+        <p>Después de limpiar, actualiza tus reglas a este modelo para proteger la base contra accesos no autorizados:</p>
+        <textarea id="rulesEditor" rows="12">{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "v_servicio": {
+      ".read": true,
+      ".write": "auth != null"
+    }
+  }
+}</textarea>
+        <div class="flex-row">
+            <button id="fetchRulesBtn" class="sec">📥 Obtener reglas actuales</button>
+            <button id="updateRulesBtn" class="sec">🚀 Aplicar reglas nuevas</button>
+        </div>
+        <p class="small">Nota: Necesitas autenticación con Firebase para aplicar reglas (generalmente se hace desde la consola). Este botón solo funciona si tu proyecto permite actualizar reglas mediante API con credenciales. Si no, copia el texto y aplícalo manualmente en la consola de Firebase.</p>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<script>
+    // Configuración de Firebase (tu proyecto)
+    const firebaseConfig = {
+        databaseURL: "https://jessicapenabeautystudio-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Lista de nodos principales a limpiar
+    const NODES = [
+        "clientes",
+        "compras",
+        "gastos_servicios",
+        "marcas",
+        "productos",
+        "proveedores",
+        "servicios",
+        "usuarios",
+        "v_servicio"
+    ];
+
+    // Contraseña fija (cámbiala por una segura)
+    const ADMIN_PASSWORD = "MiPassSeguro2026!";
+
+    let isVerified = false;
+
+    // DOM elements
+    const passInput = document.getElementById("adminPass");
+    const verifyBtn = document.getElementById("verifyPassBtn");
+    const passStatus = document.getElementById("passStatus");
+    const cleanAllBtn = document.getElementById("cleanAllBtn");
+    const refreshBtn = document.getElementById("refreshStatusBtn");
+    const statusArea = document.getElementById("statusArea");
+    const nodeListDiv = document.getElementById("nodeList");
+
+    let checkboxes = {}; // guardar referencias a los checkboxes
+
+    function logStatus(message, isError = false) {
+        const prefix = isError ? "❌ " : "✅ ";
+        statusArea.innerHTML = prefix + message + "\n" + statusArea.innerHTML;
+        if (statusArea.children.length > 20) {
+            // limitar líneas
+            statusArea.innerHTML = statusArea.innerHTML.split("\n").slice(0, 20).join("\n");
+        }
+        console.log(message);
+    }
+
+    async function checkNodeExists(nodeName) {
+        try {
+            const snapshot = await db.ref(nodeName).once("value");
+            return snapshot.exists();
+        } catch (e) {
+            return false;
+        }
+    }
+
+    async function renderNodeList() {
+        nodeListDiv.innerHTML = "";
+        for (const node of NODES) {
+            const exists = await checkNodeExists(node);
+            const div = document.createElement("div");
+            div.className = "node-item";
+            div.innerHTML = `
+                <span class="node-name">${node}</span>
+                <div>
+                    <input type="checkbox" id="chk_${node}" ${exists ? '' : 'disabled'}>
+                    <span style="margin-left: 8px; font-size:0.75rem;">${exists ? '📁 existe' : '⚫ vacío'}</span>
+                    <button class="danger clean-single" data-node="${node}" style="margin-left: 12px;" ${!exists ? 'disabled' : ''}>Limpiar</button>
+                </div>
+            `;
+            nodeListDiv.appendChild(div);
+            const chk = div.querySelector(`input[type="checkbox"]`);
+            if (chk) checkboxes[node] = chk;
+
+            const cleanBtn = div.querySelector(".clean-single");
+            if (cleanBtn) {
+                cleanBtn.addEventListener("click", async (e) => {
+                    e.preventDefault();
+                    const nodeName = cleanBtn.dataset.node;
+                    await cleanSingleNode(nodeName);
+                });
+            }
+        }
+    }
+
+    async function cleanSingleNode(nodeName) {
+        if (!isVerified) {
+            alert("🔐 Primero verifica la contraseña.");
+            return false;
+        }
+        const confirmMsg = `⚠️ ¿Estás SEGURO que deseas eliminar TODO el contenido del nodo "${nodeName}"? Esta acción es irreversible.`;
+        if (!confirm(confirmMsg)) return false;
+
+        try {
+            await db.ref(nodeName).set(null);
+            logStatus(`Nodo "${nodeName}" eliminado correctamente.`);
+            await renderNodeList(); // refrescar estado
+            return true;
+        } catch (error) {
+            logStatus(`Error al limpiar "${nodeName}": ${error.message}`, true);
+            return false;
+        }
+    }
+
+    async function cleanSelectedNodes() {
+        if (!isVerified) {
+            alert("🔐 Verifica la contraseña primero.");
+            return;
+        }
+        const selected = NODES.filter(node => checkboxes[node] && checkboxes[node].checked);
+        if (selected.length === 0) {
+            alert("No has seleccionado ningún nodo para limpiar.");
+            return;
+        }
+        const confirmMsg = `⚠️⚠️⚠️ VAS A ELIMINAR PERMANENTEMENTE los siguientes nodos:\n${selected.join(", ")}\n\nEsta acción NO se puede deshacer. ¿Continuar?`;
+        if (!confirm(confirmMsg)) return;
+
+        for (const node of selected) {
+            await cleanSingleNode(node);
+        }
+        await renderNodeList();
+    }
+
+    // Verificar contraseña
+    verifyBtn.addEventListener("click", () => {
+        const entered = passInput.value;
+        if (entered === ADMIN_PASSWORD) {
+            isVerified = true;
+            passStatus.innerText = "✔️ Verificado";
+            passStatus.style.color = "#8bc34a";
+            cleanAllBtn.disabled = false;
+            logStatus("Acceso concedido. Puedes realizar limpiezas.");
+        } else {
+            isVerified = false;
+            passStatus.innerText = "❌ Contraseña incorrecta";
+            passStatus.style.color = "#ff8a6c";
+            cleanAllBtn.disabled = true;
+            logStatus("Contraseña incorrecta. Acceso denegado.", true);
+        }
+    });
+
+    cleanAllBtn.addEventListener("click", cleanSelectedNodes);
+    refreshBtn.addEventListener("click", async () => {
+        await renderNodeList();
+        logStatus("Lista de nodos actualizada.");
+    });
+
+    // Funciones para reglas de seguridad (solo lectura, la aplicación requiere autenticación avanzada)
+    async function getCurrentRules() {
+        try {
+            // Nota: obtener reglas desde el cliente no es trivial sin usar la API de REST con token.
+            // Mostramos un mensaje de ayuda.
+            logStatus("Para obtener reglas, usa la consola de Firebase: https://console.firebase.google.com/project/_/database/rules");
+            alert("No es posible leer las reglas directamente desde el cliente. Ve a la consola de Firebase para verlas.");
+        } catch (e) {
+            logStatus("Error: " + e.message);
+        }
+    }
+
+    async function updateRulesWithNew() {
+        const newRules = document.getElementById("rulesEditor").value;
+        alert("Para actualizar las reglas, ve a la consola de Firebase → Realtime Database → Reglas, y pega el contenido del editor.\n\n" +
+              "No se puede actualizar desde el cliente sin permisos especiales de administrador.");
+        logStatus("Copia el contenido del editor y pégalo en la consola de Firebase.");
+    }
+
+    document.getElementById("fetchRulesBtn").addEventListener("click", getCurrentRules);
+    document.getElementById("updateRulesBtn").addEventListener("click", updateRulesWithNew);
+
+    // Inicializar
+    renderNodeList();
+    logStatus("Herramienta cargada. Ingresa la contraseña para habilitar limpieza.");
+</script>
+</body>
+</html>

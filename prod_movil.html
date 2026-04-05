@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Productos | Escáner UPC + Firebase</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <!-- Escáner de código de barras Instascan -->
+    <script src="https://cdn.jsdelivr.net/npm/instascan@1.0.0/instascan.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f4f0f9;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            padding: 20px 12px 40px;
+        }
+        .card {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 32px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+            padding: 20px 18px;
+        }
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #5A007F, #8E04BB);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 4px;
+        }
+        .sub {
+            color: #6c4a7a;
+            font-size: 0.75rem;
+            margin-bottom: 24px;
+            border-left: 3px solid #BB19E2;
+            padding-left: 12px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #5A007F;
+            margin-bottom: 6px;
+        }
+        .required:after {
+            content: " *";
+            color: #d32f2f;
+        }
+        input, select {
+            width: 100%;
+            background: #fefaff;
+            border: 1px solid #d9c8e6;
+            border-radius: 20px;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            transition: 0.2s;
+            font-family: inherit;
+            color: #1a0f22;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #BB19E2;
+            box-shadow: 0 0 0 3px rgba(187, 25, 226, 0.2);
+        }
+        .row-flex {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .row-flex .form-group {
+            flex: 1;
+        }
+        button {
+            background: #8E04BB;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        button.primary {
+            background: #BB19E2;
+            box-shadow: 0 4px 10px rgba(187, 25, 226, 0.3);
+        }
+        button.scan {
+            background: #5A007F;
+            flex-shrink: 0;
+            padding: 12px 18px;
+        }
+        button:active {
+            transform: scale(0.97);
+        }
+        .product-section {
+            margin-top: 32px;
+        }
+        .section-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #2c0b3a;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .search-box {
+            margin-bottom: 16px;
+        }
+        .product-list {
+            max-height: 45vh;
+            overflow-y: auto;
+            border-radius: 24px;
+            background: #faf7fc;
+            padding: 4px;
+        }
+        .product-header, .product-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1.5fr 1.5fr;
+            gap: 8px;
+            padding: 12px 10px;
+            font-size: 0.7rem;
+            border-bottom: 1px solid #e4d5ef;
+        }
+        .product-header {
+            background: #f0e8f5;
+            font-weight: bold;
+            color: #5A007F;
+            border-radius: 20px;
+            margin-bottom: 6px;
+            position: sticky;
+            top: 0;
+        }
+        .product-row {
+            background: white;
+            border-radius: 18px;
+            margin-bottom: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .empty-msg {
+            text-align: center;
+            padding: 24px;
+            color: #9b7baf;
+        }
+        .scanner-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .scanner-video {
+            width: 90%;
+            max-width: 400px;
+            border-radius: 28px;
+            border: 3px solid #BB19E2;
+            background: #000;
+        }
+        .close-scanner {
+            margin-top: 24px;
+            background: #d32f2f;
+            color: white;
+            padding: 10px 24px;
+        }
+        .helper-text {
+            font-size: 0.65rem;
+            color: #8560a3;
+            margin-top: 6px;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>📦 Productos + Escáner</h1>
+    <div class="sub">Gestión con autollenado de unidad y navegación automática</div>
+
+    <form id="productForm">
+        <div class="row-flex">
+            <div class="form-group">
+                <label class="required">Tipo</label>
+                <select id="tipo" required>
+                    <option value="INSUMO">🧴 Insumo</option>
+                    <option value="INVENTARIO">📦 Inventario</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="required">Categoría</label>
+                <select id="categoria" required>
+                    <option value="CABELLO">CABELLO</option>
+                    <option value="FACIALES">FACIALES</option>
+                    <option value="CEJAS">CEJAS</option>
+                    <option value="MAQUILLAJE">MAQUILLAJE</option>
+                    <option value="UÑAS">UÑAS</option>
+                    <option value="LÁSER">LÁSER</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="required">Descripción</label>
+            <input type="text" id="descripcion" placeholder="Ej: TINTE EVOLUTION 9.13 60 ML" required>
+        </div>
+
+        <div class="form-group">
+            <label>Código UPC</label>
+            <div class="row-flex">
+                <input type="text" id="upc" placeholder="Escanear o escribir código de barras" style="flex:3">
+                <button type="button" class="scan" id="scanUPCBtn">📷 Escanear</button>
+            </div>
+        </div>
+
+        <div class="row-flex">
+            <div class="form-group">
+                <label>Marca</label>
+                <select id="marca"></select>
+            </div>
+            <div class="form-group">
+                <label class="required">Proveedor</label>
+                <select id="proveedor" required></select>
+            </div>
+        </div>
+
+        <div class="row-flex">
+            <div class="form-group">
+                <label>Código (auto)</label>
+                <input type="text" id="codigoAuto" readonly style="background:#f2ecf5; font-weight:500;">
+            </div>
+            <div class="form-group">
+                <label>Unidad de Medida</label>
+                <input type="text" id="unidad" placeholder="Se autocompleta desde descripción">
+            </div>
+        </div>
+
+        <button type="button" id="guardarBtn" class="primary">💾 Guardar producto</button>
+    </form>
+
+    <div class="product-section">
+        <div class="section-title">📋 Catálogo de productos</div>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Buscar por código, descripción, UPC o proveedor">
+        </div>
+        <div class="product-list">
+            <div class="product-header">
+                <span>Código</span>
+                <span>Descripción</span>
+                <span>UPC</span>
+                <span>Proveedor</span>
+            </div>
+            <div id="productList"></div>
+        </div>
+    </div>
+</div>
+
+<div id="scannerModal" style="display: none;" class="scanner-modal">
+    <video id="preview" class="scanner-video" autoplay playsinline></video>
+    <button id="closeScannerBtn" class="close-scanner">Cerrar</button>
+</div>
+
+<script>
+    // ---------- Firebase ----------
+    const firebaseConfig = {
+        databaseURL: "https://jessicapenabeautystudio-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const productosRef = db.ref("productos");
+    const proveedoresRef = db.ref("proveedores");
+    const marcasRef = db.ref("marcas");
+
+    // DOM elements
+    const tipoSelect = document.getElementById("tipo");
+    const categoriaSelect = document.getElementById("categoria");
+    const descripcionInput = document.getElementById("descripcion");
+    const upcInput = document.getElementById("upc");
+    const marcaSelect = document.getElementById("marca");
+    const proveedorSelect = document.getElementById("proveedor");
+    const codigoAutoInput = document.getElementById("codigoAuto");
+    const unidadInput = document.getElementById("unidad");
+    const guardarBtn = document.getElementById("guardarBtn");
+    const searchInput = document.getElementById("searchInput");
+    const productListDiv = document.getElementById("productList");
+
+    // Escáner
+    const scanBtn = document.getElementById("scanUPCBtn");
+    const scannerModal = document.getElementById("scannerModal");
+    const closeScannerBtn = document.getElementById("closeScannerBtn");
+    const previewVideo = document.getElementById("preview");
+    let scanner = null;
+
+    // ---------- Auto extracción de unidad desde descripción ----------
+    function extraerUnidadMedida(descripcion) {
+        if (!descripcion) return "";
+        const regex = /\b(\d+(?:\.\d+)?)\s*(ML|ml|G|g|GR|gr|L|l|UND|und|UN|un|UNIDAD|unidad|CM|cm|PAQ|paq|PIEZA|pieza)\b/;
+        const match = descripcion.match(regex);
+        if (match) return `${match[1]} ${match[2].toUpperCase()}`;
+        return "";
+    }
+
+    descripcionInput.addEventListener("input", function() {
+        const unidad = extraerUnidadMedida(this.value);
+        if (unidad) unidadInput.value = unidad;
+        else if (unidadInput.value === "") unidadInput.value = "";
+    });
+
+    // ---------- Cargar proveedores (mostrar "ID · Nombre") y almacenar ID y nombre ----------
+    async function cargarProveedores() {
+        const snapshot = await proveedoresRef.once("value");
+        const data = snapshot.val();
+        proveedorSelect.innerHTML = '<option value="">Seleccione proveedor</option>';
+        if (data) {
+            Object.entries(data).forEach(([key, prov]) => {
+                const id = prov.proveedorId || prov.id || "SIN_ID";
+                const nombre = prov.nombre || prov.razonSocial || "Proveedor";
+                const displayText = `${id} · ${nombre}`;
+                const option = document.createElement("option");
+                // Guardamos tanto el ID como el nombre
+                option.value = JSON.stringify({ id, nombre, firebaseKey: key });
+                option.textContent = displayText;
+                proveedorSelect.appendChild(option);
+            });
+        } else {
+            proveedorSelect.innerHTML += '<option value="{}">No hay proveedores</option>';
+        }
+    }
+
+    async function cargarMarcas() {
+        const snapshot = await marcasRef.once("value");
+        const data = snapshot.val();
+        marcaSelect.innerHTML = '<option value="">Seleccione marca</option>';
+        if (data) {
+            Object.entries(data).forEach(([key, marca]) => {
+                const nombre = marca.nombre || marca.marca || "Marca";
+                const option = document.createElement("option");
+                option.value = JSON.stringify({ id: key, nombre });
+                option.textContent = nombre;
+                marcaSelect.appendChild(option);
+            });
+        } else {
+            marcaSelect.innerHTML += '<option value="{}">Genérica</option>';
+        }
+    }
+
+    // ---------- Generar código automático (ej: CAB0001) ----------
+    async function generarCodigoAuto(categoria) {
+        const prefix = categoria.substring(0, 3).toUpperCase();
+        const snapshot = await productosRef.once("value");
+        const productos = snapshot.val();
+        let maxNum = 0;
+        if (productos) {
+            for (let key in productos) {
+                const prod = productos[key];
+                if (prod.codigo && prod.codigo.startsWith(prefix)) {
+                    const num = parseInt(prod.codigo.substring(3));
+                    if (!isNaN(num) && num > maxNum) maxNum = num;
+                }
+            }
+        }
+        const nuevoNumero = (maxNum + 1).toString().padStart(4, '0');
+        return `${prefix}${nuevoNumero}`;
+    }
+
+    categoriaSelect.addEventListener("change", async () => {
+        const cat = categoriaSelect.value;
+        if (cat) codigoAutoInput.value = await generarCodigoAuto(cat);
+        else codigoAutoInput.value = "";
+    });
+
+    // ---------- Validar UPC duplicado ----------
+    async function existeUPC(upc, exceptCodigo = null) {
+        if (!upc) return false;
+        const snapshot = await productosRef.once("value");
+        const productos = snapshot.val();
+        if (!productos) return false;
+        for (let key in productos) {
+            const prod = productos[key];
+            if (prod.upc === upc && prod.codigo !== exceptCodigo) return true;
+        }
+        return false;
+    }
+
+    // ---------- Guardar producto (con proveedorId y proveedorNombre) ----------
+    guardarBtn.addEventListener("click", async () => {
+        const tipo = tipoSelect.value;
+        const categoria = categoriaSelect.value;
+        const descripcion = descripcionInput.value.trim();
+        const upc = upcInput.value.trim();
+        let marcaObj = null;
+        try {
+            marcaObj = JSON.parse(marcaSelect.value);
+        } catch(e) { marcaObj = null; }
+        const marcaNombre = marcaObj ? marcaObj.nombre : "";
+        const marcaId = marcaObj ? marcaObj.id : "";
+
+        const proveedorRaw = proveedorSelect.value;
+        let proveedorObj = null;
+        try {
+            proveedorObj = JSON.parse(proveedorRaw);
+        } catch(e) { proveedorObj = null; }
+        const proveedorId = proveedorObj ? proveedorObj.id : "";
+        const proveedorNombre = proveedorObj ? proveedorObj.nombre : "";
+        const proveedorFirebaseKey = proveedorObj ? proveedorObj.firebaseKey : "";
+
+        const codigoAuto = codigoAutoInput.value.trim();
+        let unidad = unidadInput.value.trim();
+        if (!unidad) unidad = extraerUnidadMedida(descripcion);
+
+        if (!descripcion) { alert("La descripción es obligatoria"); return; }
+        if (!proveedorId) { alert("Debe seleccionar un proveedor"); return; }
+        if (!codigoAuto) { alert("El código automático no se ha generado. Selecciona una categoría."); return; }
+
+        if (await existeUPC(upc)) {
+            alert("⚠️ Ya existe un producto con este código UPC. No se puede guardar.");
+            return;
+        }
+
+        const nuevoProducto = {
+            tipo,
+            categoria,
+            descripcion,
+            upc: upc || null,
+            marcaId: marcaId || "",
+            marcaNombre: marcaNombre || "",
+            proveedorId,
+            proveedorNombre,
+            proveedorFirebaseKey: proveedorFirebaseKey || "",
+            codigo: codigoAuto,
+            unidad: unidad || "unidad",
+            creadoEn: new Date().toISOString()
+        };
+
+        try {
+            await productosRef.child(codigoAuto).set(nuevoProducto);
+            alert("✅ Producto guardado correctamente");
+            // Limpiar campos del formulario (excepto tipo y categoría)
+            descripcionInput.value = "";
+            upcInput.value = "";
+            unidadInput.value = "";
+            marcaSelect.value = "";
+            proveedorSelect.value = "";
+            // Regenerar código para la misma categoría
+            const mismaCategoria = categoriaSelect.value;
+            codigoAutoInput.value = await generarCodigoAuto(mismaCategoria);
+            // Refrescar lista
+            cargarProductos();
+            // Enfocar descripción para nuevo ingreso
+            descripcionInput.focus();
+        } catch (error) {
+            console.error(error);
+            alert("Error al guardar: " + error.message);
+        }
+    });
+
+    // ---------- Cargar y mostrar productos (mostrar proveedorNombre) ----------
+    async function cargarProductos() {
+        try {
+            const snapshot = await productosRef.once("value");
+            const productos = snapshot.val();
+            if (!productos) {
+                productListDiv.innerHTML = '<div class="empty-msg">No hay productos registrados</div>';
+                return;
+            }
+            let productosArray = Object.values(productos);
+            const filtro = searchInput.value.toLowerCase();
+            if (filtro) {
+                productosArray = productosArray.filter(p =>
+                    (p.codigo && p.codigo.toLowerCase().includes(filtro)) ||
+                    (p.descripcion && p.descripcion.toLowerCase().includes(filtro)) ||
+                    (p.upc && p.upc.toLowerCase().includes(filtro)) ||
+                    ((p.proveedorNombre || p.proveedor) && (p.proveedorNombre || p.proveedor).toLowerCase().includes(filtro))
+                );
+            }
+            if (productosArray.length === 0) {
+                productListDiv.innerHTML = '<div class="empty-msg">Sin resultados</div>';
+                return;
+            }
+            productListDiv.innerHTML = productosArray.map(p => {
+                let proveedorMostrar = p.proveedorNombre || p.proveedor || '—';
+                return `
+                <div class="product-row">
+                    <span>${escapeHtml(p.codigo || '—')}</span>
+                    <span>${escapeHtml(p.descripcion || '—')}</span>
+                    <span>${escapeHtml(p.upc || '—')}</span>
+                    <span>${escapeHtml(proveedorMostrar)}</span>
+                </div>
+            `}).join('');
+        } catch (error) {
+            console.error(error);
+            productListDiv.innerHTML = '<div class="empty-msg">Error al cargar productos</div>';
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // ---------- Escáner (Instascan) ----------
+    function iniciarScanner() {
+        if (scanner) {
+            scanner.stop();
+            scanner = null;
+        }
+        scanner = new Instascan.Scanner({ video: previewVideo, mirror: false, backgroundScan: false });
+        scanner.addListener('scan', function(content) {
+            upcInput.value = content;
+            cerrarScanner();
+            alert(`Código escaneado: ${content}`);
+            // Después de escanear, pasar el foco a Marca
+            marcaSelect.focus();
+        });
+        Instascan.Camera.getCameras().then(function(cameras) {
+            if (cameras.length > 0) {
+                const backCamera = cameras.find(cam => cam.name.toLowerCase().includes('back')) || cameras[0];
+                scanner.start(backCamera).catch(err => {
+                    console.error(err);
+                    alert("No se pudo iniciar la cámara. Verifica permisos.");
+                    cerrarScanner();
+                });
+            } else {
+                alert("No se detectó cámara en este dispositivo.");
+                cerrarScanner();
+            }
+        }).catch(function(e) {
+            console.error(e);
+            alert("Error al acceder a la cámara: " + e.message);
+            cerrarScanner();
+        });
+    }
+
+    function abrirScanner() {
+        scannerModal.style.display = "flex";
+        setTimeout(() => iniciarScanner(), 100);
+    }
+
+    function cerrarScanner() {
+        if (scanner) {
+            scanner.stop();
+            scanner = null;
+        }
+        scannerModal.style.display = "none";
+        if (previewVideo.srcObject) {
+            previewVideo.srcObject.getTracks().forEach(track => track.stop());
+            previewVideo.srcObject = null;
+        }
+    }
+
+    scanBtn.addEventListener("click", abrirScanner);
+    closeScannerBtn.addEventListener("click", cerrarScanner);
+    window.addEventListener("click", (e) => { if (e.target === scannerModal) cerrarScanner(); });
+
+    // ---------- Navegación automática ----------
+    tipoSelect.addEventListener("change", () => categoriaSelect.focus());
+    categoriaSelect.addEventListener("change", () => descripcionInput.focus());
+    // Descripción no salta automáticamente a UPC (manual)
+    // Después de escanear UPC salta a Marca (ver evento scan)
+    marcaSelect.addEventListener("change", () => proveedorSelect.focus());
+    // Proveedor manual, luego guardar
+
+    // Permitir Enter para navegar
+    descripcionInput.addEventListener("keypress", (e) => { if (e.key === "Enter") upcInput.focus(); });
+    upcInput.addEventListener("keypress", (e) => { if (e.key === "Enter") marcaSelect.focus(); });
+    marcaSelect.addEventListener("keypress", (e) => { if (e.key === "Enter") proveedorSelect.focus(); });
+    proveedorSelect.addEventListener("keypress", (e) => { if (e.key === "Enter") guardarBtn.click(); });
+
+    // ---------- Inicialización ----------
+    async function init() {
+        await cargarProveedores();
+        await cargarMarcas();
+        const catInicial = categoriaSelect.value;
+        codigoAutoInput.value = await generarCodigoAuto(catInicial);
+        await cargarProductos();
+        searchInput.addEventListener("input", () => cargarProductos());
+    }
+    init();
+</script>
+</body>
+</html>

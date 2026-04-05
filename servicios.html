@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Servicios — Jessica Peña Nails Spa</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  /* ══ PALETA CORPORATIVA 3 TONOS ══
+     Brillante : #BB19E2  → luz, acentos, hover
+     Base      : #8E04BB  → botones primarios, encabezados
+     Profundo  : #5A007F  → sombras, viñetado, fondos oscuros  */
+  :root{
+    --p-bright:#BB19E2;
+    --p-base:  #8E04BB;
+    --p-deep:  #5A007F;
+    --p-bg:    #0d0017;      /* fondo página */
+    --p-card:  rgba(94,0,127,.45);
+    --p-light: #ddb3f0;      /* texto suave */
+    --p-soft:  #f0d9ff;      /* texto claro */
+    --white:   #ffffff;
+    --success: #2ecc71;
+    --danger:  #e74c3c;
+    --warn:    #f39c12;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Nunito',sans-serif;
+    min-height:100vh;
+    background:var(--p-bg);
+    color:var(--p-soft);
+    overflow-x:hidden;
+  }
+
+  /* ── VIÑETADO ── */
+  body::before{
+    content:'';
+    position:fixed;inset:0;z-index:0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%,   rgba(187,25,226,.22) 0%,transparent 65%),
+      radial-gradient(ellipse 60% 50% at 0%   100%, rgba(90,0,127,.5)   0%,transparent 60%),
+      radial-gradient(ellipse 60% 50% at 100% 100%, rgba(142,4,187,.3)   0%,transparent 60%);
+    pointer-events:none;
+  }
+  .bg-grid{
+    position:fixed;inset:0;z-index:0;
+    background-image:radial-gradient(circle,rgba(187,25,226,.07) 1px,transparent 1px);
+    background-size:26px 26px;
+    pointer-events:none;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar{
+    position:sticky;top:0;z-index:50;
+    height:56px;
+    background:rgba(13,0,23,.88);
+    border-bottom:1px solid rgba(187,25,226,.3);
+    display:flex;align-items:center;padding:0 18px;gap:10px;
+    backdrop-filter:blur(14px);
+  }
+  .topbar::after{
+    content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--p-bright),transparent);
+    opacity:.6;
+  }
+  .brand-ring{
+    width:32px;height:32px;border-radius:50%;
+    background:linear-gradient(135deg,var(--p-bright),var(--p-base));
+    display:flex;align-items:center;justify-content:center;
+    font-size:15px;flex-shrink:0;
+    box-shadow:0 0 16px rgba(187,25,226,.55);
+  }
+  .topbar h1{
+    font-family:'Cinzel',serif;font-size:14px;font-weight:600;
+    letter-spacing:.06em;flex:1;
+    background:linear-gradient(90deg,var(--p-soft),var(--p-bright));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .topbar-btns{display:flex;gap:6px;flex-shrink:0}
+  .tb-btn{
+    height:32px;padding:0 12px;border-radius:7px;
+    font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;
+    cursor:pointer;display:flex;align-items:center;gap:5px;
+    border:none;transition:all .2s;white-space:nowrap;
+  }
+  .tb-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(187,25,226,.35)}
+  .tb-new{background:linear-gradient(135deg,var(--p-base),var(--p-bright));color:#fff}
+  .tb-dl{background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff}
+  .tb-close{background:rgba(187,25,226,.1);border:1px solid rgba(187,25,226,.3)!important;color:var(--p-light)}
+
+  /* ── PÁGINA ── */
+  .page{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:22px 16px 56px}
+
+  /* ── CARD ── */
+  .card{
+    background:var(--p-card);
+    border:1px solid rgba(187,25,226,.25);
+    border-radius:14px;
+    padding:20px;
+    backdrop-filter:blur(16px);
+    position:relative;
+    margin-bottom:18px;
+    box-shadow:0 8px 32px rgba(90,0,127,.35);
+  }
+  .card::before{
+    content:'';position:absolute;top:0;left:15%;right:15%;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(187,25,226,.5),transparent);
+  }
+  .card-title{
+    font-family:'Cinzel',serif;font-size:13px;font-weight:600;
+    color:var(--p-soft);margin-bottom:16px;
+    display:flex;align-items:center;gap:8px;
+  }
+
+  /* ── STATS ── */
+  .stats-strip{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+  .stat-pill{
+    flex:1;min-width:110px;
+    background:rgba(90,0,127,.4);
+    border:1px solid rgba(187,25,226,.25);
+    border-radius:10px;padding:10px 14px;text-align:center;
+  }
+  .sp-val{
+    font-family:'Cinzel',serif;font-size:20px;font-weight:600;
+    color:var(--white);display:block;
+  }
+  .sp-lbl{font-size:10px;color:rgba(187,25,226,.7);text-transform:uppercase;letter-spacing:.1em;margin-top:2px;display:block}
+
+  /* ── FILTROS ── */
+  .filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+  .fi{
+    height:38px;
+    background:rgba(90,0,127,.3);
+    border:1px solid rgba(187,25,226,.25);
+    border-radius:9px;
+    color:var(--p-soft);
+    font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;
+    padding:0 12px;outline:none;
+    transition:border-color .2s,box-shadow .2s;
+  }
+  .fi::placeholder{color:rgba(187,25,226,.4);font-weight:400}
+  .fi:focus{border-color:var(--p-bright);box-shadow:0 0 0 3px rgba(187,25,226,.2)}
+  .fi-sel{
+    height:38px;
+    background:rgba(90,0,127,.3);
+    border:1px solid rgba(187,25,226,.25);
+    border-radius:9px;
+    color:var(--p-soft);
+    font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;
+    padding:0 28px 0 12px;outline:none;cursor:pointer;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23BB19E2' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 9px center;
+    transition:border-color .2s;
+  }
+  .fi-sel:focus{border-color:var(--p-bright)}
+  .fi-sel option{background:#1a0030;color:var(--p-soft)}
+
+  /* ── TABLA ── */
+  .tbl-wrap{overflow-x:auto;border-radius:11px;border:1px solid rgba(187,25,226,.2)}
+  table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px}
+  thead th{
+    background:linear-gradient(90deg,var(--p-deep),var(--p-base));
+    color:var(--white);font-weight:700;letter-spacing:.07em;
+    text-transform:uppercase;padding:10px 10px;text-align:center;
+    white-space:nowrap;cursor:pointer;user-select:none;
+    border-bottom:1px solid rgba(187,25,226,.4);
+  }
+  thead th:hover{background:linear-gradient(90deg,var(--p-base),var(--p-bright))}
+  tbody tr{border-bottom:1px solid rgba(187,25,226,.1);cursor:pointer;transition:background .15s}
+  tbody tr:hover{background:rgba(187,25,226,.1)}
+  tbody tr.selected{background:rgba(187,25,226,.2);border-left:3px solid var(--p-bright)}
+  tbody td{padding:8px 10px;color:rgba(240,217,255,.85);text-align:center}
+  tbody td:nth-child(4){text-align:left;font-weight:600;color:var(--p-soft)}
+  .empty-row td{text-align:center;color:rgba(187,25,226,.4);padding:28px}
+
+  /* Category badge */
+  .cat-badge{
+    display:inline-flex;font-size:10px;font-weight:700;
+    padding:2px 8px;border-radius:10px;
+    background:rgba(187,25,226,.18);color:var(--p-bright);
+    border:1px solid rgba(187,25,226,.3);
+  }
+  /* Precio highlight */
+  .price-val{color:#82e6a4;font-weight:700}
+
+  /* ── MODAL FORMULARIO ── */
+  .modal-ov{
+    display:none;position:fixed;inset:0;z-index:200;
+    background:rgba(13,0,23,.82);backdrop-filter:blur(8px);
+    align-items:center;justify-content:center;padding:20px;
+  }
+  .modal-ov.show{display:flex}
+  .modal-box{
+    background:rgba(90,0,127,.92);
+    border:1px solid rgba(187,25,226,.4);
+    border-radius:16px;padding:28px 26px;
+    width:100%;max-width:540px;position:relative;
+    box-shadow:0 0 60px rgba(187,25,226,.25),0 24px 48px rgba(0,0,0,.5);
+    animation:mIn .28s ease both;
+    max-height:92vh;overflow-y:auto;
+  }
+  @keyframes mIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  .modal-box::before{
+    content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
+    background:linear-gradient(90deg,transparent,var(--p-bright),transparent);
+  }
+  .modal-title{
+    font-family:'Cinzel',serif;font-size:16px;font-weight:700;
+    color:var(--white);margin-bottom:20px;
+    display:flex;align-items:center;gap:9px;
+  }
+  .modal-title .glow{
+    display:inline-block;
+    color:var(--p-bright);
+    text-shadow:0 0 12px rgba(187,25,226,.7);
+  }
+  .modal-close{
+    position:absolute;top:14px;right:16px;
+    background:none;border:none;
+    color:rgba(187,25,226,.5);cursor:pointer;font-size:19px;
+    transition:color .15s;
+  }
+  .modal-close:hover{color:var(--p-bright)}
+
+  /* Formulario modal */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+  .fg{display:flex;flex-direction:column;gap:4px}
+  .fg.full{grid-column:1/-1}
+  .fl{
+    font-size:10px;font-weight:700;letter-spacing:.13em;
+    text-transform:uppercase;color:rgba(187,25,226,.7);
+  }
+  .mfi{
+    height:40px;
+    background:rgba(13,0,23,.5);
+    border:1px solid rgba(187,25,226,.3);
+    border-radius:9px;color:var(--p-soft);
+    font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;
+    padding:0 12px;outline:none;width:100%;
+    transition:border-color .2s,box-shadow .2s;
+  }
+  .mfi::placeholder{color:rgba(187,25,226,.3);font-weight:400}
+  .mfi:focus{border-color:var(--p-bright);box-shadow:0 0 0 3px rgba(187,25,226,.18)}
+  .mfi.err{border-color:rgba(231,76,60,.6)}
+  .mfi-ro{
+    background:rgba(90,0,127,.35);color:rgba(187,25,226,.8);
+    cursor:default;font-family:'Cinzel',serif;
+  }
+  .mfi-sel{
+    height:40px;
+    background:rgba(13,0,23,.5);
+    border:1px solid rgba(187,25,226,.3);
+    border-radius:9px;color:var(--p-soft);
+    font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;
+    padding:0 30px 0 12px;outline:none;width:100%;cursor:pointer;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23BB19E2' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center;
+    transition:border-color .2s;
+  }
+  .mfi-sel:focus{border-color:var(--p-bright);box-shadow:0 0 0 3px rgba(187,25,226,.18)}
+  .mfi-sel option{background:#1a0030}
+
+  /* Precio calc display */
+  .calc-box{
+    display:flex;align-items:center;justify-content:center;
+    height:40px;border-radius:9px;
+    background:rgba(46,204,113,.08);
+    border:1px solid rgba(46,204,113,.25);
+    font-family:'Cinzel',serif;font-size:15px;font-weight:600;color:#82e6a4;
+  }
+  .calc-box.orange{
+    background:rgba(187,25,226,.1);
+    border-color:rgba(187,25,226,.3);
+    color:var(--p-bright);
+  }
+
+  /* Hint nombre */
+  .nombre-hint{
+    font-size:10px;color:rgba(187,25,226,.55);margin-top:2px;
+  }
+
+  /* Botones modal */
+  .modal-btns{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+  .btn{
+    height:38px;padding:0 18px;border:none;border-radius:9px;
+    font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;
+    cursor:pointer;display:flex;align-items:center;gap:6px;
+    transition:all .2s;white-space:nowrap;
+  }
+  .btn:hover:not(:disabled){transform:translateY(-1px)}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  .btn-primary{
+    background:linear-gradient(135deg,var(--p-base),var(--p-bright));
+    color:#fff;box-shadow:0 4px 16px rgba(187,25,226,.35);
+  }
+  .btn-primary:hover:not(:disabled){box-shadow:0 6px 22px rgba(187,25,226,.5)}
+  .btn-danger{background:linear-gradient(135deg,#a93226,var(--danger));color:#fff}
+  .btn-ghost{
+    background:rgba(187,25,226,.1);
+    border:1px solid rgba(187,25,226,.3);
+    color:var(--p-light);
+  }
+  .btn-ghost:hover{background:rgba(187,25,226,.2)}
+
+  /* ── TOAST ── */
+  .toast{
+    position:fixed;bottom:26px;left:50%;
+    transform:translateX(-50%) translateY(60px);
+    background:rgba(13,0,23,.97);
+    border:1px solid rgba(187,25,226,.35);
+    border-radius:10px;padding:11px 22px;
+    font-size:13px;color:var(--p-soft);
+    z-index:999;white-space:nowrap;
+    transition:transform .35s cubic-bezier(.2,.8,.3,1),opacity .35s;
+    opacity:0;pointer-events:none;
+    box-shadow:0 8px 24px rgba(90,0,127,.4);
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .toast.ok{border-color:rgba(46,204,113,.45);color:#82e6a4}
+  .toast.err{border-color:rgba(231,76,60,.45);color:#f1948a}
+  .toast.wrn{border-color:rgba(243,156,18,.45);color:#f8c471}
+
+  .spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+
+<!-- ══ TOPBAR ══ -->
+<header class="topbar">
+  <div class="brand-ring">💅</div>
+  <h1>Gestión de Servicios</h1>
+  <div class="topbar-btns">
+    <button class="tb-btn tb-new" onclick="abrirModal()">＋ Nuevo Servicio</button>
+    <button class="tb-btn tb-dl" onclick="descargarExcel()">📥 Descargar Excel</button>
+    <button class="tb-btn tb-close" onclick="window.close()">✕ Cerrar</button>
+  </div>
+</header>
+
+<!-- ══ PÁGINA ══ -->
+<div class="page">
+
+  <!-- STATS -->
+  <div class="stats-strip">
+    <div class="stat-pill"><span class="sp-val" id="st-total">—</span><span class="sp-lbl">Total servicios</span></div>
+    <div class="stat-pill"><span class="sp-val" id="st-cats">—</span><span class="sp-lbl">Categorías</span></div>
+    <div class="stat-pill"><span class="sp-val" id="st-avg" style="color:#BB19E2">—</span><span class="sp-lbl">Precio promedio S/</span></div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="filter-bar">
+    <input class="fi" id="s-q" placeholder="🔍 Buscar servicio o categoría..." oninput="filtrar()" style="flex:2;min-width:220px">
+    <select class="fi-sel" id="s-cat" onchange="filtrar()" style="max-width:200px">
+      <option value="">Todas las categorías</option>
+    </select>
+    <button class="btn btn-ghost" style="height:38px;padding:0 14px;font-size:11px" onclick="limpiarFiltros()">✕ Limpiar</button>
+  </div>
+
+  <!-- TABLA -->
+  <div class="card">
+    <div class="card-title">
+      <span>💅</span> Catálogo de Servicios
+      <button onclick="cargarServicios()" style="margin-left:auto;background:none;border:none;color:rgba(187,25,226,.5);cursor:pointer;font-size:16px;transition:color .15s" onmouseover="this.style.color='#BB19E2'" onmouseout="this.style.color='rgba(187,25,226,.5)'">↻</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th onclick="sortData(0)">ID ↕</th>
+            <th onclick="sortData(2)">Categoría ↕</th>
+            <th onclick="sortData(3)">Nombre Servicio ↕</th>
+            <th onclick="sortData(4)">Producto S/</th>
+            <th onclick="sortData(5)">Mano Obra S/</th>
+            <th onclick="sortData(6)">Margen %</th>
+            <th onclick="sortData(7)">Costo Base S/</th>
+            <th onclick="sortData(8)">P. Venta S/</th>
+            <th onclick="sortData(9)">P. Manual S/</th>
+            <th onclick="sortData(10)">P. Final S/</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tbl-body">
+          <tr class="empty-row"><td colspan="11">Cargando servicios...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL SERVICIO ══ -->
+<div class="modal-ov" id="modal-servicio">
+  <div class="modal-box">
+    <button class="modal-close" onclick="cerrarModal()">✕</button>
+    <div class="modal-title">
+      <span class="glow">💅</span>
+      <span id="modal-titulo">Nuevo Servicio</span>
+    </div>
+
+    <div class="form-grid">
+      <div class="fg">
+        <label class="fl">Categoría *</label>
+        <select class="mfi-sel" id="m-cat" onchange="onCatChange()" onkeydown="en(event,'m-nombre')">
+          <option value="">— Selecciona —</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Código Categoría</label>
+        <input class="mfi mfi-ro" id="m-cod-cat" readonly placeholder="Auto">
+      </div>
+      <div class="fg">
+        <label class="fl">ID Servicio</label>
+        <input class="mfi mfi-ro" id="m-id" readonly placeholder="Auto">
+      </div>
+      <div class="fg full">
+        <label class="fl">Nombre Servicio * <span style="color:rgba(187,25,226,.5);font-weight:400;font-size:9px">(debe empezar con CATEGORÍA: nombre)</span></label>
+        <input class="mfi" id="m-nombre" placeholder="CATEGORÍA: nombre del servicio" onkeydown="en(event,'m-producto')">
+      </div>
+      <div class="fg">
+        <label class="fl">Producto S/</label>
+        <input class="mfi" type="number" id="m-producto" min="0" step="0.01" placeholder="0.00" oninput="calcularPrecios()" onkeydown="en(event,'m-mano-obra')">
+      </div>
+      <div class="fg">
+        <label class="fl">Mano de Obra S/</label>
+        <input class="mfi" type="number" id="m-mano-obra" min="0" step="0.01" placeholder="0.00" oninput="calcularPrecios()" onkeydown="en(event,'m-margen')">
+      </div>
+      <div class="fg">
+        <label class="fl">Margen %</label>
+        <input class="mfi" type="number" id="m-margen" min="0" max="999" step="1" placeholder="0" oninput="calcularPrecios()" onkeydown="en(event,'m-precio-manual')">
+      </div>
+      <div class="fg">
+        <label class="fl">Precio Manual S/ <span style="color:rgba(187,25,226,.45);font-size:9px">(0 = usa calculado)</span></label>
+        <input class="mfi" type="number" id="m-precio-manual" min="0" step="0.01" placeholder="0.00" oninput="actualizarPrecioFinal()" onkeydown="en(event,'btn-guardar-svc')">
+      </div>
+      <div class="fg">
+        <label class="fl">Costo Base S/</label>
+        <div class="calc-box orange" id="m-costo-base">S/ 0.00</div>
+      </div>
+      <div class="fg">
+        <label class="fl">Precio Venta S/ (calculado)</label>
+        <div class="calc-box" id="m-precio-venta">S/ 0.00</div>
+      </div>
+      <div class="fg full">
+        <label class="fl">Precio Final S/</label>
+        <div class="calc-box" id="m-precio-final" style="font-size:18px;background:rgba(187,25,226,.12);border-color:rgba(187,25,226,.4);color:var(--p-bright)">S/ 0.00</div>
+      </div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-guardar-svc" onclick="guardarServicio()">
+        <span id="lbl-gs">💾 Guardar Servicio</span>
+        <div class="spin" id="sp-gs" style="display:none"></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp }                         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+/* ── Firebase config ── */
+const firebaseConfig={
+  apiKey:"TU_API_KEY",
+  authDomain:"jessicapenabeautystudio.firebaseapp.com",
+  databaseURL:"https://jessicapenabeautystudio-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"jessicapenabeautystudio",
+  storageBucket:"jessicapenabeautystudio.appspot.com",
+  messagingSenderId:"TU_SENDER_ID",
+  appId:"TU_APP_ID"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+/* ── ESTADO ── */
+let allServicios = [];
+let categorias   = {};          // { NombreCat: codigoCat }
+let selectedKey  = null;
+let editandoKey  = null;
+let sortCol = -1, sortAsc = true;
+
+const fmt2  = n => parseFloat(n||0).toFixed(2);
+const fmt0  = n => Math.round(parseFloat(n||0));
+
+/* ── TOAST ── */
+window.showToast = (msg, type='') => {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast show ${type}`;
+  setTimeout(() => { t.className = 'toast'; }, 3500);
+};
+
+/* ── ENTER navega ── */
+window.en = (e, nextId) => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  const el = document.getElementById(nextId);
+  if (!el) return;
+  if (el.tagName === 'BUTTON') el.click(); else el.focus();
+};
+
+/* ══════════════════════════════════
+   CARGAR CATEGORÍAS desde /categorias
+══════════════════════════════════ */
+async function cargarCategorias() {
+  try {
+    const snap = await get(ref(db, 'categorias'));
+    categorias = {};
+    const DEFAULTS = [
+      ['MANICURA','1'],['PEDICURA','2'],['PESTAÑAS','3'],['DEPILACIÓN','4'],
+      ['CABELLO','5'],['CEJAS','6'],['UÑAS','7'],['TRATAMIENTOS','8'],
+      ['FACIALES','9'],['CORPORALES','10'],['MASAJES','11'],['MAQUILLAJE','12'],
+      ['INVENTARIO','13'],['MARKETING','14'],['OTROS','15']
+    ];
+    if (snap.exists()) {
+      snap.forEach(c => { const v = c.val(); categorias[v.nombre||c.key] = v.codigo||c.key; });
+    } else {
+      DEFAULTS.forEach(([n,c]) => { categorias[n] = c; });
+    }
+    // Poblar selects de categoría
+    const cats = Object.keys(categorias).sort();
+    const catOpts = '<option value="">— Selecciona —</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+    document.getElementById('m-cat').innerHTML = catOpts;
+    const filterCatOpts = '<option value="">Todas las categorías</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+    document.getElementById('s-cat').innerHTML = filterCatOpts;
+  } catch(err) { console.error(err); }
+}
+
+/* ══════════════════════════════════
+   CARGAR SERVICIOS
+══════════════════════════════════ */
+window.cargarServicios = async () => {
+  try {
+    const snap = await get(ref(db, 'servicios'));
+    allServicios = [];
+    if (snap.exists()) {
+      snap.forEach(c => allServicios.push({ key: c.key, ...c.val() }));
+    }
+    allServicios.sort((a,b) => (a.categoria||'').localeCompare(b.categoria||'') || (a.nombreServicio||'').localeCompare(b.nombreServicio||''));
+    filtrar();
+    updateStats();
+    showToast('✅ Servicios cargados', 'ok');
+  } catch(err) { console.error(err); showToast('Error al cargar servicios', 'err'); }
+};
+
+function updateStats() {
+  document.getElementById('st-total').textContent = allServicios.length;
+  const cats = new Set(allServicios.map(s => s.categoria).filter(Boolean));
+  document.getElementById('st-cats').textContent = cats.size;
+  const precios = allServicios.map(s => parseFloat(s.precioFinal||s.precioVenta||0)).filter(p=>p>0);
+  const avg = precios.length ? precios.reduce((a,b)=>a+b,0)/precios.length : 0;
+  document.getElementById('st-avg').textContent = 'S/ ' + fmt2(avg);
+}
+
+/* ══════════════════════════════════
+   RENDER TABLA
+══════════════════════════════════ */
+function renderTabla(list) {
+  const tbody = document.getElementById('tbl-body');
+  if (!list.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="11">Sin servicios registrados</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(s => `
+    <tr data-key="${s.key}" class="${s.key===selectedKey?'selected':''}" onclick="selFila('${s.key}')" ondblclick="abrirModal('${s.key}')">
+      <td><code style="font-size:10px;background:rgba(187,25,226,.15);padding:2px 7px;border-radius:5px;color:var(--p-bright)">${s.servicioId||s.key.substring(0,8)}</code></td>
+      <td><span class="cat-badge">${s.categoria||'—'}</span></td>
+      <td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.nombreServicio||''}">${s.nombreServicio||'—'}</td>
+      <td>${fmt2(s.producto)}</td>
+      <td>${fmt2(s.manoObra)}</td>
+      <td>${fmt0(s.margen*100)||0}%</td>
+      <td>${fmt2(s.costoBase)}</td>
+      <td>${fmt2(s.precioVenta)}</td>
+      <td>${fmt2(s.precioVentaManual)}</td>
+      <td class="price-val">S/ ${fmt2(s.precioFinal||s.precioVenta)}</td>
+      <td>
+        <button onclick="event.stopPropagation();abrirModal('${s.key}')"
+          style="background:rgba(187,25,226,.15);border:1px solid rgba(187,25,226,.3);border-radius:6px;color:var(--p-bright);cursor:pointer;font-size:11px;padding:3px 8px;margin-right:4px">✏️</button>
+        <button onclick="event.stopPropagation();eliminarServicio('${s.key}')"
+          style="background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.25);border-radius:6px;color:#f1948a;cursor:pointer;font-size:11px;padding:3px 8px">🗑️</button>
+      </td>
+    </tr>`).join('');
+}
+
+window.filtrar = () => {
+  const q   = document.getElementById('s-q').value.toLowerCase();
+  const cat = document.getElementById('s-cat').value;
+  let list  = allServicios.filter(s =>
+    (!q   || (s.nombreServicio||'').toLowerCase().includes(q) || (s.categoria||'').toLowerCase().includes(q) || (s.servicioId||'').toLowerCase().includes(q)) &&
+    (!cat || s.categoria === cat)
+  );
+  // sort
+  if (sortCol >= 0) {
+    const keys = ['servicioId','codigoCategoria','categoria','nombreServicio','producto','manoObra','margen','costoBase','precioVenta','precioVentaManual','precioFinal'];
+    const k = keys[sortCol];
+    list.sort((a,b) => {
+      const av = a[k]||'', bv = b[k]||'';
+      return sortAsc ? String(av).localeCompare(String(bv),undefined,{numeric:true}) : -String(av).localeCompare(String(bv),undefined,{numeric:true});
+    });
+  }
+  renderTabla(list);
+};
+
+window.limpiarFiltros = () => {
+  document.getElementById('s-q').value = '';
+  document.getElementById('s-cat').value = '';
+  filtrar();
+};
+
+window.sortData = col => {
+  if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
+  filtrar();
+};
+
+window.selFila = key => {
+  selectedKey = key;
+  document.querySelectorAll('tbody tr').forEach(r => r.classList.toggle('selected', r.dataset.key === key));
+};
+
+/* ══════════════════════════════════
+   MODAL NUEVO / EDITAR
+══════════════════════════════════ */
+window.abrirModal = key => {
+  editandoKey = key || null;
+  document.getElementById('modal-titulo').textContent = key ? 'Editar Servicio' : 'Nuevo Servicio';
+  document.getElementById('lbl-gs').textContent = key ? '💾 Actualizar' : '💾 Guardar Servicio';
+
+  if (key) {
+    const s = allServicios.find(x => x.key === key);
+    if (!s) return;
+    document.getElementById('m-cat').value          = s.categoria      || '';
+    document.getElementById('m-cod-cat').value      = s.codigoCategoria|| '';
+    document.getElementById('m-id').value           = s.servicioId     || '';
+    document.getElementById('m-nombre').value       = s.nombreServicio  || '';
+    document.getElementById('m-producto').value     = fmt2(s.producto);
+    document.getElementById('m-mano-obra').value    = fmt2(s.manoObra);
+    document.getElementById('m-margen').value       = fmt0(s.margen*100);
+    document.getElementById('m-precio-manual').value= fmt2(s.precioVentaManual);
+    calcularPrecios();
+  } else {
+    // Reset
+    ['m-nombre','m-producto','m-mano-obra','m-precio-manual'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('m-margen').value = '0';
+    document.getElementById('m-cat').value = '';
+    document.getElementById('m-cod-cat').value = '';
+    document.getElementById('m-id').value = '';
+    ['m-costo-base','m-precio-venta','m-precio-final'].forEach(id => document.getElementById(id).textContent = 'S/ 0.00');
+  }
+
+  document.getElementById('modal-servicio').classList.add('show');
+  setTimeout(() => document.getElementById('m-cat').focus(), 100);
+};
+
+window.cerrarModal = () => {
+  document.getElementById('modal-servicio').classList.remove('show');
+  editandoKey = null;
+};
+document.getElementById('modal-servicio').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-servicio')) cerrarModal();
+});
+
+/* ── Lógica de categoría → auto ID ── */
+window.onCatChange = async () => {
+  const cat = document.getElementById('m-cat').value;
+  if (!cat) return;
+  const codCat = categorias[cat] || '0';
+  document.getElementById('m-cod-cat').value = codCat;
+
+  if (!editandoKey) {
+    // Generar siguiente servicioId = codCat*100 + n
+    const cod = parseInt(codCat) || 0;
+    const base = cod * 100;
+    const existing = allServicios.filter(s => s.codigoCategoria === codCat).map(s => parseInt(s.servicioId)||0);
+    const maxN = existing.length ? Math.max(...existing) : base;
+    const nextId = maxN < base ? base + 1 : maxN + 1;
+    document.getElementById('m-id').value = String(nextId);
+  }
+
+  // Prefijo en nombre
+  const nombre = document.getElementById('m-nombre').value;
+  if (!editandoKey || !nombre.trim()) {
+    const partes = nombre.includes(':') ? nombre.split(':').slice(1).join(':').trim() : '';
+    document.getElementById('m-nombre').value = `${cat}: ${partes}`;
+  }
+
+  document.getElementById('m-nombre').focus();
+  calcularPrecios();
+};
+
+/* ── Cálculo de precios en tiempo real ── */
+window.calcularPrecios = () => {
+  const prod     = parseFloat(document.getElementById('m-producto').value)   || 0;
+  const mano     = parseFloat(document.getElementById('m-mano-obra').value)  || 0;
+  const margenPct= parseFloat(document.getElementById('m-margen').value)     || 0;
+  const margen   = margenPct / 100;
+  const costoBase  = prod + mano;
+  const precioVenta= costoBase * (1 + margen);
+  document.getElementById('m-costo-base').textContent  = 'S/ ' + fmt2(costoBase);
+  document.getElementById('m-precio-venta').textContent = 'S/ ' + fmt2(precioVenta);
+  actualizarPrecioFinal();
+};
+
+window.actualizarPrecioFinal = () => {
+  const precioManual = parseFloat(document.getElementById('m-precio-manual').value) || 0;
+  const precioVentaTxt = document.getElementById('m-precio-venta').textContent.replace('S/ ','');
+  const pv = parseFloat(precioVentaTxt) || 0;
+  const final = precioManual > 0 ? precioManual : pv;
+  document.getElementById('m-precio-final').textContent = 'S/ ' + fmt2(final);
+};
+
+/* ══════════════════════════════════
+   GUARDAR SERVICIO
+══════════════════════════════════ */
+window.guardarServicio = async () => {
+  const cat       = document.getElementById('m-cat').value;
+  const codCat    = document.getElementById('m-cod-cat').value;
+  const svcId     = document.getElementById('m-id').value;
+  const nombre    = document.getElementById('m-nombre').value.trim();
+  const prod      = parseFloat(document.getElementById('m-producto').value)    || 0;
+  const mano      = parseFloat(document.getElementById('m-mano-obra').value)   || 0;
+  const margenPct = parseFloat(document.getElementById('m-margen').value)      || 0;
+  const manual    = parseFloat(document.getElementById('m-precio-manual').value)|| 0;
+
+  if (!cat)    { showToast('Selecciona una categoría', 'err'); return; }
+  if (!nombre) { showToast('El nombre del servicio es obligatorio', 'err'); return; }
+  if (!nombre.startsWith(`${cat}:`)) { showToast(`El nombre debe comenzar con "${cat}:"`, 'wrn'); return; }
+
+  const margen     = margenPct / 100;
+  const costoBase  = prod + mano;
+  const precioVenta= costoBase * (1 + margen);
+  const precioFinal= manual > 0 ? manual : precioVenta;
+
+  const data = {
+    servicioId: svcId, codigoCategoria: codCat, categoria: cat,
+    nombreServicio: nombre,
+    producto: prod, manoObra: mano, margen,
+    costoBase, precioVenta, precioVentaManual: manual, precioFinal,
+    actualizadoEn: new Date().toISOString()
+  };
+
+  const btn = document.getElementById('btn-guardar-svc'); btn.disabled = true;
+  document.getElementById('lbl-gs').style.display = 'none';
+  document.getElementById('sp-gs').style.display  = 'block';
+
+  try {
+    const nodeKey = editandoKey || `svc_${svcId}`;
+    await set(ref(db, `servicios/${nodeKey}`), { ...data, creadoEn: editandoKey ? (allServicios.find(x=>x.key===editandoKey)?.creadoEn||new Date().toISOString()) : new Date().toISOString() });
+    showToast(`✅ Servicio "${nombre.split(':')[1]?.trim()||nombre}" guardado`, 'ok');
+    cerrarModal();
+    await cargarServicios();
+  } catch(err) { console.error(err); showToast('Error al guardar en Firebase', 'err'); }
+
+  btn.disabled = false;
+  document.getElementById('lbl-gs').style.display  = 'inline';
+  document.getElementById('sp-gs').style.display   = 'none';
+};
+
+/* ══════════════════════════════════
+   ELIMINAR SERVICIO
+══════════════════════════════════ */
+window.eliminarServicio = async key => {
+  const s = allServicios.find(x => x.key === key);
+  if (!confirm(`¿Eliminar el servicio "${s?.nombreServicio}"?`)) return;
+  try {
+    await remove(ref(db, `servicios/${key}`));
+    showToast('🗑️ Servicio eliminado', 'ok');
+    selectedKey = null;
+    await cargarServicios();
+  } catch(err) { showToast('Error al eliminar', 'err'); }
+};
+
+/* ══════════════════════════════════
+   DESCARGAR EXCEL
+══════════════════════════════════ */
+window.descargarExcel = () => {
+  if (!allServicios.length) { showToast('Sin datos para exportar', 'wrn'); return; }
+  const rows = allServicios.map(s => ({
+    'ID':           s.servicioId   || '',
+    'Cód. Cat.':    s.codigoCategoria || '',
+    'Categoría':    s.categoria    || '',
+    'Nombre':       s.nombreServicio || '',
+    'Producto S/':  parseFloat(s.producto  ||0).toFixed(2),
+    'Mano Obra S/': parseFloat(s.manoObra  ||0).toFixed(2),
+    'Margen %':     Math.round((parseFloat(s.margen||0))*100),
+    'Costo Base':   parseFloat(s.costoBase ||0).toFixed(2),
+    'P. Venta':     parseFloat(s.precioVenta||0).toFixed(2),
+    'P. Manual':    parseFloat(s.precioVentaManual||0).toFixed(2),
+    'P. Final':     parseFloat(s.precioFinal||0).toFixed(2),
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [8,10,14,34,12,14,10,12,12,12,12].map(w=>({wch:w}));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Servicios');
+  XLSX.writeFile(wb, `Servicios_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('📥 Excel descargado', 'ok');
+};
+
+/* ── INICIAR ── */
+(async () => {
+  await cargarCategorias();
+  await cargarServicios();
+})();
+</script>
+</body>
+</html>

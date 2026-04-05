@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gestión de Clientes — Jessica Peña Nails Spa</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<!-- SheetJS para lectura y escritura Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
     --c-deep:#1a0030; --c-dark:#3a006f; --c-mid:#6A0DAD;
@@ -23,8 +25,98 @@
   .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(195,155,211,.35),transparent)}
   .brand-ring{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--c-mid),var(--c-light));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;box-shadow:0 0 12px rgba(155,89,182,.4)}
   .topbar h1{font-family:'Cinzel',serif;font-size:14px;font-weight:600;letter-spacing:.05em;flex:1}
+
+  /* ── BOTONES TOPBAR (importar / exportar / cerrar) ── */
+  .topbar-actions{display:flex;align-items:center;gap:8px}
+
+  /* Botón importar Excel (verde, solo icono) */
+  .btn-import-xl{
+    width:34px;height:34px;border-radius:8px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#1a6e35,#27ae60);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 10px rgba(39,174,96,.35);
+    transition:transform .15s,box-shadow .2s,opacity .2s;
+    position:relative;flex-shrink:0;
+  }
+  .btn-import-xl:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(39,174,96,.5);opacity:.92}
+  .btn-import-xl:active{transform:scale(.94)}
+  /* Icono Excel SVG inline */
+  .btn-import-xl svg{width:18px;height:18px}
+
+  /* Botón exportar / descarga (círculo con flecha abajo) */
+  .btn-export-xl{
+    width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#3a006f,#6A0DAD);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 3px 10px rgba(106,13,173,.4);
+    transition:transform .15s,box-shadow .2s,opacity .2s;
+    position:relative;flex-shrink:0;
+  }
+  .btn-export-xl:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(106,13,173,.6);opacity:.92}
+  .btn-export-xl:active{transform:scale(.94)}
+  .btn-export-xl svg{width:16px;height:16px}
+
+  /* Tooltip común */
+  .tpbtn{position:relative}
+  .tpbtn::after{
+    content:attr(data-tip);position:absolute;top:calc(100% + 6px);right:0;
+    background:rgba(26,0,48,.97);border:1px solid rgba(195,155,211,.3);
+    color:var(--c-soft);font-family:'Nunito',sans-serif;font-size:11px;
+    font-weight:600;padding:4px 9px;border-radius:6px;white-space:nowrap;
+    opacity:0;pointer-events:none;transform:translateY(-4px);
+    transition:opacity .2s,transform .2s;z-index:100;
+  }
+  .tpbtn:hover::after{opacity:1;transform:translateY(0)}
+
   .btn-back{background:rgba(195,155,211,.08);border:1px solid rgba(195,155,211,.22);border-radius:8px;color:var(--c-light);font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;padding:6px 14px;cursor:pointer;transition:background .2s;text-decoration:none;display:inline-flex;align-items:center}
   .btn-back:hover{background:rgba(195,155,211,.18)}
+
+  /* INPUT ARCHIVO oculto */
+  #input-excel{display:none}
+
+  /* ── MODAL IMPORTACIÓN ── */
+  .modal-overlay{
+    position:fixed;inset:0;z-index:300;
+    background:rgba(10,0,22,.75);backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .25s;
+  }
+  .modal-overlay.active{opacity:1;pointer-events:all}
+  .modal{
+    background:rgba(30,5,55,.97);border:1px solid rgba(195,155,211,.25);
+    border-radius:16px;padding:28px 26px;width:min(480px,92vw);
+    transform:scale(.93) translateY(12px);transition:transform .25s cubic-bezier(.2,.8,.3,1);
+    position:relative;
+  }
+  .modal-overlay.active .modal{transform:scale(1) translateY(0)}
+  .modal::before{content:'';position:absolute;top:0;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,rgba(195,155,211,.35),transparent)}
+  .modal-title{font-family:'Cinzel',serif;font-size:14px;font-weight:600;color:var(--c-soft);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  .modal-close{position:absolute;top:14px;right:14px;background:none;border:none;color:rgba(195,155,211,.5);cursor:pointer;font-size:18px;line-height:1;transition:color .2s}
+  .modal-close:hover{color:var(--c-light)}
+  /* Zona drop */
+  .drop-zone{
+    border:2px dashed rgba(195,155,211,.3);border-radius:12px;
+    padding:30px 20px;text-align:center;cursor:pointer;
+    transition:border-color .2s,background .2s;margin-bottom:14px;
+  }
+  .drop-zone:hover,.drop-zone.dragover{border-color:rgba(39,174,96,.6);background:rgba(39,174,96,.05)}
+  .drop-zone-icon{font-size:36px;margin-bottom:8px}
+  .drop-zone-text{font-size:12px;color:rgba(195,155,211,.6)}
+  .drop-zone-text b{color:var(--c-light)}
+  /* Preview tabla importación */
+  .import-preview{max-height:200px;overflow-y:auto;border:1px solid rgba(195,155,211,.15);border-radius:8px;margin-bottom:14px;display:none}
+  .import-preview table{width:100%;border-collapse:collapse;font-size:11px}
+  .import-preview thead th{background:rgba(106,13,173,.4);padding:7px 8px;color:var(--c-light);text-align:left;position:sticky;top:0}
+  .import-preview tbody td{padding:6px 8px;border-bottom:1px solid rgba(195,155,211,.07);color:rgba(232,213,245,.8)}
+  .import-preview tbody tr:hover{background:rgba(195,155,211,.06)}
+  .import-info{font-size:12px;color:rgba(195,155,211,.55);margin-bottom:14px;display:none}
+  .import-info b{color:var(--c-light)}
+  .import-actions{display:flex;gap:8px;justify-content:flex-end}
+  .btn-sm{height:34px;padding:0 16px;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:opacity .2s,transform .15s}
+  .btn-sm:hover{opacity:.88;transform:translateY(-1px)}
+  .btn-sm.cancel{background:rgba(195,155,211,.1);border:1px solid rgba(195,155,211,.2);color:rgba(195,155,211,.75)}
+  .btn-sm.confirm{background:linear-gradient(135deg,#1a8a4a,#2ecc71);color:#fff;box-shadow:0 3px 10px rgba(46,204,113,.3)}
+  .btn-sm.confirm:disabled{opacity:.4;cursor:not-allowed}
 
   /* LAYOUT */
   .page{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:24px 16px 48px;display:grid;grid-template-columns:320px 1fr;gap:20px;align-items:start}
@@ -78,7 +170,7 @@
   .badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(106,13,173,.3);color:var(--c-light);border:1px solid rgba(195,155,211,.22)}
 
   /* TOAST */
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:rgba(30,5,55,.97);border:1px solid rgba(195,155,211,.3);border-radius:10px;padding:10px 20px;font-size:13px;color:var(--c-soft);z-index:200;white-space:nowrap;transition:transform .35s cubic-bezier(.2,.8,.3,1),opacity .35s;opacity:0;pointer-events:none}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:rgba(30,5,55,.97);border:1px solid rgba(195,155,211,.3);border-radius:10px;padding:10px 20px;font-size:13px;color:var(--c-soft);z-index:400;white-space:nowrap;transition:transform .35s cubic-bezier(.2,.8,.3,1),opacity .35s;opacity:0;pointer-events:none}
   .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
   .toast.ok{border-color:rgba(46,204,113,.4);color:#82e6a4}
   .toast.err{border-color:rgba(231,76,60,.4);color:#f1948a}
@@ -93,6 +185,10 @@
   .stat-box{flex:1;background:rgba(195,155,211,.07);border:1px solid rgba(195,155,211,.15);border-radius:10px;padding:10px 12px;text-align:center}
   .stat-val{font-family:'Cinzel',serif;font-size:20px;font-weight:600;color:var(--c-white)}
   .stat-lbl{font-size:10px;color:rgba(195,155,211,.5);text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+
+  /* Animación pulso botón importar cuando hay archivo listo */
+  @keyframes pulse-green{0%,100%{box-shadow:0 3px 10px rgba(39,174,96,.35)}50%{box-shadow:0 3px 20px rgba(39,174,96,.7)}}
+  .btn-import-xl.ready{animation:pulse-green 1.5s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -100,12 +196,97 @@
 <div class="bg-orb orb1"></div>
 <div class="bg-orb orb2"></div>
 
+<!-- INPUT OCULTO para selección de archivo Excel -->
+<input type="file" id="input-excel" accept=".xlsx,.xls,.csv">
+
+<!-- ═══════════════════ MODAL IMPORTACIÓN ═══════════════════ -->
+<div class="modal-overlay" id="modal-import">
+  <div class="modal">
+    <button class="modal-close" onclick="cerrarModal()" title="Cerrar">✕</button>
+    <div class="modal-title">
+      <!-- Icono Excel pequeño verde -->
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+        <rect width="24" height="24" rx="4" fill="#1D6F42"/>
+        <path d="M14 2H7a1 1 0 00-1 1v18a1 1 0 001 1h12a1 1 0 001-1V8l-6-6z" fill="none" stroke="rgba(255,255,255,.5)" stroke-width=".5"/>
+        <path d="M14 2v6h6" fill="none" stroke="rgba(255,255,255,.4)" stroke-width=".8"/>
+        <text x="3" y="20" font-family="Arial" font-size="9" font-weight="bold" fill="white">XLS</text>
+      </svg>
+      Importar Clientes desde Excel
+    </div>
+
+    <!-- Zona drag & drop -->
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('input-excel').click()">
+      <div class="drop-zone-icon">📂</div>
+      <div class="drop-zone-text">
+        <b>Haz clic aquí</b> o arrastra tu archivo Excel (.xlsx / .xls / .csv)<br>
+        <span style="font-size:11px;margin-top:4px;display:block">Columnas requeridas: <b>nombre</b> — Opcionales: <b>telefono · cumpleanios · fechaAlta</b></span>
+        <span style="font-size:10px;color:rgba(195,155,211,.4);display:block;margin-top:3px">El código se genera automáticamente — no incluir en el archivo</span>
+      </div>
+    </div>
+
+    <!-- Info resumen -->
+    <div class="import-info" id="import-info"></div>
+
+    <!-- Preview datos -->
+    <div class="import-preview" id="import-preview">
+      <table>
+        <thead id="preview-head"></thead>
+        <tbody id="preview-body"></tbody>
+      </table>
+    </div>
+
+    <div class="import-actions">
+      <button class="btn-sm cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-sm confirm" id="btn-confirmar-import" onclick="confirmarImportacion()" disabled>
+        <span id="lbl-import">✅ Importar</span>
+        <div class="spin" id="sp-import" style="display:none"></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TOPBAR ═══════════════════ -->
 <header class="topbar">
   <div class="brand-ring">👥</div>
   <h1>Gestión de Clientes</h1>
-  <a class="btn-back" href="javascript:window.close()">✕ Cerrar</a>
+
+  <div class="topbar-actions">
+    <!-- Botón Importar Excel (verde, solo icono) -->
+    <button class="btn-import-xl tpbtn" id="btn-import-xl" data-tip="Cargar clientes desde Excel" onclick="abrirModalImport()" title="Importar clientes desde Excel">
+      <!-- Icono Excel: cuadro verde con X blanca (estilo MS Excel) -->
+      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="18" height="18" rx="3" fill="#1D6F42"/>
+        <rect x="1" y="1" width="18" height="18" rx="3" fill="none" stroke="rgba(255,255,255,.25)" stroke-width=".8"/>
+        <!-- Columnas hoja -->
+        <rect x="4" y="5" width="3" height="2" rx=".4" fill="rgba(255,255,255,.35)"/>
+        <rect x="8.5" y="5" width="3" height="2" rx=".4" fill="rgba(255,255,255,.35)"/>
+        <rect x="13" y="5" width="3" height="2" rx=".4" fill="rgba(255,255,255,.2)"/>
+        <!-- Letra X central grande -->
+        <text x="5" y="16.5" font-family="Arial Black, sans-serif" font-size="10" font-weight="900" fill="white">X</text>
+        <!-- Checkmark / flecha up derecha (importar) -->
+        <path d="M13 14 L17 10 M15 10 L17 10 L17 12" stroke="rgba(255,255,255,.8)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <!-- Botón Exportar / Descargar (círculo con flecha abajo) -->
+    <button class="btn-export-xl tpbtn" data-tip="Descargar clientes en Excel" onclick="exportarExcel()" title="Descargar clientes en Excel">
+      <!-- Círculo con flecha hacia abajo -->
+      <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Círculo de fondo ya es el propio botón circular, aquí solo la flecha -->
+        <!-- Línea vertical -->
+        <path d="M10 4 L10 13" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        <!-- Punta de flecha -->
+        <path d="M6.5 10 L10 14 L13.5 10" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- Bandeja base -->
+        <path d="M4 16.5 H16" stroke="rgba(255,255,255,.6)" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <a class="btn-back" href="javascript:window.close()">✕ Cerrar</a>
+  </div>
 </header>
 
+<!-- ═══════════════════ CONTENIDO ═══════════════════ -->
 <div class="page">
 
   <!-- ═══ FORMULARIO ═══ -->
@@ -206,21 +387,26 @@ const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 
 // ── ESTADO ──
-let allClients = [];
+let allClients  = [];
 let selectedKey = null;
+let importRows  = [];   // filas parseadas pendientes de importar
 const today = new Date().toISOString().split('T')[0];
 
-// Fecha alta por defecto = hoy
 document.getElementById('f-alta').value = today;
 
-// ── TOAST ──
+// ──────────────────────────────────────────────────────────
+// TOAST
+// ──────────────────────────────────────────────────────────
 window.showToast = (msg, type='') => {
   const t = document.getElementById('toast');
-  t.textContent = msg; t.className = `toast show ${type}`;
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
   setTimeout(() => { t.className = 'toast'; }, 3400);
 };
 
-// ── ENTER navega ──
+// ──────────────────────────────────────────────────────────
+// ENTER navega entre campos
+// ──────────────────────────────────────────────────────────
 window.en = (e, nextId) => {
   if (e.key !== 'Enter') return;
   e.preventDefault();
@@ -229,7 +415,9 @@ window.en = (e, nextId) => {
   if (el.tagName === 'BUTTON') el.click(); else el.focus();
 };
 
-// ── CARGAR CLIENTES ──
+// ──────────────────────────────────────────────────────────
+// CARGAR CLIENTES
+// ──────────────────────────────────────────────────────────
 window.cargarClientes = async () => {
   try {
     const snap = await get(ref(db, 'clientes'));
@@ -238,17 +426,20 @@ window.cargarClientes = async () => {
       snap.forEach(child => {
         allClients.push({ key: child.key, ...child.val() });
       });
-      allClients.sort((a,b) => a.codigo - b.codigo);
+      allClients.sort((a, b) => parseInt(a.codigo) - parseInt(b.codigo));
     }
     renderTabla(allClients);
     updateStats();
     generarSiguienteCodigo();
   } catch(err) {
     console.error(err);
-    showToast('Error al cargar clientes','err');
+    showToast('Error al cargar clientes', 'err');
   }
 };
 
+// ──────────────────────────────────────────────────────────
+// RENDER TABLA
+// ──────────────────────────────────────────────────────────
 function renderTabla(list) {
   const tbody = document.getElementById('tbl-body');
   if (!list.length) {
@@ -265,9 +456,12 @@ function renderTabla(list) {
     </tr>`).join('');
 }
 
+// ──────────────────────────────────────────────────────────
+// STATS
+// ──────────────────────────────────────────────────────────
 function updateStats() {
   document.getElementById('st-total').textContent = allClients.length;
-  const mes = new Date().getMonth() + 1;
+  const mes  = new Date().getMonth() + 1;
   const anio = new Date().getFullYear();
   const esteMes = allClients.filter(c => {
     if (!c.fechaAlta) return false;
@@ -279,17 +473,36 @@ function updateStats() {
     const m = parseInt(c.cumpleanios.split('-')[1]);
     return m === mes;
   }).length;
-  document.getElementById('st-mes').textContent = esteMes;
+  document.getElementById('st-mes').textContent   = esteMes;
   document.getElementById('st-cumple').textContent = cumpleMes;
 }
 
+// ──────────────────────────────────────────────────────────
+// GENERAR CÓDIGO ÚNICO AUTOINCRMENTAL
+// Siempre parte del máximo existente + 1, asegurando unicidad
+// ──────────────────────────────────────────────────────────
 function generarSiguienteCodigo() {
-  if (!allClients.length) { document.getElementById('f-codigo').value = '0001'; return; }
-  const maxCod = Math.max(...allClients.map(c => parseInt(c.codigo)||0));
-  document.getElementById('f-codigo').value = String(maxCod+1).padStart(4,'0');
+  const maxCod = allClients.length
+    ? Math.max(...allClients.map(c => parseInt(c.codigo) || 0))
+    : 0;
+  document.getElementById('f-codigo').value = String(maxCod + 1).padStart(4, '0');
 }
 
-// ── FILTRAR ──
+/**
+ * Genera el siguiente código libre en base a un array de clientes
+ * ya existentes + los ya procesados en la importación actual.
+ * Garantiza que no haya colisiones en importaciones masivas.
+ */
+function siguienteCodigoLibre(existentes) {
+  const maxCod = existentes.length
+    ? Math.max(...existentes.map(c => parseInt(c.codigo) || 0))
+    : 0;
+  return String(maxCod + 1).padStart(4, '0');
+}
+
+// ──────────────────────────────────────────────────────────
+// FILTRAR
+// ──────────────────────────────────────────────────────────
 window.filtrarClientes = () => {
   const nombre = document.getElementById('s-nombre').value.toLowerCase();
   const codigo = document.getElementById('s-codigo').value.toLowerCase();
@@ -300,21 +513,27 @@ window.filtrarClientes = () => {
   renderTabla(filtered);
 };
 
-// ── SELECCIONAR FILA ──
+// ──────────────────────────────────────────────────────────
+// SELECCIONAR FILA
+// ──────────────────────────────────────────────────────────
 window.seleccionarFila = key => {
   selectedKey = key;
   const c = allClients.find(x => x.key === key);
   if (!c) return;
-  document.getElementById('f-codigo').value    = c.codigo  || '';
-  document.getElementById('f-nombre').value    = c.nombre  || '';
-  document.getElementById('f-telefono').value  = c.telefono|| '';
-  document.getElementById('f-cumple').value    = c.cumpleanios || '';
-  document.getElementById('f-alta').value      = c.fechaAlta   || '';
+  document.getElementById('f-codigo').value   = c.codigo      || '';
+  document.getElementById('f-nombre').value   = c.nombre      || '';
+  document.getElementById('f-telefono').value = c.telefono    || '';
+  document.getElementById('f-cumple').value   = c.cumpleanios || '';
+  document.getElementById('f-alta').value     = c.fechaAlta   || '';
   document.getElementById('lbl-guardar').textContent = '💾 Guardar';
-  document.querySelectorAll('tbody tr').forEach(r => r.classList.toggle('selected', r.dataset.key===key));
+  document.querySelectorAll('tbody tr').forEach(r =>
+    r.classList.toggle('selected', r.dataset.key === key)
+  );
 };
 
-// ── NUEVO CLIENTE ──
+// ──────────────────────────────────────────────────────────
+// NUEVO CLIENTE
+// ──────────────────────────────────────────────────────────
 window.nuevoCliente = () => {
   selectedKey = null;
   document.getElementById('f-nombre').value   = '';
@@ -326,7 +545,9 @@ window.nuevoCliente = () => {
   document.getElementById('f-nombre').focus();
 };
 
-// ── GUARDAR CLIENTE ──
+// ──────────────────────────────────────────────────────────
+// GUARDAR CLIENTE
+// ──────────────────────────────────────────────────────────
 window.guardarCliente = async () => {
   const nombre   = document.getElementById('f-nombre').value.trim();
   const codigo   = document.getElementById('f-codigo').value.trim();
@@ -336,44 +557,49 @@ window.guardarCliente = async () => {
 
   if (!nombre) {
     document.getElementById('f-nombre').classList.add('err');
-    showToast('El nombre es obligatorio','err');
-    setTimeout(()=>document.getElementById('f-nombre').classList.remove('err'),2500);
+    showToast('El nombre es obligatorio', 'err');
+    setTimeout(() => document.getElementById('f-nombre').classList.remove('err'), 2500);
     return;
   }
 
-  // Verificar duplicado de código
+  // Verificar duplicado de código (solo contra otros registros)
   const existe = allClients.find(c => c.codigo === codigo && c.key !== selectedKey);
-  if (existe) { showToast(`El código ${codigo} ya existe`,'wrn'); return; }
+  if (existe) { showToast(`El código ${codigo} ya existe`, 'wrn'); return; }
 
   const btn = document.getElementById('btn-guardar');
   btn.disabled = true;
-  document.getElementById('lbl-guardar').style.display='none';
-  document.getElementById('sp-guardar').style.display='block';
+  document.getElementById('lbl-guardar').style.display = 'none';
+  document.getElementById('sp-guardar').style.display  = 'block';
 
   try {
-    const key = codigo; // usamos código como clave del nodo
+    const key = codigo;
     await set(ref(db, `clientes/${key}`), {
-      codigo, nombre, telefono: telefono||'', cumpleanios: cumple||'', fechaAlta: alta||today,
-      creadoEn: new Date().toISOString()
+      codigo, nombre,
+      telefono:   telefono || '',
+      cumpleanios: cumple  || '',
+      fechaAlta:  alta     || today,
+      creadoEn:   new Date().toISOString()
     });
-    showToast(`✅ Cliente "${nombre}" guardado`,'ok');
+    showToast(`✅ Cliente "${nombre}" guardado`, 'ok');
     await cargarClientes();
     nuevoCliente();
   } catch(err) {
     console.error(err);
-    showToast('Error al guardar en Firebase','err');
+    showToast('Error al guardar en Firebase', 'err');
   }
 
   btn.disabled = false;
-  document.getElementById('lbl-guardar').style.display='inline';
-  document.getElementById('sp-guardar').style.display='none';
+  document.getElementById('lbl-guardar').style.display = 'inline';
+  document.getElementById('sp-guardar').style.display  = 'none';
 };
 
-// ── ACTUALIZAR CLIENTE ──
+// ──────────────────────────────────────────────────────────
+// ACTUALIZAR CLIENTE
+// ──────────────────────────────────────────────────────────
 window.actualizarCliente = async () => {
-  if (!selectedKey) { showToast('Selecciona un cliente de la tabla','wrn'); return; }
-  const nombre   = document.getElementById('f-nombre').value.trim();
-  if (!nombre) { showToast('El nombre es obligatorio','err'); return; }
+  if (!selectedKey) { showToast('Selecciona un cliente de la tabla', 'wrn'); return; }
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if (!nombre) { showToast('El nombre es obligatorio', 'err'); return; }
   const telefono = document.getElementById('f-telefono').value.trim();
   const cumple   = document.getElementById('f-cumple').value;
   const alta     = document.getElementById('f-alta').value;
@@ -381,24 +607,308 @@ window.actualizarCliente = async () => {
     await update(ref(db, `clientes/${selectedKey}`), {
       nombre, telefono: telefono||'', cumpleanios: cumple||'', fechaAlta: alta||''
     });
-    showToast(`✅ Cliente actualizado`,'ok');
+    showToast('✅ Cliente actualizado', 'ok');
     await cargarClientes();
-  } catch(err) { showToast('Error al actualizar','err'); }
+  } catch(err) {
+    console.error(err);
+    showToast('Error al actualizar', 'err');
+  }
 };
 
-// ── ELIMINAR CLIENTE ──
+// ──────────────────────────────────────────────────────────
+// ELIMINAR CLIENTE
+// ──────────────────────────────────────────────────────────
 window.eliminarCliente = async () => {
-  if (!selectedKey) { showToast('Selecciona un cliente de la tabla','wrn'); return; }
+  if (!selectedKey) { showToast('Selecciona un cliente de la tabla', 'wrn'); return; }
   const c = allClients.find(x => x.key === selectedKey);
   if (!confirm(`¿Eliminar al cliente "${c?.nombre}"?`)) return;
   try {
     await remove(ref(db, `clientes/${selectedKey}`));
-    showToast(`🗑️ Cliente eliminado`,'ok');
+    showToast('🗑️ Cliente eliminado', 'ok');
     selectedKey = null;
     await cargarClientes();
     nuevoCliente();
-  } catch(err) { showToast('Error al eliminar','err'); }
+  } catch(err) {
+    console.error(err);
+    showToast('Error al eliminar', 'err');
+  }
 };
+
+// ══════════════════════════════════════════════════════════
+// ══  EXPORTAR EXCEL  ══════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+window.exportarExcel = () => {
+  if (!allClients.length) {
+    showToast('No hay clientes para exportar', 'wrn');
+    return;
+  }
+
+  // Construir array de filas con encabezados exactos del nodo Firebase
+  const filas = allClients.map(c => ({
+    codigo:      c.codigo      || '',
+    nombre:      c.nombre      || '',
+    telefono:    c.telefono    || '',
+    cumpleanios: c.cumpleanios || '',
+    fechaAlta:   c.fechaAlta   || '',
+    creadoEn:    c.creadoEn    || ''
+  }));
+
+  const ws  = XLSX.utils.json_to_sheet(filas);
+
+  // Ancho de columnas
+  ws['!cols'] = [
+    { wch: 8  },  // codigo
+    { wch: 35 },  // nombre
+    { wch: 18 },  // telefono
+    { wch: 14 },  // cumpleanios
+    { wch: 14 },  // fechaAlta
+    { wch: 26 },  // creadoEn
+  ];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Clientes');
+
+  const fecha = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(wb, `clientes_${fecha}.xlsx`);
+  showToast(`📥 Exportados ${filas.length} clientes`, 'ok');
+};
+
+// ══════════════════════════════════════════════════════════
+// ══  IMPORTAR EXCEL  ══════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+
+// Normaliza encabezados: quita tildes, minúsculas, sin espacios
+function normalizar(str) {
+  return (str||'').toString().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,'');
+}
+
+// Mapeo flexible de columnas del Excel → campos internos
+const COL_MAP = {
+  nombre:      ['nombre','name','cliente','nombrecompleto'],
+  telefono:    ['telefono','tel','phone','celular','movil','fono'],
+  cumpleanios: ['cumpleanios','cumpleanos','cumpleaños','birthday','nacimiento','fechanacimiento'],
+  fechaAlta:   ['fechaalta','alta','registro','fecharegistro','ingreso'],
+};
+
+function mapearColumnas(headers) {
+  const map = {};
+  headers.forEach((h, idx) => {
+    const norm = normalizar(h);
+    for (const [campo, aliases] of Object.entries(COL_MAP)) {
+      if (aliases.includes(norm)) map[campo] = idx;
+    }
+  });
+  return map;
+}
+
+function parsearArchivo(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data  = new Uint8Array(e.target.result);
+        const wb    = XLSX.read(data, { type: 'array', cellDates: true });
+        const ws    = wb.Sheets[wb.SheetNames[0]];
+        const rows  = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        resolve(rows);
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = () => reject(new Error('Error al leer archivo'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function procesarFilas(rows) {
+  if (rows.length < 2) throw new Error('El archivo no tiene datos');
+  const headers = rows[0].map(h => (h||'').toString().trim());
+  const colMap  = mapearColumnas(headers);
+
+  if (colMap.nombre === undefined) {
+    throw new Error('No se encontró la columna "nombre" en el archivo');
+  }
+
+  const registros = [];
+  for (let i = 1; i < rows.length; i++) {
+    const row    = rows[i];
+    const nombre = (row[colMap.nombre] || '').toString().trim();
+    if (!nombre) continue; // omitir filas vacías
+
+    // Formatear fecha si viene como objeto Date (cellDates:true)
+    const fmtFecha = v => {
+      if (!v) return '';
+      if (v instanceof Date) return v.toISOString().split('T')[0];
+      return v.toString().trim();
+    };
+
+    registros.push({
+      nombre,
+      telefono:    colMap.telefono    !== undefined ? (row[colMap.telefono]||'').toString().trim()    : '',
+      cumpleanios: colMap.cumpleanios !== undefined ? fmtFecha(row[colMap.cumpleanios])               : '',
+      fechaAlta:   colMap.fechaAlta   !== undefined ? fmtFecha(row[colMap.fechaAlta])                 : today,
+    });
+  }
+
+  if (!registros.length) throw new Error('No se encontraron filas con datos válidos');
+  return registros;
+}
+
+function mostrarPreview(rows) {
+  importRows = rows;
+
+  // Info
+  const infoEl = document.getElementById('import-info');
+  infoEl.style.display = 'block';
+  infoEl.innerHTML = `Se encontraron <b>${rows.length}</b> cliente(s) listos para importar. Los códigos se generarán automáticamente a continuación del último existente.`;
+
+  // Tabla preview (máx 5 filas)
+  const previewEl = document.getElementById('import-preview');
+  previewEl.style.display = 'block';
+
+  document.getElementById('preview-head').innerHTML =
+    '<tr><th>Nombre</th><th>Teléfono</th><th>Cumpleaños</th><th>Fecha Alta</th></tr>';
+
+  const max = Math.min(rows.length, 5);
+  let html = '';
+  for (let i = 0; i < max; i++) {
+    const r = rows[i];
+    html += `<tr><td>${r.nombre}</td><td>${r.telefono||'—'}</td><td>${r.cumpleanios||'—'}</td><td>${r.fechaAlta||'—'}</td></tr>`;
+  }
+  if (rows.length > 5) {
+    html += `<tr><td colspan="4" style="text-align:center;color:rgba(195,155,211,.4);font-style:italic">… y ${rows.length - 5} más</td></tr>`;
+  }
+  document.getElementById('preview-body').innerHTML = html;
+
+  document.getElementById('btn-confirmar-import').disabled = false;
+}
+
+function resetearModal() {
+  importRows = [];
+  document.getElementById('import-info').style.display    = 'none';
+  document.getElementById('import-preview').style.display = 'none';
+  document.getElementById('btn-confirmar-import').disabled = true;
+  document.getElementById('lbl-import').style.display  = 'inline';
+  document.getElementById('sp-import').style.display   = 'none';
+  document.getElementById('drop-zone').classList.remove('dragover');
+}
+
+window.abrirModalImport = () => {
+  resetearModal();
+  document.getElementById('modal-import').classList.add('active');
+};
+
+window.cerrarModal = () => {
+  document.getElementById('modal-import').classList.remove('active');
+  resetearModal();
+};
+
+window.confirmarImportacion = async () => {
+  if (!importRows.length) return;
+
+  const btn = document.getElementById('btn-confirmar-import');
+  btn.disabled = true;
+  document.getElementById('lbl-import').style.display = 'none';
+  document.getElementById('sp-import').style.display  = 'block';
+
+  try {
+    // Obtenemos estado más reciente de Firebase antes de asignar códigos
+    const snap = await get(ref(db, 'clientes'));
+    const existentes = [];
+    if (snap.exists()) {
+      snap.forEach(child => existentes.push({ key: child.key, ...child.val() }));
+    }
+
+    let errores  = 0;
+    let guardados = 0;
+
+    // Acumulamos los "ya procesados" para que los códigos no colisionen
+    // entre sí dentro del mismo lote
+    const acumulados = [...existentes];
+
+    for (const row of importRows) {
+      const codigo = siguienteCodigoLibre(acumulados);
+      try {
+        await set(ref(db, `clientes/${codigo}`), {
+          codigo,
+          nombre:      row.nombre,
+          telefono:    row.telefono    || '',
+          cumpleanios: row.cumpleanios || '',
+          fechaAlta:   row.fechaAlta   || today,
+          creadoEn:    new Date().toISOString()
+        });
+        acumulados.push({ key: codigo, codigo, ...row });
+        guardados++;
+      } catch(e) {
+        console.error(`Error guardando "${row.nombre}":`, e);
+        errores++;
+      }
+    }
+
+    cerrarModal();
+    await cargarClientes();
+
+    if (errores === 0) {
+      showToast(`✅ ${guardados} cliente(s) importados correctamente`, 'ok');
+    } else {
+      showToast(`⚠️ ${guardados} importados, ${errores} con error`, 'wrn');
+    }
+
+  } catch(err) {
+    console.error(err);
+    showToast('Error durante la importación', 'err');
+    btn.disabled = false;
+    document.getElementById('lbl-import').style.display = 'inline';
+    document.getElementById('sp-import').style.display  = 'none';
+  }
+};
+
+// ── Input file change ──
+document.getElementById('input-excel').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = ''; // reset para permitir reimportar el mismo archivo
+  try {
+    const rows    = await parsearArchivo(file);
+    const registros = procesarFilas(rows);
+    mostrarPreview(registros);
+  } catch(err) {
+    showToast(err.message || 'Error al leer el archivo', 'err');
+  }
+});
+
+// ── Drag & Drop sobre la zona del modal ──
+const dropZone = document.getElementById('drop-zone');
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('dragover');
+});
+dropZone.addEventListener('drop', async e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  if (!/\.(xlsx|xls|csv)$/i.test(file.name)) {
+    showToast('Formato no válido. Usa .xlsx, .xls o .csv', 'err');
+    return;
+  }
+  try {
+    const rows      = await parsearArchivo(file);
+    const registros = procesarFilas(rows);
+    mostrarPreview(registros);
+  } catch(err) {
+    showToast(err.message || 'Error al leer el archivo', 'err');
+  }
+});
+
+// Cerrar modal al click en el overlay (fuera del modal)
+document.getElementById('modal-import').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-import')) cerrarModal();
+});
 
 // ── INICIAR ──
 cargarClientes();

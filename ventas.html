@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Ventas — Jessica Peña Nails Spa</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ══ PALETA CORPORATIVA 3 TONOS ══
+     Brillante : #BB19E2  → luz, acentos, hover, glow
+     Base      : #8E04BB  → botones primarios, encabezados
+     Profundo  : #5A007F  → sombras, viñetado, fondos oscuros  */
+  :root{
+    --p-bright:#BB19E2;
+    --p-base:  #8E04BB;
+    --p-deep:  #5A007F;
+    --p-bg:    #0d0017;
+    --p-card:  rgba(90,0,127,.42);
+    --p-light: #ddb3f0;
+    --p-soft:  #f0d9ff;
+    --white:   #ffffff;
+    --success: #2ecc71;
+    --danger:  #e74c3c;
+    --warn:    #f39c12;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Nunito',sans-serif;
+    min-height:100vh;
+    background:var(--p-bg);
+    color:var(--p-soft);
+    overflow-x:hidden;
+  }
+  body::before{
+    content:'';position:fixed;inset:0;z-index:0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%,   rgba(187,25,226,.2)  0%,transparent 65%),
+      radial-gradient(ellipse 55% 45% at 0%   100%, rgba(90,0,127,.5)   0%,transparent 60%),
+      radial-gradient(ellipse 55% 45% at 100% 100%, rgba(142,4,187,.28)  0%,transparent 60%);
+    pointer-events:none;
+  }
+  .bg-grid{position:fixed;inset:0;z-index:0;background-image:radial-gradient(circle,rgba(187,25,226,.065) 1px,transparent 1px);background-size:26px 26px;pointer-events:none}
+
+  /* ── TOPBAR ── */
+  .topbar{
+    position:sticky;top:0;z-index:50;height:56px;
+    background:rgba(13,0,23,.9);
+    border-bottom:1px solid rgba(187,25,226,.28);
+    display:flex;align-items:center;padding:0 18px;gap:10px;
+    backdrop-filter:blur(14px);
+  }
+  .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--p-bright),transparent);opacity:.55}
+  .brand-ring{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--p-bright),var(--p-base));display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;box-shadow:0 0 16px rgba(187,25,226,.5)}
+  .topbar h1{font-family:'Cinzel',serif;font-size:14px;font-weight:600;letter-spacing:.06em;flex:1;background:linear-gradient(90deg,var(--p-soft),var(--p-bright));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .topbar-btns{display:flex;gap:6px;flex-shrink:0}
+  .tb-btn{height:32px;padding:0 12px;border-radius:7px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;border:none;transition:all .2s;white-space:nowrap}
+  .tb-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(187,25,226,.3)}
+  .tb-reg{background:linear-gradient(135deg,var(--p-base),var(--p-bright));color:#fff}
+  .tb-close{background:rgba(187,25,226,.1);border:1px solid rgba(187,25,226,.3)!important;color:var(--p-light)}
+
+  /* ── LAYOUT ── */
+  .page{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:20px 16px 56px;display:grid;grid-template-columns:420px 1fr;gap:20px;align-items:start}
+  @media(max-width:900px){.page{grid-template-columns:1fr}}
+
+  /* ── CARD ── */
+  .card{background:var(--p-card);border:1px solid rgba(187,25,226,.22);border-radius:14px;padding:20px;backdrop-filter:blur(16px);position:relative;box-shadow:0 8px 32px rgba(90,0,127,.3)}
+  .card::before{content:'';position:absolute;top:0;left:12%;right:12%;height:1px;background:linear-gradient(90deg,transparent,rgba(187,25,226,.5),transparent)}
+  .card-title{font-family:'Cinzel',serif;font-size:13px;font-weight:600;color:var(--p-soft);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+  /* ── FORM ── */
+  .fg{margin-bottom:12px}
+  .fl{display:block;font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:rgba(187,25,226,.7);margin-bottom:5px}
+  .fi{
+    width:100%;height:40px;
+    background:rgba(13,0,23,.55);
+    border:1px solid rgba(187,25,226,.28);
+    border-radius:9px;color:var(--p-soft);
+    font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;
+    padding:0 12px;outline:none;
+    transition:border-color .2s,box-shadow .2s;
+  }
+  .fi::placeholder{color:rgba(187,25,226,.35);font-weight:400}
+  .fi:focus{border-color:var(--p-bright);box-shadow:0 0 0 3px rgba(187,25,226,.18)}
+  .fi-sel{
+    width:100%;height:40px;
+    background:rgba(13,0,23,.55);
+    border:1px solid rgba(187,25,226,.28);
+    border-radius:9px;color:var(--p-soft);
+    font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;
+    padding:0 30px 0 12px;outline:none;cursor:pointer;
+    appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23BB19E2' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 10px center;
+    transition:border-color .2s;
+  }
+  .fi-sel:focus{border-color:var(--p-bright);box-shadow:0 0 0 3px rgba(187,25,226,.18)}
+  .fi-sel option{background:#1a0030;color:var(--p-soft)}
+  .fi-ro{background:rgba(90,0,127,.3);color:rgba(187,25,226,.75);cursor:default;font-family:'Cinzel',serif;font-size:12px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  /* TIPO VENTA TOGGLE */
+  .tipo-row{display:flex;gap:8px;margin-bottom:14px}
+  .tipo-btn{flex:1;height:36px;border:1px solid rgba(187,25,226,.28);border-radius:9px;background:rgba(13,0,23,.4);color:rgba(187,25,226,.65);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+  .tipo-btn.active{background:rgba(187,25,226,.22);border-color:var(--p-bright);color:var(--p-bright);box-shadow:0 0 10px rgba(187,25,226,.2)}
+
+  /* AUTOCOMPLETE */
+  .ac-wrap{position:relative}
+  .ac-input{
+    width:100%;height:40px;
+    background:rgba(13,0,23,.55);
+    border:1px solid rgba(187,25,226,.28);
+    border-radius:9px;color:var(--p-soft);
+    font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;
+    padding:0 12px;outline:none;
+    transition:border-color .2s,box-shadow .2s;
+  }
+  .ac-input::placeholder{color:rgba(187,25,226,.35);font-weight:400}
+  .ac-input:focus{border-color:var(--p-bright);box-shadow:0 0 0 3px rgba(187,25,226,.18)}
+  .ac-drop{
+    position:absolute;top:calc(100%+4px);left:0;right:0;
+    background:rgba(13,0,23,.97);
+    border:1px solid rgba(187,25,226,.35);
+    border-radius:10px;max-height:200px;overflow-y:auto;
+    z-index:100;display:none;
+    box-shadow:0 8px 28px rgba(90,0,127,.5);
+  }
+  .ac-drop.open{display:block}
+  .ac-item{padding:9px 14px;font-size:12px;font-weight:600;color:var(--p-light);cursor:pointer;transition:background .15s}
+  .ac-item:hover,.ac-item.active{background:rgba(187,25,226,.2);color:var(--white)}
+  .ac-drop::-webkit-scrollbar{width:4px}
+  .ac-drop::-webkit-scrollbar-thumb{background:rgba(187,25,226,.3);border-radius:2px}
+
+  /* DATOS CONSULTA */
+  .consulta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+  .cq-box{background:rgba(90,0,127,.28);border:1px solid rgba(187,25,226,.2);border-radius:8px;padding:7px 10px}
+  .cq-lbl{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(187,25,226,.55);margin-bottom:3px}
+  .cq-val{font-size:13px;font-weight:700;color:var(--p-soft)}
+
+  /* TOTAL DISPLAY */
+  .total-display{
+    background:rgba(187,25,226,.12);
+    border:1px solid rgba(187,25,226,.35);
+    border-radius:10px;padding:10px 14px;
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .total-lbl{font-size:12px;font-weight:700;color:rgba(187,25,226,.7);text-transform:uppercase;letter-spacing:.08em}
+  .total-val{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--p-bright);text-shadow:0 0 14px rgba(187,25,226,.4)}
+
+  /* BTN */
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap}
+  .btn{height:38px;padding:0 18px;border:none;border-radius:9px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .2s;white-space:nowrap}
+  .btn:hover:not(:disabled){transform:translateY(-1px)}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  .btn-add{background:linear-gradient(135deg,var(--p-base),var(--p-bright));color:#fff;box-shadow:0 4px 16px rgba(187,25,226,.3)}
+  .btn-add:hover:not(:disabled){box-shadow:0 6px 22px rgba(187,25,226,.5)}
+  .btn-reg{background:linear-gradient(135deg,#1a8a4a,#27ae60);color:#fff;box-shadow:0 4px 14px rgba(46,204,113,.25)}
+  .btn-clear{background:rgba(187,25,226,.1);border:1px solid rgba(187,25,226,.28);color:var(--p-light)}
+  .btn-del{background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.25);color:#f1948a}
+
+  /* TABLA TEMPORAL */
+  .tbl-wrap{overflow-x:auto;border-radius:11px;border:1px solid rgba(187,25,226,.2)}
+  table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px}
+  thead th{background:linear-gradient(90deg,var(--p-deep),var(--p-base));color:var(--white);font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:9px 10px;text-align:center;white-space:nowrap;border-bottom:1px solid rgba(187,25,226,.35)}
+  tbody tr{border-bottom:1px solid rgba(187,25,226,.1);transition:background .15s;cursor:pointer}
+  tbody tr:hover{background:rgba(187,25,226,.1)}
+  tbody tr.selected{background:rgba(187,25,226,.18);border-left:3px solid var(--p-bright)}
+  tbody td{padding:8px 10px;color:rgba(240,217,255,.85);text-align:center}
+  .empty-row td{text-align:center;color:rgba(187,25,226,.4);padding:28px}
+  .price-cell{color:#82e6a4;font-weight:700;font-family:'Cinzel',serif}
+
+  /* BADGE ESTADO */
+  .b-pag{background:rgba(46,204,113,.15);color:#82e6a4;border:1px solid rgba(46,204,113,.25);border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700}
+  .b-pend{background:rgba(231,76,60,.15);color:#f1948a;border:1px solid rgba(231,76,60,.25);border-radius:8px;padding:2px 8px;font-size:10px;font-weight:700}
+
+  /* GRAN TOTAL */
+  .gran-total{
+    display:flex;align-items:center;justify-content:flex-end;gap:14px;
+    padding:14px 16px;
+    background:rgba(187,25,226,.1);
+    border:1px solid rgba(187,25,226,.3);
+    border-radius:10px;margin-top:12px;
+  }
+  .gt-lbl{font-size:12px;font-weight:700;color:rgba(187,25,226,.7);text-transform:uppercase;letter-spacing:.1em}
+  .gt-val{font-family:'Cinzel',serif;font-size:28px;font-weight:700;color:var(--p-bright);text-shadow:0 0 20px rgba(187,25,226,.45)}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(60px);background:rgba(13,0,23,.97);border:1px solid rgba(187,25,226,.35);border-radius:10px;padding:11px 22px;font-size:13px;color:var(--p-soft);z-index:999;white-space:nowrap;transition:transform .35s cubic-bezier(.2,.8,.3,1),opacity .35s;opacity:0;pointer-events:none;box-shadow:0 8px 24px rgba(90,0,127,.4)}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .toast.ok{border-color:rgba(46,204,113,.45);color:#82e6a4}
+  .toast.err{border-color:rgba(231,76,60,.45);color:#f1948a}
+  .toast.wrn{border-color:rgba(243,156,18,.45);color:#f8c471}
+  .spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+
+<!-- ══ TOPBAR ══ -->
+<header class="topbar">
+  <div class="brand-ring">💰</div>
+  <h1>Gestión de Ventas</h1>
+  <div class="topbar-btns">
+    <button class="tb-btn tb-reg" id="btn-registrar-db" onclick="registrarEnFirebase()">
+      <span id="lbl-reg">✅ Registrar Ventas</span>
+      <div class="spin" id="sp-reg" style="display:none"></div>
+    </button>
+    <button class="tb-btn tb-close" onclick="window.close()">✕ Cerrar</button>
+  </div>
+</header>
+
+<!-- ══ PÁGINA ══ -->
+<div class="page">
+
+  <!-- ═══ COL IZQ: FORMULARIO ═══ -->
+  <div>
+    <div class="card">
+      <div class="card-title"><span>📋</span> Nueva Venta</div>
+
+      <!-- FECHA -->
+      <div class="fg">
+        <label class="fl">Fecha</label>
+        <input class="fi" type="date" id="v-fecha" onkeydown="en(event,'ac-cliente-input')">
+      </div>
+
+      <!-- CLIENTE -->
+      <div class="fg">
+        <label class="fl">Cliente *</label>
+        <div class="ac-wrap">
+          <input class="ac-input" id="ac-cliente-input" placeholder="Buscar cliente..." autocomplete="off"
+            oninput="acFilter('cliente')" onfocus="acOpen('cliente')"
+            onkeydown="acKey(event,'cliente')">
+          <div class="ac-drop" id="ac-cliente-drop"></div>
+        </div>
+      </div>
+
+      <!-- TIPO VENTA -->
+      <div class="fg">
+        <label class="fl">Tipo de Venta</label>
+        <div class="tipo-row">
+          <button class="tipo-btn active" id="tipo-servicio" onclick="setTipo('Servicio')">💅 Servicio</button>
+          <button class="tipo-btn" id="tipo-producto"  onclick="setTipo('Producto')">📦 Producto</button>
+        </div>
+      </div>
+
+      <!-- SERVICIO / PRODUCTO -->
+      <div class="fg">
+        <label class="fl" id="lbl-item">Servicio *</label>
+        <div class="ac-wrap">
+          <input class="ac-input" id="ac-item-input" placeholder="Buscar servicio..." autocomplete="off"
+            oninput="acFilter('item')" onfocus="acOpen('item')"
+            onkeydown="acKey(event,'item')">
+          <div class="ac-drop" id="ac-item-drop"></div>
+        </div>
+      </div>
+
+      <!-- DATOS CONSULTA (readonly, se llenan al seleccionar) -->
+      <div class="consulta-grid">
+        <div class="cq-box"><div class="cq-lbl">Servicio ID</div><div class="cq-val" id="cq-svcid">—</div></div>
+        <div class="cq-box"><div class="cq-lbl">Cód. Categoría</div><div class="cq-val" id="cq-cat">—</div></div>
+        <div class="cq-box"><div class="cq-lbl">Mano de Obra S/</div><div class="cq-val" id="cq-mano">—</div></div>
+        <div class="cq-box"><div class="cq-lbl">Margen</div><div class="cq-val" id="cq-margen">—</div></div>
+        <div class="cq-box" style="grid-column:1/-1"><div class="cq-lbl">Precio Venta S/</div><div class="cq-val" id="cq-pventa" style="color:#82e6a4;font-family:'Cinzel',serif;font-size:16px">—</div></div>
+      </div>
+
+      <!-- CANTIDAD, PRECIO UNITARIO -->
+      <div class="row2">
+        <div class="fg">
+          <label class="fl">Cantidad</label>
+          <input class="fi" type="number" id="v-cantidad" min="1" value="1" oninput="recalcTotal()" onkeydown="en(event,'v-precio')">
+        </div>
+        <div class="fg">
+          <label class="fl">Precio Unitario S/</label>
+          <input class="fi" type="number" id="v-precio" min="0" step="0.01" placeholder="0.00" oninput="recalcTotal()" onkeydown="en(event,'v-descuento')">
+        </div>
+      </div>
+
+      <!-- DESCUENTO, ESTADO PAGO -->
+      <div class="row2">
+        <div class="fg">
+          <label class="fl">Descuento S/</label>
+          <input class="fi" type="number" id="v-descuento" min="0" step="0.01" value="0.00" oninput="recalcTotal()" onkeydown="en(event,'v-estado')">
+        </div>
+        <div class="fg">
+          <label class="fl">Estado de Pago</label>
+          <select class="fi-sel" id="v-estado" onkeydown="en(event,'v-obs')">
+            <option value="Pagado">Pagado</option>
+            <option value="Pendiente">Pendiente</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- OBSERVACIONES -->
+      <div class="fg">
+        <label class="fl">Observaciones</label>
+        <input class="fi" id="v-obs" placeholder="Notas del servicio..." onkeydown="en(event,'btn-agregar')">
+      </div>
+
+      <!-- TOTAL LÍNEA -->
+      <div class="total-display">
+        <span class="total-lbl">Total línea</span>
+        <span class="total-val" id="total-linea">S/ 0.00</span>
+      </div>
+
+      <!-- BTN AGREGAR -->
+      <button class="btn btn-add" id="btn-agregar" style="width:100%;justify-content:center" onclick="agregarVenta()">
+        ＋ Agregar a la Lista
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ COL DER: LISTA + ACCIONES ═══ -->
+  <div>
+    <div class="card">
+      <div class="card-title">
+        <span>🧾</span> Detalle de Ventas
+        <span style="margin-left:auto;font-size:11px;color:rgba(187,25,226,.5)">
+          <kbd style="background:rgba(187,25,226,.15);border:1px solid rgba(187,25,226,.3);border-radius:4px;padding:1px 6px;font-size:10px">Ctrl+S</kbd> para registrar
+        </span>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Cliente</th>
+              <th>Servicio / Producto</th>
+              <th>Cant.</th>
+              <th>Precio Unit.</th>
+              <th>Descuento</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbl-ventas">
+            <tr class="empty-row"><td colspan="9">Sin ventas agregadas aún</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="gran-total">
+        <div class="btn-row">
+          <button class="btn btn-del" onclick="quitarSeleccionado()">🗑️ Quitar</button>
+          <button class="btn btn-clear" onclick="limpiarLista()">✕ Limpiar todo</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="gt-lbl">Total Venta</span>
+          <span class="gt-val" id="gran-total">S/ 0.00</span>
+        </div>
+      </div>
+
+      <!-- REGISTRAR -->
+      <div style="margin-top:14px">
+        <button class="btn btn-reg" style="width:100%;justify-content:center;height:44px;font-size:13px" onclick="registrarEnFirebase()">
+          ✅ Registrar Todas las Ventas en Firebase
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- ══ FIREBASE + LÓGICA ══ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig={
+  apiKey:"TU_API_KEY",
+  authDomain:"jessicapenabeautystudio.firebaseapp.com",
+  databaseURL:"https://jessicapenabeautystudio-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"jessicapenabeautystudio",
+  storageBucket:"jessicapenabeautystudio.appspot.com",
+  messagingSenderId:"TU_SENDER_ID",
+  appId:"TU_APP_ID"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+/* ── ESTADO ── */
+let listaVentas    = [];         // ventas temporales
+let clientes       = [];         // [{codigo, nombre}]
+let servicios      = [];         // [{key, ...}]
+let productos      = [];         // [{key, ...}]
+let tipoActual     = 'Servicio';
+let selectedItem   = null;       // datos del servicio/producto seleccionado
+let clienteActual  = { codigo:'', nombre:'' };
+let selectedRow    = -1;
+
+const fmt2 = n => parseFloat(n||0).toFixed(2);
+const today= new Date().toISOString().split('T')[0];
+document.getElementById('v-fecha').value = today;
+
+/* ── TOAST / ENTER ── */
+window.showToast = (msg,type='') => {
+  const t=document.getElementById('toast');t.textContent=msg;t.className=`toast show ${type}`;setTimeout(()=>{t.className='toast'},3500);
+};
+window.en = (e,nextId)=>{if(e.key!=='Enter')return;e.preventDefault();const el=document.getElementById(nextId);if(!el)return;if(el.tagName==='BUTTON')el.click();else el.focus();};
+
+/* ── Ctrl+S ── */
+document.addEventListener('keydown', e => { if (e.ctrlKey && e.key==='s') { e.preventDefault(); registrarEnFirebase(); } });
+
+/* ══════════════════════════════════
+   CARGAR CATÁLOGOS
+══════════════════════════════════ */
+async function cargarCatalogos() {
+  try {
+    const [snapCli, snapSvc, snapProd] = await Promise.all([
+      get(ref(db,'clientes')),
+      get(ref(db,'servicios')),
+      get(ref(db,'productos'))
+    ]);
+    clientes = [];
+    if (snapCli.exists()) snapCli.forEach(c => clientes.push({ key:c.key, codigo:c.val().codigo||c.key, nombre:c.val().nombre||c.key }));
+    clientes.sort((a,b) => a.nombre.localeCompare(b.nombre));
+
+    servicios = [];
+    if (snapSvc.exists()) snapSvc.forEach(c => servicios.push({ key:c.key, ...c.val() }));
+    servicios.sort((a,b) => (a.nombreServicio||'').localeCompare(b.nombreServicio||''));
+
+    productos = [];
+    if (snapProd.exists()) snapProd.forEach(c => { const v=c.val(); if(v.tipo==='PRODUCTO') productos.push({ key:c.key, ...v }); });
+    productos.sort((a,b) => (a.descripcion||'').localeCompare(b.descripcion||''));
+
+    acState.cliente.list = clientes.map(c=>c.nombre);
+    acState.item.list    = servicios.map(s=>s.nombreServicio||'');
+    showToast('✅ Catálogos cargados','ok');
+  } catch(err) { console.error(err); showToast('Error al cargar catálogos','err'); }
+}
+
+/* ══════════════════════════════════
+   AUTOCOMPLETE ENGINE
+══════════════════════════════════ */
+const acState = {
+  cliente: { list:[], idx:-1 },
+  item:    { list:[], idx:-1 }
+};
+
+window.acFilter = type => {
+  const val = document.getElementById(`ac-${type}-input`).value.toUpperCase();
+  const list = acState[type].list;
+  const filtered = val ? list.filter(s => s.toUpperCase().includes(val)) : list;
+  renderDrop(type, filtered);
+};
+
+window.acOpen = type => renderDrop(type, acState[type].list);
+
+window.acKey = (e, type) => {
+  const st  = acState[type];
+  const drop= document.getElementById(`ac-${type}-drop`);
+  const items = drop.querySelectorAll('.ac-item');
+  if (e.key==='ArrowDown') { e.preventDefault(); st.idx=Math.min(st.idx+1,items.length-1); items.forEach((el,i)=>el.classList.toggle('active',i===st.idx)); }
+  else if (e.key==='ArrowUp') { e.preventDefault(); st.idx=Math.max(st.idx-1,0); items.forEach((el,i)=>el.classList.toggle('active',i===st.idx)); }
+  else if (e.key==='Enter') {
+    e.preventDefault();
+    const active=drop.querySelector('.ac-item.active')||drop.querySelector('.ac-item');
+    if(active){acSelect(type,active.textContent);}
+    else{drop.classList.remove('open');if(type==='cliente')document.getElementById('tipo-servicio').focus();else document.getElementById('v-cantidad').focus();}
+  } else if(e.key==='Escape'){drop.classList.remove('open');}
+};
+
+function renderDrop(type, list) {
+  const drop = document.getElementById(`ac-${type}-drop`);
+  acState[type].idx = -1;
+  if (!list.length) { drop.classList.remove('open'); return; }
+  const shown = list.slice(0,60);
+  drop.innerHTML = shown.map(s=>`<div class="ac-item" onmousedown="acSelect('${type}','${s.replace(/'/g,"&#39;")}')">${s}</div>`).join('');
+  drop.classList.add('open');
+}
+
+window.acSelect = (type, val) => {
+  document.getElementById(`ac-${type}-input`).value = val;
+  document.getElementById(`ac-${type}-drop`).classList.remove('open');
+  if (type === 'cliente') {
+    const c = clientes.find(x=>x.nombre===val);
+    clienteActual = c ? { codigo:c.codigo, nombre:c.nombre } : { codigo:'', nombre:val };
+    document.getElementById('tipo-servicio').focus();
+  } else {
+    cargarDatosItem(val);
+  }
+};
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.ac-wrap')) {
+    document.querySelectorAll('.ac-drop').forEach(d=>d.classList.remove('open'));
+  }
+});
+
+/* ══════════════════════════════════
+   TIPO VENTA
+══════════════════════════════════ */
+window.setTipo = tipo => {
+  tipoActual = tipo;
+  document.getElementById('tipo-servicio').classList.toggle('active', tipo==='Servicio');
+  document.getElementById('tipo-producto').classList.toggle('active', tipo==='Producto');
+  document.getElementById('lbl-item').textContent = tipo==='Servicio' ? 'Servicio *' : 'Producto *';
+  document.getElementById('ac-item-input').placeholder = tipo==='Servicio' ? 'Buscar servicio...' : 'Buscar producto...';
+  acState.item.list = tipo==='Servicio' ? servicios.map(s=>s.nombreServicio||'') : productos.map(p=>p.descripcion||'');
+  document.getElementById('ac-item-input').value = '';
+  limpiarDatosItem();
+  document.getElementById('ac-item-input').focus();
+};
+
+/* ══════════════════════════════════
+   CARGAR DATOS DE SERVICIO / PRODUCTO
+══════════════════════════════════ */
+function limpiarDatosItem() {
+  selectedItem = null;
+  ['cq-svcid','cq-cat','cq-mano','cq-margen','cq-pventa'].forEach(id=>document.getElementById(id).textContent='—');
+  document.getElementById('v-precio').value='';
+  recalcTotal();
+}
+
+function cargarDatosItem(nombre) {
+  if (tipoActual==='Servicio') {
+    const s = servicios.find(x=>x.nombreServicio===nombre);
+    if (!s) { limpiarDatosItem(); return; }
+    const pv = parseFloat(s.precioFinal||s.precioVenta||0);
+    selectedItem = { servicioId:s.servicioId||s.key, codigoCategoria:s.codigoCategoria||'', manoObra:s.manoObra||0, margen:s.margen||0, precioVenta:pv, tipo:'Servicio', nombreServicio:nombre, costoBase:s.costoBase||0 };
+    document.getElementById('cq-svcid').textContent   = s.servicioId || s.key.substring(0,8);
+    document.getElementById('cq-cat').textContent     = s.codigoCategoria || '—';
+    document.getElementById('cq-mano').textContent    = 'S/ ' + fmt2(s.manoObra);
+    document.getElementById('cq-margen').textContent  = Math.round((parseFloat(s.margen||0))*100) + '%';
+    document.getElementById('cq-pventa').textContent  = 'S/ ' + fmt2(pv);
+    document.getElementById('v-precio').value = fmt2(pv);
+  } else {
+    const p = productos.find(x=>x.descripcion===nombre);
+    if (!p) { limpiarDatosItem(); return; }
+    const pv = parseFloat(p.precio||p.precioFinal||0);
+    selectedItem = { servicioId:p.codigo||p.key, codigoCategoria:p.codigo||p.key, manoObra:0, margen:0, precioVenta:pv, tipo:'Producto', nombreServicio:nombre, costoBase:pv };
+    document.getElementById('cq-svcid').textContent   = p.codigo || p.key.substring(0,8);
+    document.getElementById('cq-cat').textContent     = p.codigo || '—';
+    document.getElementById('cq-mano').textContent    = 'S/ 0.00';
+    document.getElementById('cq-margen').textContent  = '0%';
+    document.getElementById('cq-pventa').textContent  = 'S/ ' + fmt2(pv);
+    document.getElementById('v-precio').value = fmt2(pv);
+  }
+  recalcTotal();
+  document.getElementById('v-cantidad').focus();
+}
+
+/* ══════════════════════════════════
+   CALCULAR TOTAL LÍNEA
+══════════════════════════════════ */
+window.recalcTotal = () => {
+  const cant = parseInt(document.getElementById('v-cantidad').value)||0;
+  const pu   = parseFloat(document.getElementById('v-precio').value)||0;
+  const desc = parseFloat(document.getElementById('v-descuento').value)||0;
+  const total = Math.max(0, cant*pu - desc);
+  document.getElementById('total-linea').textContent = 'S/ ' + fmt2(total);
+};
+
+/* ══════════════════════════════════
+   AGREGAR VENTA A LISTA
+══════════════════════════════════ */
+window.agregarVenta = () => {
+  const cliente = document.getElementById('ac-cliente-input').value.trim();
+  const item    = document.getElementById('ac-item-input').value.trim();
+  const cant    = parseInt(document.getElementById('v-cantidad').value)||0;
+  const pu      = parseFloat(document.getElementById('v-precio').value)||0;
+  const desc    = parseFloat(document.getElementById('v-descuento').value)||0;
+  const estado  = document.getElementById('v-estado').value;
+  const obs     = document.getElementById('v-obs').value.trim();
+  const fecha   = document.getElementById('v-fecha').value;
+
+  if (!cliente) { showToast('Selecciona un cliente','wrn'); return; }
+  if (!item)    { showToast('Selecciona un servicio/producto','wrn'); return; }
+  if (!cant||cant<=0||!pu||pu<=0) { showToast('Revisa cantidad y precio','wrn'); return; }
+
+  const total = Math.max(0, cant*pu-desc);
+  const venta = {
+    fecha: fecha+' '+new Date().toLocaleTimeString('es-PE'),
+    codigoCliente:  clienteActual.codigo || '',
+    nombreCliente:  cliente,
+    servicioId:     selectedItem?.servicioId || '',
+    nombreServicio: item,
+    cantidad:       cant,
+    precioUnitario: pu,
+    descuento:      desc,
+    costoBase:      selectedItem?.costoBase||pu,
+    codigoCategoria:selectedItem?.codigoCategoria||'',
+    total:          parseFloat(total.toFixed(2)),
+    estadoPago:     estado,
+    observaciones:  obs,
+    tipoVenta:      tipoActual,
+    responsable:    sessionStorage.getItem('loggedUser')||'Jessica'
+  };
+
+  listaVentas.push(venta);
+  renderListaVentas();
+  limpiarLinea();
+  document.getElementById('ac-item-input').focus();
+  showToast(`✅ "${item.split(':')[1]?.trim()||item}" agregado`,'ok');
+};
+
+/* ══════════════════════════════════
+   RENDER LISTA TEMPORAL
+══════════════════════════════════ */
+function renderListaVentas() {
+  const tbody = document.getElementById('tbl-ventas');
+  if (!listaVentas.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Sin ventas agregadas aún</td></tr>';
+    document.getElementById('gran-total').textContent = 'S/ 0.00';
+    return;
+  }
+  tbody.innerHTML = listaVentas.map((v,i) => `
+    <tr class="${i===selectedRow?'selected':''}" onclick="selRow(${i})">
+      <td>${i+1}</td>
+      <td>${v.nombreCliente}</td>
+      <td style="text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${v.nombreServicio}">${v.nombreServicio}</td>
+      <td>${v.cantidad}</td>
+      <td>S/ ${fmt2(v.precioUnitario)}</td>
+      <td>S/ ${fmt2(v.descuento)}</td>
+      <td class="price-cell">S/ ${fmt2(v.total)}</td>
+      <td><span class="${v.estadoPago==='Pagado'?'b-pag':'b-pend'}">${v.estadoPago}</span></td>
+      <td><button onclick="event.stopPropagation();quitarFila(${i})" style="background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.25);border-radius:6px;color:#f1948a;cursor:pointer;font-size:11px;padding:3px 8px">🗑️</button></td>
+    </tr>`).join('');
+  const gran = listaVentas.reduce((s,v)=>s+v.total,0);
+  document.getElementById('gran-total').textContent = 'S/ ' + fmt2(gran);
+}
+
+window.selRow = i => { selectedRow = i; renderListaVentas(); };
+window.quitarFila = i => { listaVentas.splice(i,1); if(selectedRow>=listaVentas.length) selectedRow=-1; renderListaVentas(); };
+window.quitarSeleccionado = () => { if(selectedRow>=0) quitarFila(selectedRow); else showToast('Selecciona una fila','wrn'); };
+window.limpiarLista = () => {
+  if (!listaVentas.length||confirm('¿Limpiar toda la lista?')) { listaVentas=[]; selectedRow=-1; renderListaVentas(); }
+};
+
+function limpiarLinea() {
+  document.getElementById('ac-item-input').value='';
+  document.getElementById('v-cantidad').value='1';
+  document.getElementById('v-precio').value='';
+  document.getElementById('v-descuento').value='0.00';
+  document.getElementById('v-obs').value='';
+  document.getElementById('v-estado').value='Pagado';
+  limpiarDatosItem();
+  document.getElementById('total-linea').textContent='S/ 0.00';
+}
+
+/* ══════════════════════════════════
+   REGISTRAR EN FIREBASE
+══════════════════════════════════ */
+window.registrarEnFirebase = async () => {
+  if (!listaVentas.length) { showToast('Sin ventas en la lista','wrn'); return; }
+  const btn = document.getElementById('btn-registrar-db'); btn.disabled=true;
+  document.getElementById('lbl-reg').style.display='none'; document.getElementById('sp-reg').style.display='block';
+  try {
+    for (const v of listaVentas) {
+      await push(ref(db,'ventas'), { ...v, registradoEn: new Date().toISOString() });
+    }
+    showToast(`✅ ${listaVentas.length} venta(s) registrada(s) correctamente`, 'ok');
+    listaVentas=[]; selectedRow=-1; renderListaVentas();
+    document.getElementById('ac-item-input').focus();
+  } catch(err) {
+    console.error(err);
+    showToast('Error al registrar en Firebase','err');
+  }
+  btn.disabled=false;
+  document.getElementById('lbl-reg').style.display='inline';
+  document.getElementById('sp-reg').style.display='none';
+};
+
+/* ── INICIAR ── */
+cargarCatalogos();
+</script>
+</body>
+</html>

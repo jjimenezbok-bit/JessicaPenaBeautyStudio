@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Inventario Rápido | Escáner de Códigos de Barras</title>
+    <!-- Html5-QRCode Library for barcode scanning -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Font Awesome for icons (optional but nice) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #f0f4f8;
+            padding: 16px;
+            color: #1e2a3e;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        h1 small {
+            font-size: 0.8rem;
+            font-weight: normal;
+            background: #e9ecef;
+            padding: 5px 12px;
+            border-radius: 30px;
+        }
+
+        .app-header {
+            margin-bottom: 24px;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: #2c3e66;
+        }
+
+        .tab-btn.active {
+            background: #1e5f7a;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .panel {
+            display: none;
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .panel.active-panel {
+            display: block;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #1e5f7a;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0f4b62;
+        }
+
+        .btn-success {
+            background: #2c6e3c;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #d97706;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #b91c1c;
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #cbd5e1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            display: block;
+        }
+
+        th, td {
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f8fafc;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .product-table-wrapper {
+            overflow-x: auto;
+            max-height: 450px;
+            overflow-y: auto;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+            align-items: flex-end;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 130px;
+        }
+
+        .form-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #4b5563;
+        }
+
+        input, .form-group input {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 20px;
+            border: 1px solid #cbd5e1;
+            margin-top: 4px;
+        }
+
+        .scanner-area {
+            background: #1a2a32;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 24px;
+            color: white;
+        }
+
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .inventory-stats {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 16px 0;
+        }
+
+        .stat-card {
+            background: #f1f5f9;
+            padding: 12px 18px;
+            border-radius: 28px;
+        }
+
+        .badge {
+            background: #cbd5e1;
+            padding: 4px 8px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .discrepancy {
+            background: #fee2e2;
+            color: #a11;
+            font-weight: bold;
+        }
+
+        .match {
+            background: #e0f2e9;
+            color: #166534;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        @media (max-width: 700px) {
+            th, td {
+                font-size: 0.7rem;
+                padding: 8px 4px;
+            }
+            .btn {
+                padding: 6px 12px;
+                font-size: 0.75rem;
+            }
+            .card-title {
+                font-size: 1.2rem;
+            }
+        }
+
+        .flex-btns {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .manual-scan {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="app-header">
+        <h1>📦 InventiScan <small>Control de stock por código de barras</small></h1>
+        <p style="margin-top: 8px;">🔍 Escanea productos con la cámara, compara stock real vs esperado. Automatiza tu inventario.</p>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="products">📋 Gestión de Productos</button>
+        <button class="tab-btn" data-tab="inventory">📸 Conteo Rápido + Escáner</button>
+    </div>
+
+    <!-- PANEL PRODUCTOS (gestión de stock) -->
+    <div id="productsPanel" class="panel active-panel">
+        <div class="card-title">
+            <span><i class="fas fa-boxes"></i> Mi catálogo (stock base)</span>
+            <div class="flex-btns">
+                <button id="importSampleBtn" class="btn btn-primary"><i class="fas fa-database"></i> Cargar muestra</button>
+                <button id="clearAllBtn" class="btn btn-outline"><i class="fas fa-trash-alt"></i> Limpiar todo</button>
+            </div>
+        </div>
+        <div style="margin-bottom: 20px; background: #f9fafb; padding: 14px; border-radius: 24px;">
+            <div class="form-row" id="addProductForm">
+                <div class="form-group"><label>Código interno</label><input type="text" id="prodCode" placeholder="Ej: CAB0002"></div>
+                <div class="form-group"><label>Depósito</label><input type="text" id="prodDepo" placeholder="A01-1"></div>
+                <div class="form-group"><label>Descripción</label><input type="text" id="prodDesc" placeholder="Tinte marrón"></div>
+                <div class="form-group"><label>Código UPC (barras)</label><input type="text" id="prodUpc" placeholder="1234567890123"></div>
+                <div class="form-group"><label>Categoría</label><input type="text" id="prodCat" placeholder="Cabello"></div>
+                <div class="form-group"><label>Cantidad</label><input type="number" id="prodQty" value="0"></div>
+                <div class="form-group"><button id="addProductBtn" class="btn btn-primary" style="margin-top: 22px;"><i class="fas fa-plus"></i> Agregar</button></div>
+            </div>
+        </div>
+
+        <div class="product-table-wrapper">
+            <table id="productsTable">
+                <thead>
+                    <tr><th>Código</th><th>Depósito</th><th>Descripción</th><th>UPC (barras)</th><th>Categoría</th><th>Cantidad (Stock)</th><th>Acciones</th></tr>
+                </thead>
+                <tbody id="productsTbody">
+                    <tr><td colspan="7">Cargando productos o sin datos...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="inventory-stats">
+            <span class="stat-card"><i class="fas fa-cubes"></i> Total SKUs: <strong id="totalSkus">0</strong></span>
+            <span class="stat-card"><i class="fas fa-cart-shopping"></i> Unidades totales: <strong id="totalUnits">0</strong></span>
+        </div>
+    </div>
+
+    <!-- PANEL INVENTARIO (ESCÁNER + conteo físico) -->
+    <div id="inventoryPanel" class="panel">
+        <div class="card-title">
+            <span><i class="fas fa-camera-retro"></i> Conteo por escáner / cámara</span>
+            <div class="flex-btns">
+                <button id="startScannerBtn" class="btn btn-success"><i class="fas fa-video"></i> Iniciar escáner</button>
+                <button id="stopScannerBtn" class="btn btn-outline"><i class="fas fa-stop"></i> Detener cámara</button>
+                <button id="resetSessionBtn" class="btn btn-warning"><i class="fas fa-undo-alt"></i> Reiniciar conteo</button>
+                <button id="applyStockBtn" class="btn btn-primary"><i class="fas fa-check-double"></i> Finalizar y actualizar stock</button>
+            </div>
+        </div>
+        <div class="scanner-area">
+            <div id="reader" style="width:100%; min-height: 280px;"></div>
+            <div class="manual-scan">
+                <input type="text" id="manualBarcode" placeholder="📱 Escribe o pega código de barras manualmente" style="flex:1">
+                <button id="manualScanBtn" class="btn btn-primary">➕ Sumar +1</button>
+            </div>
+            <div id="lastScanMsg" style="margin-top: 10px; font-size: 0.8rem; background: #2d3e44; padding: 8px; border-radius: 40px; text-align: center;">
+                📡 Esperando escaneo...
+            </div>
+        </div>
+
+        <div style="margin-top: 15px;">
+            <h3><i class="fas fa-clipboard-list"></i> Comparativa: Stock esperado vs Cantidad escaneada (física)</h3>
+            <div class="product-table-wrapper" style="max-height: 400px;">
+                <table id="inventoryCompareTable">
+                    <thead>
+                        <tr><th>Código</th><th>Descripción</th><th>Depósito</th><th>Stock Sistema</th><th>Escaneado (físico)</th><th>Diferencia</th><th>Ajuste manual</th></tr>
+                    </thead>
+                    <tbody id="inventoryTbody">
+                        <tr><td colspan="7">Inicia sesión de conteo o carga productos</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="inventory-stats" id="inventorySummary">
+                <span class="stat-card">✅ Productos completos: <strong id="completedCount">0</strong></span>
+                <span class="stat-card">⚠️ Discrepancias: <strong id="discrepCount">0</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- DATA MODEL ----------
+    let products = [];      // each: { code, deposito, descripcion, upc, categoria, cantidad }
+    let scannedCounts = {}; // mapa: code -> cantidad escaneada (física)
+    let html5QrCode = null;
+    let isScannerRunning = false;
+    let currentActiveTab = "products";
+
+    // ---------- HELPER: Load/Save localStorage ----------
+    function saveProductsToLocal() {
+        localStorage.setItem("inventoryApp_products", JSON.stringify(products));
+    }
+
+    function loadProductsFromLocal() {
+        const stored = localStorage.getItem("inventoryApp_products");
+        if (stored) {
+            products = JSON.parse(stored);
+        } else {
+            // Cargar muestra por defecto (los datos del ejemplo + algunos adicionales)
+            products = [
+                { code: "CAB0001", deposito: "A01-1", descripcion: "ACRILOE TINTE PERMUTO Y MARRÓN TB 90 gr", upc: "1234567897896", categoria: "CABELLO", cantidad: 18 },
+                { code: "CEJ0001", deposito: "A01-1", descripcion: "PALITOS DE NARANJA 100 UN", upc: "1234879874564", categoria: "CEJAS", cantidad: 23 },
+                { code: "FAC0001", deposito: "A01-2", descripcion: "FLOR DE LOTO DE NIGERIA DE 20 UN", upc: "1234568791230", categoria: "FACIALES", cantidad: 18 },
+                { code: "MAN0001", deposito: "A01-2", descripcion: "MONOMETRO UCERI BLANCO DE 100 ML", upc: "1234569874563", categoria: "MANICURA", cantidad: 4 },
+                { code: "MAQ0001", deposito: "A01-3", descripcion: "PALETA DE COLORES PROX-BI PI DE 100 ML", upc: "3214579875263", categoria: "MAQUILLAJE", cantidad: 18 },
+                { code: "TIN001", deposito: "B02-1", descripcion: "TINTE RUBIO CLARO 120ml", upc: "7501234567890", categoria: "CABELLO", cantidad: 12 },
+                { code: "CEP001", deposito: "C03-2", descripcion: "CEPILLO REDONDO PROFESIONAL", upc: "7801234567891", categoria: "HERRAMIENTAS", cantidad: 8 }
+            ];
+            saveProductsToLocal();
+        }
+        renderProductsTable();
+        updateInventoryStats();
+    }
+
+    function updateInventoryStats() {
+        const totalSkus = products.length;
+        const totalUnits = products.reduce((sum, p) => sum + (p.cantidad || 0), 0);
+        document.getElementById("totalSkus").innerText = totalSkus;
+        document.getElementById("totalUnits").innerText = totalUnits;
+    }
+
+    // Render tabla de gestión
+    function renderProductsTable() {
+        const tbody = document.getElementById("productsTbody");
+        if (!tbody) return;
+        if (products.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7">📭 No hay productos. Agrega uno o carga muestra.</td></tr>';
+            updateInventoryStats();
+            return;
+        }
+        tbody.innerHTML = "";
+        products.forEach((prod, idx) => {
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = prod.code;
+            row.insertCell(1).innerText = prod.deposito;
+            row.insertCell(2).innerText = prod.descripcion;
+            row.insertCell(3).innerText = prod.upc;
+            row.insertCell(4).innerText = prod.categoria;
+            row.insertCell(5).innerText = prod.cantidad;
+            const actionsCell = row.insertCell(6);
+            const editBtn = document.createElement("button");
+            editBtn.className = "btn btn-outline";
+            editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+            editBtn.style.marginRight = "6px";
+            editBtn.onclick = () => editProduct(idx);
+            const delBtn = document.createElement("button");
+            delBtn.className = "btn btn-outline";
+            delBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            delBtn.onclick = () => deleteProduct(idx);
+            actionsCell.appendChild(editBtn);
+            actionsCell.appendChild(delBtn);
+        });
+        updateInventoryStats();
+    }
+
+    function editProduct(index) {
+        const prod = products[index];
+        document.getElementById("prodCode").value = prod.code;
+        document.getElementById("prodDepo").value = prod.deposito;
+        document.getElementById("prodDesc").value = prod.descripcion;
+        document.getElementById("prodUpc").value = prod.upc;
+        document.getElementById("prodCat").value = prod.categoria;
+        document.getElementById("prodQty").value = prod.cantidad;
+        // Delete original after add logic: we will replace after new add
+        products.splice(index, 1);
+        saveProductsToLocal();
+        renderProductsTable();
+        // if inventory session active, reset maybe? mejor avisar
+        if (isInventorySessionActive()) {
+            alert("⚠️ Has editado productos. El conteo activo se reiniciará para consistencia.");
+            resetInventorySession();
+        }
+    }
+
+    function deleteProduct(index) {
+        if (confirm("¿Eliminar este producto del inventario?")) {
+            products.splice(index, 1);
+            saveProductsToLocal();
+            renderProductsTable();
+            if (isInventorySessionActive()) resetInventorySession();
+        }
+    }
+
+    function addProductFromForm() {
+        const code = document.getElementById("prodCode").value.trim();
+        const deposito = document.getElementById("prodDepo").value.trim();
+        const descripcion = document.getElementById("prodDesc").value.trim();
+        const upc = document.getElementById("prodUpc").value.trim();
+        const categoria = document.getElementById("prodCat").value.trim();
+        const cantidad = parseInt(document.getElementById("prodQty").value) || 0;
+        if (!code || !upc || !descripcion) {
+            alert("Código interno, UPC y descripción son obligatorios");
+            return;
+        }
+        if (products.some(p => p.code === code)) {
+            alert("El código interno ya existe, usa uno distinto.");
+            return;
+        }
+        if (products.some(p => p.upc === upc)) {
+            if(!confirm("El UPC ya está registrado en otro producto. ¿Deseas agregar de todas formas?")) return;
+        }
+        products.push({ code, deposito, descripcion, upc, categoria, cantidad });
+        saveProductsToLocal();
+        renderProductsTable();
+        // Limpiar formulario
+        document.getElementById("prodCode").value = "";
+        document.getElementById("prodDepo").value = "";
+        document.getElementById("prodDesc").value = "";
+        document.getElementById("prodUpc").value = "";
+        document.getElementById("prodCat").value = "";
+        document.getElementById("prodQty").value = "0";
+        if (isInventorySessionActive()) resetInventorySession();
+    }
+
+    // ---------- INVENTARIO (conteo) ----------
+    function isInventorySessionActive() {
+        return scannedCounts && Object.keys(scannedCounts).length > 0;
+    }
+
+    function initInventoryCounters() {
+        // Resetea los contadores escaneados basados en productos actuales
+        const newCounts = {};
+        products.forEach(p => { newCounts[p.code] = 0; });
+        scannedCounts = newCounts;
+        renderInventoryTable();
+    }
+
+    function resetInventorySession() {
+        if (html5QrCode && isScannerRunning) {
+            stopScanner();
+        }
+        initInventoryCounters();
+        renderInventoryTable();
+        document.getElementById("lastScanMsg").innerHTML = "🔄 Sesión reiniciada. Escanea productos con cámara o manual.";
+        updateInventorySummary();
+    }
+
+    function incrementScannedCount(productCode, upcValue = null) {
+        const product = products.find(p => p.code === productCode);
+        if (!product) return false;
+        if (scannedCounts[productCode] === undefined) scannedCounts[productCode] = 0;
+        scannedCounts[productCode] += 1;
+        renderInventoryTable();
+        const msg = `✅ +1: ${product.descripcion} (ahora: ${scannedCounts[productCode]} escaneados)`;
+        document.getElementById("lastScanMsg").innerHTML = msg;
+        updateInventorySummary();
+        return true;
+    }
+
+    function decrementScannedCount(productCode) {
+        if (scannedCounts[productCode] > 0) {
+            scannedCounts[productCode] -= 1;
+            renderInventoryTable();
+            updateInventorySummary();
+            const product = products.find(p => p.code === productCode);
+            document.getElementById("lastScanMsg").innerHTML = `↩️ Decrementado: ${product?.descripcion} (ahora ${scannedCounts[productCode]})`;
+        }
+    }
+
+    function renderInventoryTable() {
+        const tbody = document.getElementById("inventoryTbody");
+        if (!tbody) return;
+        if (products.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7">No hay productos registrados. Ve a la pestaña "Gestión de Productos" y agrega stock.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = "";
+        for (let prod of products) {
+            const scanned = scannedCounts[prod.code] || 0;
+            const diff = scanned - prod.cantidad;
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = prod.code;
+            row.insertCell(1).innerText = prod.descripcion.substring(0, 30);
+            row.insertCell(2).innerText = prod.deposito;
+            row.insertCell(3).innerText = prod.cantidad;
+            const scannedCell = row.insertCell(4);
+            scannedCell.innerText = scanned;
+            const diffCell = row.insertCell(5);
+            diffCell.innerText = diff === 0 ? "✓ Coincide" : (diff > 0 ? `+${diff} excedente` : `${diff} faltante`);
+            if (diff !== 0) diffCell.className = "discrepancy";
+            else diffCell.className = "match";
+            const actionsCell = row.insertCell(6);
+            const plusBtn = document.createElement("button");
+            plusBtn.innerHTML = '<i class="fas fa-plus-circle"></i>';
+            plusBtn.className = "btn btn-outline";
+            plusBtn.style.marginRight = "5px";
+            plusBtn.onclick = () => incrementScannedCount(prod.code);
+            const minusBtn = document.createElement("button");
+            minusBtn.innerHTML = '<i class="fas fa-minus-circle"></i>';
+            minusBtn.className = "btn btn-outline";
+            minusBtn.onclick = () => decrementScannedCount(prod.code);
+            actionsCell.appendChild(plusBtn);
+            actionsCell.appendChild(minusBtn);
+        }
+        updateInventorySummary();
+    }
+
+    function updateInventorySummary() {
+        if (!products.length) return;
+        let completed = 0;
+        let discrepancies = 0;
+        for (let prod of products) {
+            const scanned = scannedCounts[prod.code] || 0;
+            if (scanned === prod.cantidad) completed++;
+            if (scanned !== prod.cantidad) discrepancies++;
+        }
+        document.getElementById("completedCount").innerText = completed;
+        document.getElementById("discrepCount").innerText = discrepancies;
+    }
+
+    function applyScannedToStock() {
+        let changes = 0;
+        for (let prod of products) {
+            const scannedVal = scannedCounts[prod.code];
+            if (scannedVal !== undefined && scannedVal !== prod.cantidad) {
+                prod.cantidad = scannedVal;
+                changes++;
+            }
+        }
+        if (changes > 0) {
+            saveProductsToLocal();
+            renderProductsTable();
+            alert(`✅ Stock actualizado: ${changes} producto(s) modificados según conteo físico.`);
+        } else {
+            alert("📦 No hay diferencias, todo coincide.");
+        }
+        // reiniciamos sesión de conteo para reflejar nuevo stock
+        initInventoryCounters();
+        renderInventoryTable();
+    }
+
+    // -------------- ESCÁNER CÓDIGO DE BARRAS --------------
+    async function startScanner() {
+        if (html5QrCode && isScannerRunning) {
+            alert("Escáner ya está activo.");
+            return;
+        }
+        if (products.length === 0) {
+            alert("⚠️ No hay productos cargados. Primero agrega productos o carga muestra.");
+            return;
+        }
+        // ensure inventory counters are initialized
+        if (Object.keys(scannedCounts).length === 0) initInventoryCounters();
+        const readerDiv = document.getElementById("reader");
+        readerDiv.innerHTML = "";
+        html5QrCode = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 250, height: 200 } };
+        try {
+            await html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError);
+            isScannerRunning = true;
+            document.getElementById("lastScanMsg").innerHTML = "📷 Cámara activada. Acerca el código de barras. (Evita movimientos bruscos)";
+        } catch (err) {
+            console.error(err);
+            alert("No se pudo acceder a la cámara. Asegura permisos y HTTPS. Usa entrada manual.");
+            isScannerRunning = false;
+        }
+    }
+
+    let lastScannedUpc = "";
+    let lastScannedTime = 0;
+    function onScanSuccess(decodedText, decodedResult) {
+        // anti-spam: mismo código en menos de 800ms? ignorar
+        const now = Date.now();
+        if (decodedText === lastScannedUpc && (now - lastScannedTime) < 800) {
+            return;
+        }
+        lastScannedUpc = decodedText;
+        lastScannedTime = now;
+        const upcClean = decodedText.trim();
+        const product = products.find(p => p.upc === upcClean);
+        if (product) {
+            incrementScannedCount(product.code);
+        } else {
+            document.getElementById("lastScanMsg").innerHTML = `❌ Código ${upcClean} no registrado en inventario. Verifica UPC.`;
+            // beep opcional? solo notificación visual
+        }
+    }
+
+    function onScanError(errorMessage) {
+        // silencioso, solo para depuración
+        // console.warn(errorMessage);
+    }
+
+    function stopScanner() {
+        if (html5QrCode && isScannerRunning) {
+            html5QrCode.stop().then(() => {
+                isScannerRunning = false;
+                document.getElementById("lastScanMsg").innerHTML = "⏹️ Escáner detenido. Puedes usar entrada manual.";
+            }).catch(err => console.warn(err));
+        }
+    }
+
+    function manualScanAdd() {
+        const manualCode = document.getElementById("manualBarcode").value.trim();
+        if (!manualCode) {
+            alert("Ingresa un código de barras UPC");
+            return;
+        }
+        const product = products.find(p => p.upc === manualCode);
+        if (product) {
+            incrementScannedCount(product.code);
+            document.getElementById("manualBarcode").value = "";
+        } else {
+            alert(`Código "${manualCode}" no existe en el inventario. Revisa el UPC en gestión.`);
+        }
+    }
+
+    // -------------- UI TABS --------------
+    function switchTab(tabId) {
+        document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active-panel'));
+        document.getElementById(`${tabId}Panel`).classList.add('active-panel');
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+        currentActiveTab = tabId;
+        if (tabId === 'inventory') {
+            if (Object.keys(scannedCounts).length === 0 && products.length > 0) initInventoryCounters();
+            renderInventoryTable();
+        } else if (tabId === 'products') {
+            renderProductsTable();
+            if (isScannerRunning) stopScanner();
+        }
+    }
+
+    // -------------- EVENT LISTENERS --------------
+    document.getElementById("addProductBtn").addEventListener("click", addProductFromForm);
+    document.getElementById("importSampleBtn").addEventListener("click", () => {
+        if (confirm("¿Cargar datos de ejemplo? Esto reemplazará tu inventario actual.")) {
+            products = [
+                { code: "CAB0001", deposito: "A01-1", descripcion: "ACRILOE TINTE PERMUTO Y MARRÓN TB 90 gr", upc: "1234567897896", categoria: "CABELLO", cantidad: 18 },
+                { code: "CEJ0001", deposito: "A01-1", descripcion: "PALITOS DE NARANJA 100 UN", upc: "1234879874564", categoria: "CEJAS", cantidad: 23 },
+                { code: "FAC0001", deposito: "A01-2", descripcion: "FLOR DE LOTO DE NIGERIA DE 20 UN", upc: "1234568791230", categoria: "FACIALES", cantidad: 18 },
+                { code: "MAN0001", deposito: "A01-2", descripcion: "MONOMETRO UCERI BLANCO DE 100 ML", upc: "1234569874563", categoria: "MANICURA", cantidad: 4 },
+                { code: "MAQ0001", deposito: "A01-3", descripcion: "PALETA DE COLORES PROX-BI PI DE 100 ML", upc: "3214579875263", categoria: "MAQUILLAJE", cantidad: 18 }
+            ];
+            saveProductsToLocal();
+            renderProductsTable();
+            resetInventorySession();
+        }
+    });
+    document.getElementById("clearAllBtn").addEventListener("click", () => {
+        if (confirm("⚠️ Eliminar TODOS los productos. ¿Continuar?")) {
+            products = [];
+            saveProductsToLocal();
+            renderProductsTable();
+            resetInventorySession();
+        }
+    });
+    document.getElementById("startScannerBtn").addEventListener("click", startScanner);
+    document.getElementById("stopScannerBtn").addEventListener("click", stopScanner);
+    document.getElementById("resetSessionBtn").addEventListener("click", resetInventorySession);
+    document.getElementById("applyStockBtn").addEventListener("click", applyScannedToStock);
+    document.getElementById("manualScanBtn").addEventListener("click", manualScanAdd);
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const tab = btn.getAttribute("data-tab");
+            if (tab) switchTab(tab);
+        });
+    });
+
+    // inicializar
+    loadProductsFromLocal();
+    initInventoryCounters();
+</script>
+</body>
+</html>

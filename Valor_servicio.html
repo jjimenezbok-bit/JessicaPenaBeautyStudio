@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Studio Price Pro | Calculadora + Firebase</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- SheetJS para importar Excel/CSV -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at top left, #1f0030, #0a0012);
+            padding: 1.5rem 1rem;
+            min-height: 100vh;
+        }
+        :root {
+            --purple-bright: #BB19E2;
+            --purple-medium: #8E04BB;
+            --purple-deep: #5A007F;
+        }
+        .container { max-width: 1600px; margin: 0 auto; }
+        /* Resumen compacto */
+        .summary-header {
+            background: linear-gradient(135deg, var(--purple-deep), var(--purple-medium));
+            border-radius: 1.6rem;
+            padding: 0.8rem 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 15px 25px -10px rgba(0,0,0,0.4);
+            border: 1px solid rgba(187, 25, 226, 0.3);
+        }
+        .summary-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: space-between;
+            text-align: center;
+        }
+        .summary-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(6px);
+            border-radius: 1.2rem;
+            padding: 0.5rem 0.6rem;
+            flex: 1;
+            min-width: 100px;
+            border: 1px solid rgba(187, 25, 226, 0.5);
+        }
+        .summary-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 500; color: #eccdff; }
+        .summary-value { font-size: 1.4rem; font-weight: 800; color: white; line-height: 1.2; margin-top: 4px; }
+        .summary-sub { font-size: 0.55rem; color: #dbbaff; }
+        .subtotal-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.65rem;
+            color: #dbbaff;
+            padding: 0 0.2rem;
+        }
+        /* Parámetros y botones */
+        .params-panel {
+            background: rgba(0,0,0,0.5);
+            border-radius: 1.2rem;
+            padding: 0.7rem 1.2rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: space-between;
+            align-items: flex-end;
+            border: 1px solid var(--purple-medium);
+        }
+        .param-item { flex: 1; min-width: 130px; }
+        .param-item label { display: block; font-size: 0.7rem; font-weight: 600; color: #cfb3e6; margin-bottom: 3px; }
+        .param-item input {
+            width: 100%;
+            background: #2a0a38;
+            border: 1px solid var(--purple-medium);
+            padding: 6px 10px;
+            border-radius: 1rem;
+            color: white;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .button-bar {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-bottom: 1.5rem;
+        }
+        .btn {
+            background: var(--purple-deep);
+            border: none;
+            padding: 8px 18px;
+            border-radius: 2rem;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+        .btn-primary { background: var(--purple-bright); }
+        .btn-primary:hover { background: #9f0fc7; transform: scale(0.98); }
+        .btn-danger { background: #7a2e5a; }
+        .btn-danger:hover { background: #a03a75; }
+        .two-columns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .card {
+            background: rgba(20, 5, 30, 0.7);
+            backdrop-filter: blur(12px);
+            border-radius: 1.8rem;
+            padding: 1.2rem;
+            border: 1px solid var(--purple-bright);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+        .card h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--purple-bright);
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--purple-bright);
+            padding-left: 12px;
+        }
+        .dynamic-group { margin-bottom: 1.5rem; }
+        .product-row {
+            background: rgba(90, 0, 127, 0.3);
+            border-radius: 1rem;
+            padding: 0.6rem;
+            margin-bottom: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: flex-end;
+            border-left: 3px solid var(--purple-bright);
+        }
+        .prod-name { flex: 2; min-width: 140px; position: relative; }
+        .prod-name input {
+            width: 100%;
+            background: #1f072b;
+            border: 1px solid #8E04BB;
+            padding: 6px 8px;
+            border-radius: 1rem;
+            color: white;
+            font-size: 0.8rem;
+        }
+        .suggestions {
+            position: absolute;
+            background: #2a0a38;
+            border: 1px solid var(--purple-bright);
+            border-radius: 0.8rem;
+            width: 100%;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 10;
+            margin-top: 2px;
+        }
+        .suggestions div { padding: 6px 10px; cursor: pointer; font-size: 0.75rem; color: white; border-bottom: 1px solid #5a2a7a; }
+        .suggestions div:hover { background: var(--purple-medium); }
+        .price-info {
+            min-width: 130px;
+            font-size: 0.7rem;
+            color: #BB19E2;
+            background: #1f072b;
+            padding: 6px 8px;
+            border-radius: 1rem;
+            text-align: center;
+        }
+        .qty-input { width: 110px; }
+        .qty-input input {
+            width: 100%;
+            background: #1f072b;
+            border: 1px solid #8E04BB;
+            padding: 6px 8px;
+            border-radius: 1rem;
+            color: white;
+        }
+        .product-row button {
+            background: var(--purple-deep);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+        }
+        .add-btn {
+            background: var(--purple-deep);
+            border: none;
+            padding: 6px 16px;
+            border-radius: 2rem;
+            color: white;
+            font-weight: bold;
+            margin-top: 6px;
+            cursor: pointer;
+        }
+        .static-field { margin-bottom: 0.8rem; }
+        .static-field label { display: block; font-size: 0.75rem; color: #e2c5ff; margin-bottom: 3px; }
+        .static-field input {
+            width: 100%;
+            background: #2a0a38;
+            border: 1px solid #8E04BB;
+            padding: 6px 12px;
+            border-radius: 1rem;
+            color: white;
+        }
+        .footer-note { text-align: center; color: #b77dd9; font-size: 0.65rem; margin-top: 1rem; }
+        @media (max-width: 780px) { body { padding: 1rem; } .two-columns { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- Resumen compacto -->
+    <div class="summary-header">
+        <div class="summary-grid">
+            <div class="summary-card"><div class="summary-label">💰 COSTO DIRECTO</div><div class="summary-value" id="resumenCD">S/ 0.00</div><div class="summary-sub">productos + mano obra + depreciación</div></div>
+            <div class="summary-card"><div class="summary-label">🏛️ GASTOS GENERALES</div><div class="summary-value" id="resumenGG">S/ 0.00</div><div class="summary-sub">por sesión</div></div>
+            <div class="summary-card"><div class="summary-label">📈 MARGEN</div><div class="summary-value" id="resumenMargen">S/ 0.00</div><div class="summary-sub">sobre subtotal</div></div>
+            <div class="summary-card"><div class="summary-label">🏷️ PRECIO FINAL</div><div class="summary-value" id="resumenPrecio">S/ 0.00</div><div class="summary-sub">valor de venta</div></div>
+        </div>
+        <div class="subtotal-row">
+            <span>📊 Subtotal (directo + gastos gen): <strong id="subtotalResumen">S/ 0.00</strong></span>
+            <span>⚡ Gasto general por hora: <strong id="gastoHoraRes">S/ 0.00</strong></span>
+        </div>
+    </div>
+
+    <!-- Barra de botones -->
+    <div class="button-bar">
+        <button class="btn" id="btnLimpiar">🧹 Limpiar todo</button>
+        <button class="btn" id="btnImportar">📂 Importar Excel/CSV</button>
+        <button class="btn btn-primary" id="btnGuardar">💾 Guardar</button>
+        <input type="file" id="fileImport" accept=".xlsx, .xls, .csv" style="display: none;">
+    </div>
+
+    <!-- Parámetros de negocio -->
+    <div class="params-panel">
+        <div class="param-item"><label>📆 Horas productivas / mes</label><input type="number" id="horasProductivas" value="110" step="1"></div>
+        <div class="param-item"><label>⏱️ Duración sesión (horas)</label><input type="number" id="duracionSesion" value="1" step="0.25"></div>
+        <div class="param-item"><label>🎯 Margen ganancia (%)</label><input type="number" id="margenGanancia" value="40" step="1"></div>
+    </div>
+
+    <div class="two-columns">
+        <!-- COSTOS DIRECTOS -->
+        <div class="card">
+            <h2>💎 COSTOS DIRECTOS (por sesión)</h2>
+            <div class="dynamic-group">
+                <label style="color:#BB19E2; font-weight:bold;">🧴 Productos utilizados</label>
+                <div id="productosContainer"></div>
+                <button type="button" class="add-btn" id="agregarProductoBtn">+ Agregar producto</button>
+                <div style="font-size:0.65rem; color:#b28fd6; margin-top:6px;">🔍 Escribe el nombre, elige la compra y define la cantidad usada. El costo se calcula automáticamente.</div>
+            </div>
+            <div class="static-field"><label>👩‍⚕️ Mano de obra directa (valor por hora)</label><input type="number" id="manoObraHora" value="10.41" step="0.5"></div>
+            <div class="static-field"><label>⚡ Depreciación equipo láser (por sesión)</label><input type="number" id="depreciacionEquipo" value="5.00" step="0.5"></div>
+            <div class="static-field"><label>📦 Otros costos directos (por sesión)</label><input type="number" id="otrosDirectos" value="0.00" step="0.5"></div>
+        </div>
+
+        <!-- GASTOS GENERALES -->
+        <div class="card">
+            <h2>🏢 GASTOS GENERALES (mensuales)</h2>
+            <div class="static-field"><label>🏠 Alquiler del local</label><input type="number" id="alquiler" value="800" step="50"></div>
+            <div class="static-field"><label>💡 Electricidad</label><input type="number" id="electricidad" value="150" step="20"></div>
+            <div class="static-field"><label>💧 Agua</label><input type="number" id="agua" value="30" step="10"></div>
+            <div class="static-field"><label>🌐 Internet / Teléfono</label><input type="number" id="internet" value="80" step="10"></div>
+            <div class="static-field"><label>📢 Publicidad / Marketing</label><input type="number" id="publicidad" value="200" step="20"></div>
+            <div class="static-field"><label>🧾 Contador / Asesor legal</label><input type="number" id="contador" value="100" step="20"></div>
+            <div class="static-field"><label>🧹 Limpieza general</label><input type="number" id="limpieza" value="50" step="10"></div>
+            <div class="static-field"><label>⚠️ Imprevistos (mensual)</label><input type="number" id="imprevistos" value="70" step="10"></div>
+            <div class="static-field"><label>➕ Otros gastos generales</label><input type="number" id="otrosGenerales" value="0" step="20"></div>
+        </div>
+    </div>
+    <div class="footer-note">✅ Los precios de productos se obtienen de Firebase (últimas compras). Guardar almacena toda la configuración en "v_servicio".</div>
+</div>
+
+<script>
+    // ---------- CONFIGURACIÓN FIREBASE ----------
+    const firebaseConfig = {
+        // Reemplaza con tu configuración real. Para este ejemplo usamos la URL pública.
+        databaseURL: "https://jessicapenabeautystudio-default-rtdb.europe-west1.firebasedatabase.app"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Variable global para almacenar todas las compras (se carga al inicio)
+    let todasLasCompras = [];
+
+    // Cargar compras desde Firebase
+    async function cargarCompras() {
+        try {
+            const snapshot = await db.ref("compras").once("value");
+            const data = snapshot.val();
+            if (!data) {
+                console.warn("No hay datos de compras");
+                return [];
+            }
+            // Convertir objeto a array y normalizar
+            const comprasArray = Object.values(data).map(compra => {
+                // Calcular precioConIGV si no existe
+                let precioConIGV = compra.precioConIGV;
+                if (!precioConIGV && compra.precio) {
+                    const igv = compra.igvPct ? compra.igvPct / 100 : 0.18;
+                    precioConIGV = compra.precio * (1 + igv);
+                }
+                if (!precioConIGV && compra.total) precioConIGV = compra.total;
+                return {
+                    producto: compra.producto || "SIN NOMBRE",
+                    fecha: compra.fecha || "",
+                    cantidadComprada: compra.cantidad || 1,
+                    unidad: compra.unidad || "unidad",
+                    precioConIGV: precioConIGV || 0,
+                    precioUnitario: (precioConIGV || 0) / (compra.cantidad || 1)
+                };
+            });
+            return comprasArray;
+        } catch (e) {
+            console.error("Error cargando compras:", e);
+            return [];
+        }
+    }
+
+    // ---------- PRODUCTOS DINÁMICOS ----------
+    let productos = []; // { id, nombre, compraSeleccionada, cantidadUsada, costoPorSesion }
+    let nextId = 1;
+
+    const productosContainer = document.getElementById("productosContainer");
+    const agregarBtn = document.getElementById("agregarProductoBtn");
+
+    function renderProductos() {
+        productosContainer.innerHTML = "";
+        productos.forEach(prod => {
+            const row = document.createElement("div");
+            row.className = "product-row";
+            row.dataset.id = prod.id;
+
+            const nameDiv = document.createElement("div");
+            nameDiv.className = "prod-name";
+            const inputName = document.createElement("input");
+            inputName.type = "text";
+            inputName.placeholder = "Ej: GEL DE LT OXI";
+            inputName.value = prod.nombre;
+            inputName.autocomplete = "off";
+            nameDiv.appendChild(inputName);
+
+            const suggestionsDiv = document.createElement("div");
+            suggestionsDiv.className = "suggestions";
+            suggestionsDiv.style.display = "none";
+            nameDiv.appendChild(suggestionsDiv);
+
+            let timeoutId;
+            inputName.addEventListener("input", (e) => {
+                const term = e.target.value.trim();
+                prod.nombre = term;
+                if (timeoutId) clearTimeout(timeoutId);
+                if (term.length < 2) {
+                    suggestionsDiv.style.display = "none";
+                    suggestionsDiv.innerHTML = "";
+                    return;
+                }
+                timeoutId = setTimeout(() => {
+                    const coincidencias = todasLasCompras.filter(c => c.producto.toLowerCase().includes(term.toLowerCase()));
+                    const productosUnicos = [...new Map(coincidencias.map(c => [c.producto.toLowerCase(), c])).values()];
+                    if (productosUnicos.length === 0) {
+                        suggestionsDiv.style.display = "none";
+                        return;
+                    }
+                    suggestionsDiv.innerHTML = "";
+                    productosUnicos.forEach(p => {
+                        const opcion = document.createElement("div");
+                        opcion.textContent = p.producto;
+                        opcion.addEventListener("click", () => {
+                            inputName.value = p.producto;
+                            prod.nombre = p.producto;
+                            cargarSugerenciasCompra(prod, suggestionsDiv, inputName);
+                        });
+                        suggestionsDiv.appendChild(opcion);
+                    });
+                    suggestionsDiv.style.display = "block";
+                }, 300);
+            });
+
+            const priceDiv = document.createElement("div");
+            priceDiv.className = "price-info";
+            priceDiv.innerHTML = prod.compraSeleccionada ? 
+                `${prod.compraSeleccionada.fecha} | ${prod.compraSeleccionada.precioUnitario.toFixed(3)} / ${prod.compraSeleccionada.unidad}` : 
+                "Selecciona compra ↓";
+
+            const selectBtn = document.createElement("button");
+            selectBtn.textContent = "📋";
+            selectBtn.style.background = "#8E04BB";
+            selectBtn.addEventListener("click", () => {
+                if (!prod.nombre) { alert("Primero escribe el nombre del producto"); return; }
+                cargarSugerenciasCompra(prod, suggestionsDiv, inputName);
+            });
+
+            const qtyDiv = document.createElement("div");
+            qtyDiv.className = "qty-input";
+            const qtyInput = document.createElement("input");
+            qtyInput.type = "number";
+            qtyInput.placeholder = `Cantidad usada (${prod.compraSeleccionada?.unidad || "unidad"})`;
+            qtyInput.value = prod.cantidadUsada;
+            qtyInput.step = "0.1";
+            qtyInput.addEventListener("input", (e) => {
+                prod.cantidadUsada = parseFloat(e.target.value) || 0;
+                recalcularCostoProducto(prod);
+                priceDiv.innerHTML = prod.compraSeleccionada ? 
+                    `${prod.compraSeleccionada.fecha} | ${prod.compraSeleccionada.precioUnitario.toFixed(3)} / ${prod.compraSeleccionada.unidad}` : 
+                    "Selecciona compra";
+                actualizarTodo();
+            });
+            qtyDiv.appendChild(qtyInput);
+
+            const eliminarBtn = document.createElement("button");
+            eliminarBtn.textContent = "🗑️";
+            eliminarBtn.onclick = () => {
+                productos = productos.filter(p => p.id !== prod.id);
+                renderProductos();
+                actualizarTodo();
+            };
+
+            row.appendChild(nameDiv);
+            row.appendChild(priceDiv);
+            row.appendChild(selectBtn);
+            row.appendChild(qtyDiv);
+            row.appendChild(eliminarBtn);
+            productosContainer.appendChild(row);
+        });
+    }
+
+    function cargarSugerenciasCompra(prod, suggestionsDiv, inputName) {
+        const nombre = prod.nombre;
+        if (!nombre) return;
+        const ultimas = todasLasCompras.filter(c => c.producto.toLowerCase() === nombre.toLowerCase())
+            .sort((a,b) => new Date(b.fecha) - new Date(a.fecha))
+            .slice(0,3);
+        if (ultimas.length === 0) {
+            alert("No hay compras registradas para este producto.");
+            suggestionsDiv.style.display = "none";
+            return;
+        }
+        suggestionsDiv.innerHTML = "";
+        ultimas.forEach(compra => {
+            const opcion = document.createElement("div");
+            opcion.textContent = `${compra.fecha} - ${compra.precioUnitario.toFixed(3)} / ${compra.unidad}`;
+            opcion.addEventListener("click", () => {
+                prod.compraSeleccionada = compra;
+                prod.cantidadUsada = prod.cantidadUsada || 0;
+                recalcularCostoProducto(prod);
+                const row = suggestionsDiv.closest(".product-row");
+                const priceDiv = row.querySelector(".price-info");
+                const qtyInput = row.querySelector(".qty-input input");
+                if (priceDiv) priceDiv.innerHTML = `${compra.fecha} | ${compra.precioUnitario.toFixed(3)} / ${compra.unidad}`;
+                if (qtyInput) qtyInput.placeholder = `Cantidad usada (${compra.unidad})`;
+                suggestionsDiv.style.display = "none";
+                actualizarTodo();
+            });
+            suggestionsDiv.appendChild(opcion);
+        });
+        suggestionsDiv.style.display = "block";
+        setTimeout(() => {
+            document.addEventListener("click", function cerrar(e) {
+                if (!suggestionsDiv.contains(e.target) && e.target !== inputName) {
+                    suggestionsDiv.style.display = "none";
+                    document.removeEventListener("click", cerrar);
+                }
+            });
+        }, 0);
+    }
+
+    function recalcularCostoProducto(prod) {
+        if (prod.compraSeleccionada && prod.cantidadUsada > 0) {
+            prod.costoPorSesion = prod.compraSeleccionada.precioUnitario * prod.cantidadUsada;
+        } else {
+            prod.costoPorSesion = 0;
+        }
+    }
+
+    function agregarProductoVacio() {
+        productos.push({
+            id: nextId++,
+            nombre: "",
+            compraSeleccionada: null,
+            cantidadUsada: 0,
+            costoPorSesion: 0
+        });
+        renderProductos();
+        actualizarTodo();
+    }
+
+    agregarBtn.addEventListener("click", agregarProductoVacio);
+
+    // ---------- CÁLCULO GLOBAL ----------
+    function actualizarTodo() {
+        const totalProductos = productos.reduce((sum, p) => sum + (p.costoPorSesion || 0), 0);
+        const manoObraHora = parseFloat(document.getElementById("manoObraHora").value) || 0;
+        const duracionSesion = parseFloat(document.getElementById("duracionSesion").value) || 1;
+        const costoManoObra = manoObraHora * duracionSesion;
+        const depreciacion = parseFloat(document.getElementById("depreciacionEquipo").value) || 0;
+        const otrosDirectos = parseFloat(document.getElementById("otrosDirectos").value) || 0;
+        const costoDirecto = totalProductos + costoManoObra + depreciacion + otrosDirectos;
+
+        const alquiler = parseFloat(document.getElementById("alquiler").value) || 0;
+        const electricidad = parseFloat(document.getElementById("electricidad").value) || 0;
+        const agua = parseFloat(document.getElementById("agua").value) || 0;
+        const internet = parseFloat(document.getElementById("internet").value) || 0;
+        const publicidad = parseFloat(document.getElementById("publicidad").value) || 0;
+        const contador = parseFloat(document.getElementById("contador").value) || 0;
+        const limpieza = parseFloat(document.getElementById("limpieza").value) || 0;
+        const imprevistos = parseFloat(document.getElementById("imprevistos").value) || 0;
+        const otrosGenerales = parseFloat(document.getElementById("otrosGenerales").value) || 0;
+        const totalGastosMensuales = alquiler + electricidad + agua + internet + publicidad + contador + limpieza + imprevistos + otrosGenerales;
+
+        const horasProductivas = parseFloat(document.getElementById("horasProductivas").value) || 1;
+        const gastoPorHora = totalGastosMensuales / horasProductivas;
+        const gastosGeneralesSesion = gastoPorHora * duracionSesion;
+
+        const subtotal = costoDirecto + gastosGeneralesSesion;
+        const margenPct = parseFloat(document.getElementById("margenGanancia").value) || 0;
+        const ganancia = subtotal * (margenPct / 100);
+        const precioFinal = subtotal + ganancia;
+
+        document.getElementById("resumenCD").innerText = `S/ ${costoDirecto.toFixed(2)}`;
+        document.getElementById("resumenGG").innerText = `S/ ${gastosGeneralesSesion.toFixed(2)}`;
+        document.getElementById("resumenMargen").innerText = `S/ ${ganancia.toFixed(2)}`;
+        document.getElementById("resumenPrecio").innerText = `S/ ${precioFinal.toFixed(2)}`;
+        document.getElementById("subtotalResumen").innerText = `S/ ${subtotal.toFixed(2)}`;
+        document.getElementById("gastoHoraRes").innerText = `S/ ${gastoPorHora.toFixed(2)}`;
+    }
+
+    function bindStaticInputs() {
+        const ids = ["manoObraHora","depreciacionEquipo","otrosDirectos","alquiler","electricidad","agua","internet","publicidad","contador","limpieza","imprevistos","otrosGenerales","horasProductivas","duracionSesion","margenGanancia"];
+        ids.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener("input", actualizarTodo);
+        });
+    }
+
+    // ---------- LIMPIAR TODO ----------
+    function limpiarTodo() {
+        // Resetear inputs estáticos
+        document.getElementById("manoObraHora").value = 0;
+        document.getElementById("depreciacionEquipo").value = 0;
+        document.getElementById("otrosDirectos").value = 0;
+        document.getElementById("alquiler").value = 0;
+        document.getElementById("electricidad").value = 0;
+        document.getElementById("agua").value = 0;
+        document.getElementById("internet").value = 0;
+        document.getElementById("publicidad").value = 0;
+        document.getElementById("contador").value = 0;
+        document.getElementById("limpieza").value = 0;
+        document.getElementById("imprevistos").value = 0;
+        document.getElementById("otrosGenerales").value = 0;
+        document.getElementById("horasProductivas").value = 110;
+        document.getElementById("duracionSesion").value = 1;
+        document.getElementById("margenGanancia").value = 40;
+        // Limpiar productos
+        productos = [];
+        nextId = 1;
+        renderProductos();
+        actualizarTodo();
+    }
+
+    // ---------- GUARDAR EN FIREBASE ----------
+    async function guardarConfiguracion() {
+        // Recopilar datos
+        const config = {
+            timestamp: new Date().toISOString(),
+            parametros: {
+                horasProductivas: parseFloat(document.getElementById("horasProductivas").value),
+                duracionSesion: parseFloat(document.getElementById("duracionSesion").value),
+                margenGanancia: parseFloat(document.getElementById("margenGanancia").value)
+            },
+            costosDirectos: {
+                manoObraHora: parseFloat(document.getElementById("manoObraHora").value),
+                depreciacionEquipo: parseFloat(document.getElementById("depreciacionEquipo").value),
+                otrosDirectos: parseFloat(document.getElementById("otrosDirectos").value),
+                productos: productos.map(p => ({
+                    id: p.id,
+                    nombre: p.nombre,
+                    compraSeleccionada: p.compraSeleccionada ? {
+                        producto: p.compraSeleccionada.producto,
+                        fecha: p.compraSeleccionada.fecha,
+                        cantidadComprada: p.compraSeleccionada.cantidadComprada,
+                        unidad: p.compraSeleccionada.unidad,
+                        precioConIGV: p.compraSeleccionada.precioConIGV,
+                        precioUnitario: p.compraSeleccionada.precioUnitario
+                    } : null,
+                    cantidadUsada: p.cantidadUsada,
+                    costoPorSesion: p.costoPorSesion
+                }))
+            },
+            gastosGenerales: {
+                alquiler: parseFloat(document.getElementById("alquiler").value),
+                electricidad: parseFloat(document.getElementById("electricidad").value),
+                agua: parseFloat(document.getElementById("agua").value),
+                internet: parseFloat(document.getElementById("internet").value),
+                publicidad: parseFloat(document.getElementById("publicidad").value),
+                contador: parseFloat(document.getElementById("contador").value),
+                limpieza: parseFloat(document.getElementById("limpieza").value),
+                imprevistos: parseFloat(document.getElementById("imprevistos").value),
+                otrosGenerales: parseFloat(document.getElementById("otrosGenerales").value)
+            },
+            resultados: {
+                costoDirecto: parseFloat(document.getElementById("resumenCD").innerText.replace("S/ ", "")),
+                gastosGeneralesSesion: parseFloat(document.getElementById("resumenGG").innerText.replace("S/ ", "")),
+                margen: parseFloat(document.getElementById("resumenMargen").innerText.replace("S/ ", "")),
+                precioFinal: parseFloat(document.getElementById("resumenPrecio").innerText.replace("S/ ", ""))
+            }
+        };
+        try {
+            const newRef = db.ref("v_servicio").push();
+            await newRef.set(config);
+            alert(`✅ Configuración guardada correctamente en v_servicio (ID: ${newRef.key})`);
+        } catch (e) {
+            console.error(e);
+            alert("Error al guardar: " + e.message);
+        }
+    }
+
+    // ---------- IMPORTAR EXCEL/CSV ----------
+    function importarArchivo(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+            if (!rows.length) return;
+            // Buscar el formato: se espera que la primera columna sea el campo y la segunda el valor
+            // Creamos un objeto de mapeo
+            const map = new Map();
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                if (row.length >= 2) {
+                    let key = (row[0] || "").toString().trim();
+                    let val = row[1];
+                    map.set(key, val);
+                }
+            }
+            // Asignar valores
+            if (map.has("manoObraHora")) document.getElementById("manoObraHora").value = parseFloat(map.get("manoObraHora")) || 0;
+            if (map.has("depreciacionEquipo")) document.getElementById("depreciacionEquipo").value = parseFloat(map.get("depreciacionEquipo")) || 0;
+            if (map.has("otrosDirectos")) document.getElementById("otrosDirectos").value = parseFloat(map.get("otrosDirectos")) || 0;
+            if (map.has("horasProductivas")) document.getElementById("horasProductivas").value = parseFloat(map.get("horasProductivas")) || 110;
+            if (map.has("duracionSesion")) document.getElementById("duracionSesion").value = parseFloat(map.get("duracionSesion")) || 1;
+            if (map.has("margenGanancia")) document.getElementById("margenGanancia").value = parseFloat(map.get("margenGanancia")) || 40;
+            if (map.has("alquiler")) document.getElementById("alquiler").value = parseFloat(map.get("alquiler")) || 0;
+            if (map.has("electricidad")) document.getElementById("electricidad").value = parseFloat(map.get("electricidad")) || 0;
+            if (map.has("agua")) document.getElementById("agua").value = parseFloat(map.get("agua")) || 0;
+            if (map.has("internet")) document.getElementById("internet").value = parseFloat(map.get("internet")) || 0;
+            if (map.has("publicidad")) document.getElementById("publicidad").value = parseFloat(map.get("publicidad")) || 0;
+            if (map.has("contador")) document.getElementById("contador").value = parseFloat(map.get("contador")) || 0;
+            if (map.has("limpieza")) document.getElementById("limpieza").value = parseFloat(map.get("limpieza")) || 0;
+            if (map.has("imprevistos")) document.getElementById("imprevistos").value = parseFloat(map.get("imprevistos")) || 0;
+            if (map.has("otrosGenerales")) document.getElementById("otrosGenerales").value = parseFloat(map.get("otrosGenerales")) || 0;
+
+            // Para productos, esperamos una cadena JSON en la fila "productos"
+            if (map.has("productos") && map.get("productos")) {
+                try {
+                    const productosImportados = JSON.parse(map.get("productos"));
+                    if (Array.isArray(productosImportados)) {
+                        productos = productosImportados.map(p => ({
+                            ...p,
+                            costoPorSesion: p.costoPorSesion || 0,
+                            compraSeleccionada: p.compraSeleccionada || null
+                        }));
+                        nextId = Math.max(...productos.map(p => p.id), 0) + 1;
+                        renderProductos();
+                    }
+                } catch(e) { console.warn("Error parsing productos", e); }
+            }
+            actualizarTodo();
+            alert("✅ Datos importados correctamente");
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // ---------- EVENTOS ----------
+    document.getElementById("btnLimpiar").addEventListener("click", limpiarTodo);
+    document.getElementById("btnGuardar").addEventListener("click", guardarConfiguracion);
+    document.getElementById("btnImportar").addEventListener("click", () => document.getElementById("fileImport").click());
+    document.getElementById("fileImport").addEventListener("change", (e) => {
+        if (e.target.files.length) importarArchivo(e.target.files[0]);
+        e.target.value = "";
+    });
+
+    // Inicializar: cargar compras y productos de ejemplo
+    async function init() {
+        todasLasCompras = await cargarCompras();
+        // Agregar producto demo: GEL DE LT OXI (para mostrar)
+        const gelCompra = todasLasCompras.find(c => c.producto === "GEL DE LT OXI");
+        if (gelCompra) {
+            productos.push({
+                id: nextId++,
+                nombre: "GEL DE LT OXI",
+                compraSeleccionada: gelCompra,
+                cantidadUsada: 10,
+                costoPorSesion: gelCompra.precioUnitario * 10
+            });
+        } else {
+            // fallback
+            productos.push({
+                id: nextId++,
+                nombre: "GEL DE LT OXI",
+                compraSeleccionada: null,
+                cantidadUsada: 0,
+                costoPorSesion: 0
+            });
+        }
+        renderProductos();
+        bindStaticInputs();
+        actualizarTodo();
+    }
+    init();
+</script>
+</body>
+</html>

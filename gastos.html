@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gastos Operativos — Jessica Peña Nails Spa</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{--c-deep:#1a0030;--c-mid:#6A0DAD;--c-accent:#9b59b6;--c-light:#c39bd3;--c-soft:#e8d5f5;--c-white:#fff}
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Nunito',sans-serif;min-height:100vh;background:var(--c-deep);color:var(--c-white);overflow-x:hidden}
+  .bg-dots{position:fixed;inset:0;z-index:0;background-image:radial-gradient(circle,rgba(195,155,211,.06) 1px,transparent 1px);background-size:28px 28px;pointer-events:none}
+  .bg-orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
+  .orb1{width:500px;height:500px;background:radial-gradient(circle,rgba(106,13,173,.28) 0%,transparent 70%);top:-100px;left:-100px}
+  .orb2{width:380px;height:380px;background:radial-gradient(circle,rgba(155,89,182,.18) 0%,transparent 70%);bottom:-80px;right:-80px}
+  /* TOPBAR */
+  .topbar{position:sticky;top:0;z-index:50;height:54px;background:rgba(26,0,48,.92);border-bottom:1px solid rgba(195,155,211,.18);display:flex;align-items:center;padding:0 16px;gap:8px;backdrop-filter:blur(12px)}
+  .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(195,155,211,.35),transparent)}
+  .brand-ring{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--c-mid),var(--c-light));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+  .topbar h1{font-family:'Cinzel',serif;font-size:14px;font-weight:600;letter-spacing:.04em;flex:1}
+  .topbar-btns{display:flex;gap:6px;flex-shrink:0}
+  .tb-btn{height:32px;padding:0 11px;border-radius:7px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;border:none;transition:opacity .2s,transform .15s;white-space:nowrap}
+  .tb-btn:hover{opacity:.85;transform:translateY(-1px)}
+  .tb-download{background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff}
+  .tb-close{background:rgba(195,155,211,.1);border:1px solid rgba(195,155,211,.25)!important;color:var(--c-light)}
+  /* TABS */
+  .tabs-bar{position:sticky;top:54px;z-index:40;background:rgba(20,0,40,.95);border-bottom:1px solid rgba(195,155,211,.15);display:flex;gap:2px;padding:0 16px;backdrop-filter:blur(8px)}
+  .tab{height:44px;padding:0 18px;background:none;border:none;color:rgba(195,155,211,.55);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;position:relative;transition:color .15s;flex-shrink:0}
+  .tab::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--c-light);transform:scaleX(0);transition:transform .2s}
+  .tab:hover{color:rgba(195,155,211,.85)}
+  .tab.active{color:var(--c-light)}
+  .tab.active::after{transform:scaleX(1)}
+  /* PANELS */
+  .panel{display:none;padding:20px 16px;position:relative;z-index:1;animation:fadeIn .25s ease;max-width:1100px;margin:0 auto}
+  .panel.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  /* CARD */
+  .card{background:rgba(30,5,55,.72);border:1px solid rgba(195,155,211,.2);border-radius:14px;padding:20px;backdrop-filter:blur(14px);position:relative;margin-bottom:16px}
+  .card::before{content:'';position:absolute;top:0;left:15%;right:15%;height:1px;background:linear-gradient(90deg,transparent,rgba(195,155,211,.28),transparent)}
+  .card-title{font-family:'Cinzel',serif;font-size:13px;font-weight:600;color:var(--c-soft);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+  /* FORM */
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+  .fg{display:flex;flex-direction:column;gap:4px}
+  .fg.full{grid-column:1/-1}
+  .fl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(195,155,211,.6)}
+  .fi{height:38px;background:rgba(255,255,255,.05);border:1px solid rgba(195,155,211,.2);border-radius:8px;color:var(--c-white);font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;padding:0 10px;outline:none;width:100%;transition:border-color .2s,box-shadow .2s}
+  .fi::placeholder{color:rgba(195,155,211,.3);font-weight:400}
+  .fi:focus{border-color:rgba(155,89,182,.55);box-shadow:0 0 0 3px rgba(106,13,173,.18)}
+  .fi.err{border-color:rgba(231,76,60,.55)}
+  .fi-sel{height:38px;background:rgba(255,255,255,.05);border:1px solid rgba(195,155,211,.2);border-radius:8px;color:var(--c-white);font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;padding:0 28px 0 10px;outline:none;width:100%;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23c39bd3' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;transition:border-color .2s}
+  .fi-sel:focus{border-color:rgba(155,89,182,.55)}
+  .fi-sel option{background:#2d0050;color:#fff}
+  /* BTN */
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .btn{height:36px;padding:0 16px;border:none;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .2s,transform .15s;white-space:nowrap}
+  .btn:hover:not(:disabled){opacity:.88;transform:translateY(-1px)}
+  .btn:disabled{opacity:.35;cursor:not-allowed}
+  .btn-primary{background:linear-gradient(135deg,var(--c-mid),var(--c-accent));color:#fff}
+  .btn-warn{background:linear-gradient(135deg,#b7770d,#f39c12);color:#fff}
+  .btn-danger{background:linear-gradient(135deg,#a93226,#e74c3c);color:#fff}
+  .btn-ghost{background:rgba(195,155,211,.08);border:1px solid rgba(195,155,211,.2);color:rgba(195,155,211,.8)}
+  .btn-download{background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff}
+  /* FILTER */
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .filter-row .fi,.filter-row .fi-sel{height:34px;font-size:11px;flex:1;min-width:120px}
+  .total-lbl{font-family:'Cinzel',serif;font-size:15px;font-weight:600;color:#82e6a4;white-space:nowrap;margin-left:auto;padding:0 8px}
+  /* TABLE */
+  .tbl-wrap{overflow-x:auto;border-radius:10px;border:1px solid rgba(195,155,211,.15)}
+  table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px}
+  thead th{background:rgba(106,13,173,.35);color:var(--c-light);font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:9px 10px;text-align:left;white-space:nowrap;cursor:pointer;user-select:none}
+  thead th:hover{background:rgba(106,13,173,.5)}
+  tbody tr{border-bottom:1px solid rgba(195,155,211,.08);cursor:pointer;transition:background .15s}
+  tbody tr:hover{background:rgba(195,155,211,.08)}
+  tbody tr.selected{background:rgba(155,89,182,.2)}
+  tbody td{padding:8px 10px;color:rgba(232,213,245,.82)}
+  .empty-row td{text-align:center;color:rgba(195,155,211,.4);padding:24px}
+  /* MODAL */
+  .modal-ov{display:none;position:fixed;inset:0;z-index:200;background:rgba(10,0,20,.78);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px}
+  .modal-ov.show{display:flex}
+  .modal-box{background:rgba(26,0,48,.97);border:1px solid rgba(195,155,211,.28);border-radius:16px;padding:28px 26px;width:100%;max-width:480px;position:relative;box-shadow:0 24px 48px rgba(0,0,0,.5);animation:mIn .28s ease both}
+  @keyframes mIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+  .modal-box::before{content:'';position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,rgba(195,155,211,.35),transparent)}
+  .modal-title{font-family:'Cinzel',serif;font-size:15px;color:var(--c-white);margin-bottom:20px}
+  .modal-close{position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(195,155,211,.5);cursor:pointer;font-size:18px}
+  .modal-close:hover{color:var(--c-light)}
+  .modal-btns{display:flex;gap:8px;margin-top:16px}
+  /* TOAST */
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:rgba(30,5,55,.97);border:1px solid rgba(195,155,211,.3);border-radius:10px;padding:10px 20px;font-size:13px;color:var(--c-soft);z-index:999;white-space:nowrap;transition:transform .35s cubic-bezier(.2,.8,.3,1),opacity .35s;opacity:0;pointer-events:none}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .toast.ok{border-color:rgba(46,204,113,.4);color:#82e6a4}
+  .toast.err{border-color:rgba(231,76,60,.4);color:#f1948a}
+  .toast.wrn{border-color:rgba(243,156,18,.4);color:#f8c471}
+  .spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="bg-dots"></div>
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+
+<header class="topbar">
+  <div class="brand-ring">📊</div>
+  <h1>Gastos Operativos</h1>
+  <div class="topbar-btns">
+    <button class="tb-btn tb-download" onclick="descargarTabActual()">📥 Excel</button>
+    <button class="tb-btn tb-close" onclick="window.close()">✕ Cerrar</button>
+  </div>
+</header>
+
+<div class="tabs-bar">
+  <button class="tab active" onclick="showTab('servicios')">🏠 Servicios y Local</button>
+  <button class="tab" onclick="showTab('planilla')">👤 Planilla / Personal</button>
+  <button class="tab" onclick="showTab('otros')">📋 Otros Gastos</button>
+</div>
+
+<!-- ══ TAB SERVICIOS ══ -->
+<div class="panel active" id="panel-servicios">
+  <div class="card">
+    <div class="card-title"><span>🏠</span> Registro de Servicio</div>
+    <div class="form-grid">
+      <div class="fg">
+        <label class="fl">Tipo de Gasto *</label>
+        <select class="fi-sel" id="sv-tipo" onkeydown="en(event,'sv-monto')">
+          <option value="">— Selecciona —</option>
+          <option>Alquiler del local</option><option>Luz</option><option>Agua</option>
+          <option>Teléfono / Internet</option><option>Otros servicios fijos</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Monto (S/) *</label>
+        <input class="fi" type="number" id="sv-monto" min="0" step="0.01" placeholder="0.00" onkeydown="en(event,'sv-fecha')">
+      </div>
+      <div class="fg">
+        <label class="fl">Fecha *</label>
+        <input class="fi" type="date" id="sv-fecha" onkeydown="en(event,'sv-comp')">
+      </div>
+      <div class="fg">
+        <label class="fl">Comprobante</label>
+        <input class="fi" id="sv-comp" placeholder="N° Factura/Boleta" onkeydown="en(event,'sv-obs')">
+      </div>
+      <div class="fg full">
+        <label class="fl">Observaciones</label>
+        <input class="fi" id="sv-obs" placeholder="Notas adicionales..." onkeydown="en(event,'btn-sv-guardar')">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="limpiarForm('sv')">🔄 Limpiar</button>
+      <button class="btn btn-primary" id="btn-sv-guardar" onclick="guardarServicio()">
+        <span id="lbl-sv">💾 Guardar</span><div class="spin" id="sp-sv" style="display:none"></div>
+      </button>
+      <button class="btn btn-warn" onclick="editarRegistro('sv')">✏️ Actualizar</button>
+      <button class="btn btn-danger" onclick="eliminarRegistro('sv')">🗑️ Eliminar</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🔍</span> Filtros</div>
+    <div class="filter-row">
+      <input class="fi" id="sv-q" placeholder="Buscar..." oninput="filtrar('sv')" style="flex:2">
+      <select class="fi-sel" id="sv-f-tipo" onchange="filtrar('sv')" style="max-width:200px">
+        <option value="">Todos los tipos</option>
+        <option>Alquiler del local</option><option>Luz</option><option>Agua</option>
+        <option>Teléfono / Internet</option><option>Otros servicios fijos</option>
+      </select>
+      <select class="fi-sel" id="sv-f-mes" onchange="filtrar('sv')" style="max-width:140px">
+        <option value="">Todos los meses</option>
+        <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+        <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+        <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+      <button class="btn btn-ghost" style="height:34px;padding:0 12px;font-size:11px" onclick="limpiarFiltros('sv')">✕ Limpiar</button>
+      <span class="total-lbl" id="sv-total">S/ 0.00</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>ID</th><th onclick="sortData('sv',1)">Tipo ↕</th><th onclick="sortData('sv',2)">Monto ↕</th><th onclick="sortData('sv',3)">Fecha ↕</th><th>Comprobante</th><th>Observaciones</th><th>Mes</th><th>Año</th></tr></thead>
+        <tbody id="tb-sv"><tr class="empty-row"><td colspan="8">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB PLANILLA ══ -->
+<div class="panel" id="panel-planilla">
+  <div class="card">
+    <div class="card-title"><span>👤</span> Registro de Planilla</div>
+    <div class="form-grid">
+      <div class="fg">
+        <label class="fl">Trabajador *</label>
+        <input class="fi" id="pl-trabajador" placeholder="Nombre del trabajador" list="pl-workers-list" onkeydown="en(event,'pl-tipo')">
+        <datalist id="pl-workers-list"></datalist>
+      </div>
+      <div class="fg">
+        <label class="fl">Tipo de Pago *</label>
+        <select class="fi-sel" id="pl-tipo" onkeydown="en(event,'pl-monto')">
+          <option value="">— Selecciona —</option>
+          <option>Sueldo</option><option>Comisión</option><option>Adelanto</option>
+          <option>Liquidación</option><option>Bonificación</option><option>Otros</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label class="fl">Monto (S/) *</label>
+        <input class="fi" type="number" id="pl-monto" min="0" step="0.01" placeholder="0.00" onkeydown="en(event,'pl-fecha')">
+      </div>
+      <div class="fg">
+        <label class="fl">Fecha *</label>
+        <input class="fi" type="date" id="pl-fecha" onkeydown="en(event,'pl-obs')">
+      </div>
+      <div class="fg full">
+        <label class="fl">Observaciones</label>
+        <input class="fi" id="pl-obs" placeholder="Notas adicionales..." onkeydown="en(event,'btn-pl-guardar')">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="limpiarForm('pl')">🔄 Limpiar</button>
+      <button class="btn btn-primary" id="btn-pl-guardar" onclick="guardarPlanilla()">
+        <span id="lbl-pl">💾 Guardar</span><div class="spin" id="sp-pl" style="display:none"></div>
+      </button>
+      <button class="btn btn-warn" onclick="editarRegistro('pl')">✏️ Actualizar</button>
+      <button class="btn btn-danger" onclick="eliminarRegistro('pl')">🗑️ Eliminar</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🔍</span> Filtros</div>
+    <div class="filter-row">
+      <input class="fi" id="pl-q" placeholder="Buscar trabajador..." oninput="filtrar('pl')" style="flex:2">
+      <select class="fi-sel" id="pl-f-tipo" onchange="filtrar('pl')" style="max-width:160px">
+        <option value="">Todos los tipos</option>
+        <option>Sueldo</option><option>Comisión</option><option>Adelanto</option>
+        <option>Liquidación</option><option>Bonificación</option><option>Otros</option>
+      </select>
+      <select class="fi-sel" id="pl-f-mes" onchange="filtrar('pl')" style="max-width:140px">
+        <option value="">Todos los meses</option>
+        <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+        <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+        <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+      <button class="btn btn-ghost" style="height:34px;padding:0 12px;font-size:11px" onclick="limpiarFiltros('pl')">✕ Limpiar</button>
+      <span class="total-lbl" id="pl-total">S/ 0.00</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Trabajador</th><th onclick="sortData('pl',2)">Tipo Pago ↕</th><th onclick="sortData('pl',3)">Monto ↕</th><th onclick="sortData('pl',4)">Fecha ↕</th><th>Observaciones</th><th>Mes</th><th>Año</th></tr></thead>
+        <tbody id="tb-pl"><tr class="empty-row"><td colspan="8">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TAB OTROS ══ -->
+<div class="panel" id="panel-otros">
+  <div class="card">
+    <div class="card-title"><span>📋</span> Registro de Otros Gastos</div>
+    <div class="form-grid">
+      <div class="fg">
+        <label class="fl">Descripción *</label>
+        <input class="fi" id="ot-desc" placeholder="Ej: Material de limpieza" list="ot-desc-list" onkeydown="en(event,'ot-monto')">
+        <datalist id="ot-desc-list"></datalist>
+      </div>
+      <div class="fg">
+        <label class="fl">Monto (S/) *</label>
+        <input class="fi" type="number" id="ot-monto" min="0" step="0.01" placeholder="0.00" onkeydown="en(event,'ot-fecha')">
+      </div>
+      <div class="fg">
+        <label class="fl">Fecha *</label>
+        <input class="fi" type="date" id="ot-fecha" onkeydown="en(event,'ot-obs')">
+      </div>
+      <div class="fg full">
+        <label class="fl">Observaciones</label>
+        <input class="fi" id="ot-obs" placeholder="Notas adicionales..." onkeydown="en(event,'btn-ot-guardar')">
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="limpiarForm('ot')">🔄 Limpiar</button>
+      <button class="btn btn-primary" id="btn-ot-guardar" onclick="guardarOtro()">
+        <span id="lbl-ot">💾 Guardar</span><div class="spin" id="sp-ot" style="display:none"></div>
+      </button>
+      <button class="btn btn-warn" onclick="editarRegistro('ot')">✏️ Actualizar</button>
+      <button class="btn btn-danger" onclick="eliminarRegistro('ot')">🗑️ Eliminar</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🔍</span> Filtros</div>
+    <div class="filter-row">
+      <input class="fi" id="ot-q" placeholder="Buscar descripción..." oninput="filtrar('ot')" style="flex:2">
+      <select class="fi-sel" id="ot-f-mes" onchange="filtrar('ot')" style="max-width:140px">
+        <option value="">Todos los meses</option>
+        <option value="1">Enero</option><option value="2">Febrero</option><option value="3">Marzo</option>
+        <option value="4">Abril</option><option value="5">Mayo</option><option value="6">Junio</option>
+        <option value="7">Julio</option><option value="8">Agosto</option><option value="9">Septiembre</option>
+        <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+      <button class="btn btn-ghost" style="height:34px;padding:0 12px;font-size:11px" onclick="limpiarFiltros('ot')">✕ Limpiar</button>
+      <span class="total-lbl" id="ot-total">S/ 0.00</span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>ID</th><th onclick="sortData('ot',1)">Descripción ↕</th><th onclick="sortData('ot',2)">Monto ↕</th><th onclick="sortData('ot',3)">Fecha ↕</th><th>Observaciones</th><th>Mes</th><th>Año</th></tr></thead>
+        <tbody id="tb-ot"><tr class="empty-row"><td colspan="7">Cargando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONTRASEÑA -->
+<div class="modal-ov" id="modal-pass">
+  <div class="modal-box">
+    <button class="modal-close" onclick="document.getElementById('modal-pass').classList.remove('show')">✕</button>
+    <div class="modal-title">🔐 Confirmar edición</div>
+    <div style="margin-bottom:14px;font-size:12px;color:rgba(195,155,211,.6)">Ingresa la contraseña para editar este registro</div>
+    <div class="fg">
+      <label class="fl">Contraseña</label>
+      <input class="fi" type="password" id="pass-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')confirmarPass()">
+    </div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="document.getElementById('modal-pass').classList.remove('show')">Cancelar</button>
+      <button class="btn btn-warn" onclick="confirmarPass()">✅ Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, set, update, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig={apiKey:"TU_API_KEY",authDomain:"jessicapenabeautystudio.firebaseapp.com",databaseURL:"https://jessicapenabeautystudio-default-rtdb.europe-west1.firebasedatabase.app",projectId:"jessicapenabeautystudio",storageBucket:"jessicapenabeautystudio.appspot.com",messagingSenderId:"TU_SENDER_ID",appId:"TU_APP_ID"};
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
+
+// ── ESTADO ──
+const state={
+  sv:{data:[],selectedKey:null,sortCol:-1,sortAsc:true},
+  pl:{data:[],selectedKey:null,sortCol:-1,sortAsc:true},
+  ot:{data:[],selectedKey:null,sortCol:-1,sortAsc:true},
+};
+let activeTab='sv';
+let pendingEditAction=null;
+const PASS='ahorro123';
+const today=new Date().toISOString().split('T')[0];
+['sv-fecha','pl-fecha','ot-fecha'].forEach(id=>{document.getElementById(id).value=today;});
+
+// ── UTILS ──
+window.showToast=(msg,type='')=>{const t=document.getElementById('toast');t.textContent=msg;t.className=`toast show ${type}`;setTimeout(()=>{t.className='toast'},3400);};
+window.en=(e,nextId)=>{if(e.key!=='Enter')return;e.preventDefault();const el=document.getElementById(nextId);if(!el)return;if(el.tagName==='BUTTON')el.click();else el.focus();};
+const fmt2=n=>parseFloat(n||0).toFixed(2);
+
+// ── TABS ──
+window.showTab=tab=>{
+  activeTab=tab==='servicios'?'sv':tab==='planilla'?'pl':'ot';
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['servicios','planilla','otros'][i]===tab));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`panel-${tab}`).classList.add('active');
+};
+
+// ── CARGAR TODO ──
+async function cargarTodo(){
+  try{
+    const [snapSv,snapPl,snapOt,snapWorkers]=await Promise.all([
+      get(ref(db,'gastos_servicios')),
+      get(ref(db,'gastos_planilla')),
+      get(ref(db,'gastos_otros')),
+      get(ref(db,'gastos_planilla'))
+    ]);
+    state.sv.data=[];if(snapSv.exists())snapSv.forEach(c=>state.sv.data.push({key:c.key,...c.val()}));
+    state.pl.data=[];if(snapPl.exists())snapPl.forEach(c=>state.pl.data.push({key:c.key,...c.val()}));
+    state.ot.data=[];if(snapOt.exists())snapOt.forEach(c=>state.ot.data.push({key:c.key,...c.val()}));
+    // Ordenar por fecha desc
+    ['sv','pl','ot'].forEach(t=>state[t].data.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')));
+    // Trabajadores únicos para datalist
+    const workers=[...new Set(state.pl.data.map(r=>r.trabajador||r.Trabajador||'').filter(Boolean))].sort();
+    const dl=document.getElementById('pl-workers-list');
+    dl.innerHTML=workers.map(w=>`<option value="${w}">`).join('');
+    // Descripciones únicas para otros
+    const descs=[...new Set(state.ot.data.map(r=>r.descripcion||'').filter(Boolean))].sort();
+    const dlOt=document.getElementById('ot-desc-list');
+    dlOt.innerHTML=descs.map(d=>`<option value="${d}">`).join('');
+    filtrar('sv');filtrar('pl');filtrar('ot');
+    showToast('✅ Datos cargados','ok');
+  }catch(err){console.error(err);showToast('Error al cargar datos','err');}
+}
+
+// ── RENDER TABLAS ──
+function renderTabla(tab){
+  const list=getFiltered(tab);
+  const tbody=document.getElementById(`tb-${tab}`);
+  if(!list.length){
+    const cols={'sv':8,'pl':8,'ot':7}[tab];
+    tbody.innerHTML=`<tr class="empty-row"><td colspan="${cols}">Sin registros</td></tr>`;
+    updateTotal(tab,[]);return;
+  }
+  if(tab==='sv'){
+    tbody.innerHTML=list.map(r=>`
+      <tr data-key="${r.key}" class="${r.key===state.sv.selectedKey?'selected':''}" onclick="selRow('sv','${r.key}')">
+        <td><code style="font-size:10px;color:var(--c-light)">${r.key.substring(0,7)}</code></td>
+        <td>${r.tipoGasto||r.TipoGasto||'—'}</td>
+        <td>S/ ${fmt2(r.monto||r.Monto)}</td>
+        <td>${r.fecha||r.Fecha||'—'}</td>
+        <td>${r.comprobante||'—'}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${r.observaciones||'—'}</td>
+        <td>${r.mes||r.Mes||'—'}</td>
+        <td>${r.anio||r.Año||'—'}</td>
+      </tr>`).join('');
+  } else if(tab==='pl'){
+    tbody.innerHTML=list.map(r=>`
+      <tr data-key="${r.key}" class="${r.key===state.pl.selectedKey?'selected':''}" onclick="selRow('pl','${r.key}')">
+        <td><code style="font-size:10px;color:var(--c-light)">${r.key.substring(0,7)}</code></td>
+        <td><b style="color:var(--c-soft)">${r.trabajador||r.Trabajador||'—'}</b></td>
+        <td>${r.tipoPago||r.TipoPago||'—'}</td>
+        <td>S/ ${fmt2(r.monto||r.Monto)}</td>
+        <td>${r.fecha||r.Fecha||'—'}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${r.observaciones||'—'}</td>
+        <td>${r.mes||r.Mes||'—'}</td>
+        <td>${r.anio||r.Año||'—'}</td>
+      </tr>`).join('');
+  } else {
+    tbody.innerHTML=list.map(r=>`
+      <tr data-key="${r.key}" class="${r.key===state.ot.selectedKey?'selected':''}" onclick="selRow('ot','${r.key}')">
+        <td><code style="font-size:10px;color:var(--c-light)">${r.key.substring(0,7)}</code></td>
+        <td><b style="color:var(--c-soft)">${r.descripcion||'—'}</b></td>
+        <td>S/ ${fmt2(r.monto||r.Monto)}</td>
+        <td>${r.fecha||r.Fecha||'—'}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${r.observaciones||'—'}</td>
+        <td>${r.mes||r.Mes||'—'}</td>
+        <td>${r.anio||r.Año||'—'}</td>
+      </tr>`).join('');
+  }
+  updateTotal(tab,list);
+}
+
+function getFiltered(tab){
+  let list=[...state[tab].data];
+  if(tab==='sv'){
+    const q=document.getElementById('sv-q')?.value.toLowerCase()||'';
+    const tipo=document.getElementById('sv-f-tipo')?.value||'';
+    const mes=document.getElementById('sv-f-mes')?.value||'';
+    list=list.filter(r=>
+      (!q||(r.tipoGasto||r.TipoGasto||'').toLowerCase().includes(q)||(r.comprobante||'').toLowerCase().includes(q)||(r.observaciones||'').toLowerCase().includes(q))&&
+      (!tipo||(r.tipoGasto||r.TipoGasto)===tipo)&&
+      (!mes||String(r.mes||r.Mes)===mes));
+  }else if(tab==='pl'){
+    const q=document.getElementById('pl-q')?.value.toLowerCase()||'';
+    const tipo=document.getElementById('pl-f-tipo')?.value||'';
+    const mes=document.getElementById('pl-f-mes')?.value||'';
+    list=list.filter(r=>
+      (!q||(r.trabajador||r.Trabajador||'').toLowerCase().includes(q)||(r.tipoPago||r.TipoPago||'').toLowerCase().includes(q))&&
+      (!tipo||(r.tipoPago||r.TipoPago)===tipo)&&
+      (!mes||String(r.mes||r.Mes)===mes));
+  }else{
+    const q=document.getElementById('ot-q')?.value.toLowerCase()||'';
+    const mes=document.getElementById('ot-f-mes')?.value||'';
+    list=list.filter(r=>
+      (!q||(r.descripcion||'').toLowerCase().includes(q)||(r.observaciones||'').toLowerCase().includes(q))&&
+      (!mes||String(r.mes||r.Mes)===mes));
+  }
+  return list;
+}
+
+function updateTotal(tab,list){
+  const total=list.reduce((s,r)=>s+parseFloat(r.monto||r.Monto||0),0);
+  document.getElementById(`${tab}-total`).textContent='S/ '+fmt2(total);
+}
+
+window.filtrar=tab=>renderTabla(tab);
+window.limpiarFiltros=tab=>{
+  if(tab==='sv'){document.getElementById('sv-q').value='';document.getElementById('sv-f-tipo').value='';document.getElementById('sv-f-mes').value='';}
+  else if(tab==='pl'){document.getElementById('pl-q').value='';document.getElementById('pl-f-tipo').value='';document.getElementById('pl-f-mes').value='';}
+  else{document.getElementById('ot-q').value='';document.getElementById('ot-f-mes').value='';}
+  renderTabla(tab);
+};
+
+window.sortData=(tab,col)=>{
+  const st=state[tab];
+  if(st.sortCol===col)st.sortAsc=!st.sortAsc; else{st.sortCol=col;st.sortAsc=true;}
+  const keys=['key','tipoGasto','monto','fecha','comprobante','observaciones','mes','anio'];
+  const altKeys=['key','trabajador','tipoPago','monto','fecha','observaciones','mes','anio'];
+  const k=tab==='pl'?altKeys[col]:keys[col];
+  state[tab].data.sort((a,b)=>{
+    const av=a[k]||'',bv=b[k]||'';
+    return st.sortAsc?String(av).localeCompare(String(bv),undefined,{numeric:true}):-String(av).localeCompare(String(bv),undefined,{numeric:true});
+  });
+  renderTabla(tab);
+};
+
+window.selRow=(tab,key)=>{
+  state[tab].selectedKey=key;
+  const r=state[tab].data.find(x=>x.key===key);
+  if(!r)return;
+  document.querySelectorAll(`#tb-${tab} tr`).forEach(tr=>tr.classList.toggle('selected',tr.dataset.key===key));
+  // Cargar datos en formulario
+  if(tab==='sv'){
+    document.getElementById('sv-tipo').value=r.tipoGasto||r.TipoGasto||'';
+    document.getElementById('sv-monto').value=r.monto||r.Monto||'';
+    document.getElementById('sv-fecha').value=r.fecha||r.Fecha||'';
+    document.getElementById('sv-comp').value=r.comprobante||'';
+    document.getElementById('sv-obs').value=r.observaciones||'';
+  }else if(tab==='pl'){
+    document.getElementById('pl-trabajador').value=r.trabajador||r.Trabajador||'';
+    document.getElementById('pl-tipo').value=r.tipoPago||r.TipoPago||'';
+    document.getElementById('pl-monto').value=r.monto||r.Monto||'';
+    document.getElementById('pl-fecha').value=r.fecha||r.Fecha||'';
+    document.getElementById('pl-obs').value=r.observaciones||'';
+  }else{
+    document.getElementById('ot-desc').value=r.descripcion||'';
+    document.getElementById('ot-monto').value=r.monto||r.Monto||'';
+    document.getElementById('ot-fecha').value=r.fecha||r.Fecha||'';
+    document.getElementById('ot-obs').value=r.observaciones||'';
+  }
+};
+
+window.limpiarForm=tab=>{
+  state[tab].selectedKey=null;
+  if(tab==='sv'){['sv-tipo','sv-monto','sv-comp','sv-obs'].forEach(id=>document.getElementById(id).value='');document.getElementById('sv-fecha').value=today;}
+  else if(tab==='pl'){['pl-trabajador','pl-monto','pl-obs'].forEach(id=>document.getElementById(id).value='');document.getElementById('pl-tipo').value='';document.getElementById('pl-fecha').value=today;}
+  else{['ot-desc','ot-monto','ot-obs'].forEach(id=>document.getElementById(id).value='');document.getElementById('ot-fecha').value=today;}
+  document.querySelectorAll(`#tb-${tab} tr`).forEach(r=>r.classList.remove('selected'));
+};
+
+function buildData(tab){
+  if(tab==='sv'){
+    const tipo=document.getElementById('sv-tipo').value;
+    const monto=parseFloat(document.getElementById('sv-monto').value)||0;
+    const fecha=document.getElementById('sv-fecha').value;
+    const comp=document.getElementById('sv-comp').value.trim();
+    const obs=document.getElementById('sv-obs').value.trim();
+    if(!tipo||!monto||!fecha){showToast('Completa Tipo, Monto y Fecha','wrn');return null;}
+    const d=new Date(fecha);
+    return{tipoGasto:tipo,monto,fecha,comprobante:comp,observaciones:obs,mes:d.getMonth()+1,anio:d.getFullYear(),registradoEn:new Date().toISOString()};
+  }else if(tab==='pl'){
+    const trab=document.getElementById('pl-trabajador').value.trim();
+    const tipo=document.getElementById('pl-tipo').value;
+    const monto=parseFloat(document.getElementById('pl-monto').value)||0;
+    const fecha=document.getElementById('pl-fecha').value;
+    const obs=document.getElementById('pl-obs').value.trim();
+    if(!trab||!tipo||!monto||!fecha){showToast('Completa todos los campos obligatorios','wrn');return null;}
+    const d=new Date(fecha);
+    return{trabajador:trab,tipoPago:tipo,monto,fecha,observaciones:obs,mes:d.getMonth()+1,anio:d.getFullYear(),registradoEn:new Date().toISOString()};
+  }else{
+    const desc=document.getElementById('ot-desc').value.trim();
+    const monto=parseFloat(document.getElementById('ot-monto').value)||0;
+    const fecha=document.getElementById('ot-fecha').value;
+    const obs=document.getElementById('ot-obs').value.trim();
+    if(!desc||!monto||!fecha){showToast('Completa Descripción, Monto y Fecha','wrn');return null;}
+    const d=new Date(fecha);
+    return{descripcion:desc,monto,fecha,observaciones:obs,mes:d.getMonth()+1,anio:d.getFullYear(),registradoEn:new Date().toISOString()};
+  }
+}
+
+const nodeMap={sv:'gastos_servicios',pl:'gastos_planilla',ot:'gastos_otros'};
+
+async function guardar(tab){
+  const data=buildData(tab);if(!data)return;
+  const btn=document.getElementById(`btn-${tab}-guardar`);btn.disabled=true;
+  document.getElementById(`lbl-${tab}`).style.display='none';document.getElementById(`sp-${tab}`).style.display='block';
+  try{
+    await push(ref(db,nodeMap[tab]),data);
+    showToast('✅ Gasto registrado','ok');limpiarForm(tab);await cargarTodo();
+  }catch{showToast('Error al guardar','err');}
+  btn.disabled=false;document.getElementById(`lbl-${tab}`).style.display='inline';document.getElementById(`sp-${tab}`).style.display='none';
+}
+window.guardarServicio=()=>guardar('sv');
+window.guardarPlanilla=()=>guardar('pl');
+window.guardarOtro=()=>guardar('ot');
+
+// ── EDITAR (requiere contraseña) ──
+window.editarRegistro=tab=>{
+  if(!state[tab].selectedKey){showToast('Selecciona un registro de la tabla','wrn');return;}
+  pendingEditAction={tab,action:'editar'};
+  document.getElementById('pass-input').value='';
+  document.getElementById('modal-pass').classList.add('show');
+  setTimeout(()=>document.getElementById('pass-input').focus(),100);
+};
+
+window.eliminarRegistro=tab=>{
+  if(!state[tab].selectedKey){showToast('Selecciona un registro de la tabla','wrn');return;}
+  pendingEditAction={tab,action:'eliminar'};
+  document.getElementById('pass-input').value='';
+  document.getElementById('modal-pass').classList.add('show');
+  setTimeout(()=>document.getElementById('pass-input').focus(),100);
+};
+
+window.confirmarPass=async()=>{
+  const pass=document.getElementById('pass-input').value;
+  if(pass!==PASS){showToast('Contraseña incorrecta','err');document.getElementById('pass-input').value='';return;}
+  document.getElementById('modal-pass').classList.remove('show');
+  if(!pendingEditAction)return;
+  const{tab,action}=pendingEditAction;pendingEditAction=null;
+  const key=state[tab].selectedKey;
+  if(action==='editar'){
+    const data=buildData(tab);if(!data)return;
+    try{await update(ref(db,`${nodeMap[tab]}/${key}`),data);showToast('✅ Registro actualizado','ok');limpiarForm(tab);await cargarTodo();}
+    catch{showToast('Error al actualizar','err');}
+  }else{
+    const r=state[tab].data.find(x=>x.key===key);
+    if(!confirm(`¿Eliminar este registro?`))return;
+    try{await remove(ref(db,`${nodeMap[tab]}/${key}`));showToast('🗑️ Registro eliminado','ok');limpiarForm(tab);await cargarTodo();}
+    catch{showToast('Error al eliminar','err');}
+  }
+};
+
+// ── DESCARGAR EXCEL ──
+window.descargarTabActual=()=>{
+  const tab=activeTab;
+  const list=getFiltered(tab);
+  if(!list.length){showToast('Sin datos para exportar','wrn');return;}
+  let rows,name;
+  if(tab==='sv'){rows=list.map(r=>({'Tipo':r.tipoGasto||r.TipoGasto,'Monto':r.monto||r.Monto,'Fecha':r.fecha,'Comprobante':r.comprobante||'','Observaciones':r.observaciones||'','Mes':r.mes,'Año':r.anio}));name='Gastos_Servicios';}
+  else if(tab==='pl'){rows=list.map(r=>({'Trabajador':r.trabajador||r.Trabajador,'Tipo Pago':r.tipoPago||r.TipoPago,'Monto':r.monto||r.Monto,'Fecha':r.fecha,'Observaciones':r.observaciones||'','Mes':r.mes,'Año':r.anio}));name='Gastos_Planilla';}
+  else{rows=list.map(r=>({'Descripción':r.descripcion,'Monto':r.monto||r.Monto,'Fecha':r.fecha,'Observaciones':r.observaciones||'','Mes':r.mes,'Año':r.anio}));name='Gastos_Otros';}
+  const ws=XLSX.utils.json_to_sheet(rows);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,name.replace('_',' '));
+  XLSX.writeFile(wb,`${name}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('📥 Excel descargado','ok');
+};
+
+cargarTodo();
+</script>
+</body>
+</html>
