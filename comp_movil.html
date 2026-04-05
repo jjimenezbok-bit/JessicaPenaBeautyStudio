@@ -6,7 +6,6 @@
 <title>Móvil · Compras — Jessica Peña Nails Spa</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{
@@ -112,20 +111,6 @@
     justify-content:center;
     cursor:pointer;
     font-size:18px;
-    color:white;
-  }
-  .btn-gallery{
-    background:linear-gradient(135deg,#2ecc71,#27ae60);
-    border:none;
-    border-radius:12px;
-    width:42px;
-    height:42px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    font-size:18px;
-    color:white;
   }
 
   .ac-wrap{position:relative;flex:1}
@@ -161,17 +146,14 @@
     max-height:160px;
   }
   .scanner-cam video{width:100%;height:100%;object-fit:cover}
-  .scanner-cam canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:none}
   .scanner-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
   .scanner-frame{width:75%;height:60%;border:2px solid #4caf50;border-radius:12px;box-shadow:0 0 0 999px rgba(0,0,0,0.5)}
   .scanner-laser{position:absolute;width:70%;height:2px;background:linear-gradient(90deg,transparent,#4caf50,transparent);animation:scanMove 1.5s ease-in-out infinite}
   @keyframes scanMove{0%{top:20%;opacity:0}10%{opacity:1}50%{top:70%}90%{opacity:1}100%{top:20%;opacity:0}}
   .scanner-status{font-size:10px;color:#666;text-align:center;margin-top:6px}
-  .scanner-buttons{display:flex;gap:8px;margin-top:8px}
-  .scanner-buttons button{flex:1;padding:8px;border-radius:10px;border:none;font-weight:700;font-size:11px;cursor:pointer}
-  .btn-scan-cam{background:linear-gradient(135deg,#6A0DAD,#9b59b6);color:white}
-  .btn-scan-gallery{background:linear-gradient(135deg,#2ecc71,#27ae60);color:white}
-  .btn-scan-manual{background:#f0f0f0;color:#666;border:1px solid #ddd}
+  .scanner-manual{display:flex;gap:8px;margin-top:8px}
+  .scanner-manual input{flex:1;height:38px;background:white;border:1px solid #ddd;border-radius:10px;padding:0 10px;font-size:12px}
+  .scanner-manual button{background:linear-gradient(135deg,#6A0DAD,#9b59b6);border:none;border-radius:10px;color:white;font-size:11px;font-weight:700;padding:0 14px;cursor:pointer}
 
   .btn-row{display:flex;gap:8px;margin-top:12px}
   .btn{
@@ -225,6 +207,7 @@
     border-radius:12px;padding:0 12px;font-size:12px;
   }
 
+  /* SUBTOTALES */
   .subtotales{
     background:#f3e5f5;
     border-radius:12px;
@@ -267,7 +250,6 @@
   .modal-box{background:white;border-radius:20px;padding:20px;width:280px}
   .modal-box input{width:100%;height:40px;border:1px solid #ddd;border-radius:10px;padding:0 10px;margin:10px 0}
   .modal-box button{margin-right:8px;padding:8px 16px;border-radius:10px;border:none}
-  .hidden{display:none}
 </style>
 </head>
 <body>
@@ -288,38 +270,23 @@
         <div class="fg"><label class="fl">📦 Cantidad</label><input class="fi" id="c-cantidad" type="number" step="0.01" placeholder="0" oninput="calcTotal()" onkeypress="if(event.key==='Enter'){document.getElementById('c-precio').focus();event.preventDefault()}"></div>
         <div class="fg"><label class="fl">💵 Precio Unitario</label><input class="fi" id="c-precio" type="number" step="0.01" placeholder="0.00" oninput="calcTotal()" onkeypress="if(event.key==='Enter'){document.getElementById('c-pventa-pct').focus();event.preventDefault()}"></div>
         <div class="fg"><label class="fl">💰 Total Ítem</label><input class="fi fi-total fi-ro" id="c-total-display" readonly></div>
-        <div class="fg"><label class="fl">% P.Venta %</label><input class="fi fi-pventa" id="c-pventa-pct" type="number" step="0.01" placeholder="Ej: 40" oninput="calcPVenta()" onkeypress="if(event.key==='Enter'){mostrarScanner();event.preventDefault()}"></div>
+        <div class="fg"><label class="fl">% P.Venta %</label><input class="fi fi-pventa" id="c-pventa-pct" type="number" step="0.01" placeholder="Ej: 40" oninput="calcPVenta()" onkeypress="if(event.key==='Enter'){iniciarEscaner();event.preventDefault()}"></div>
         <div class="fg"><label class="fl">💲 P.Venta.P</label><input class="fi fi-pventa-p fi-ro" id="c-pventa-precio" readonly></div>
         <div class="fg"><label class="fl">🏷️ Categoría</label><input class="fi fi-ro" id="c-categoria" readonly></div>
         <div class="fg" style="grid-column:1/-1">
           <label class="fl">📷 Scann (Producto)</label>
           <div class="input-with-icon">
             <div class="ac-wrap" style="flex:1"><input class="ac-input" id="ac-producto-input" placeholder="Escanear o buscar..." autocomplete="off" oninput="acFilter('producto')" onfocus="acOpen('producto')" onkeypress="if(event.key==='Enter'){agregarALista();event.preventDefault()}"><div class="ac-drop" id="ac-producto-drop"></div></div>
-            <button class="btn-camera" onclick="mostrarScanner()">📷</button>
-            <button class="btn-gallery" onclick="subirFoto()">🖼️</button>
+            <button class="btn-camera" onclick="iniciarEscaner()">📷</button>
           </div>
         </div>
       </div>
 
-      <!-- ESCÁNER MEJORADO -->
       <div class="scanner-area" id="scanner-area" style="display:none">
-        <div class="scanner-header">
-          <span>📷 Escanear código de barras</span>
-          <button onclick="cerrarScanner()" style="margin-left:auto;background:#ddd;border:none;border-radius:20px;padding:2px 10px">✕</button>
-        </div>
-        <div class="scanner-cam" id="sc-cam-wrap">
-          <video id="sc-video" autoplay playsinline muted></video>
-          <canvas id="sc-canvas"></canvas>
-        </div>
+        <div class="scanner-header"><span>📷 Escanear código de barras</span><button onclick="cerrarScanner()" style="margin-left:auto;background:#ddd;border:none;border-radius:20px;padding:2px 10px">✕</button></div>
+        <div class="scanner-cam" id="sc-cam-wrap"><video id="sc-video" autoplay playsinline muted></video><div class="scanner-overlay"><div class="scanner-frame"></div><div class="scanner-laser"></div></div></div>
         <div class="scanner-status" id="sc-status">Apunta al código de barras</div>
-        <div class="scanner-buttons">
-          <button class="btn-scan-cam" onclick="iniciarEscaneoCamara()">📷 Iniciar Cámara</button>
-          <button class="btn-scan-gallery" onclick="subirFoto()">🖼️ Subir Foto</button>
-        </div>
-        <div style="margin-top:8px">
-          <input type="text" id="sc-upc" class="fi" placeholder="O escribe el código manualmente" style="width:100%">
-          <button class="btn-scan-manual" onclick="buscarPorUpcManual()" style="width:100%;margin-top:5px">🔍 Buscar manualmente</button>
-        </div>
+        <div class="scanner-manual"><input type="text" id="sc-upc" placeholder="O escribe UPC manualmente"><button onclick="buscarPorUpc()">🔍 Buscar</button></div>
       </div>
 
       <div class="btn-row"><button class="btn btn-danger" onclick="quitarUltimoItem()">🗑️ Quitar último</button></div>
@@ -347,6 +314,7 @@
         </table>
       </div>
       
+      <!-- SUBTOTALES -->
       <div class="subtotales" id="subtotales-container" style="display:none">
         <div class="subtotal-item"><div class="subtotal-label">SUB-PROD</div><div class="subtotal-valor" id="sub-prod">0</div></div>
         <div class="subtotal-item"><div class="subtotal-label">Cantidad</div><div class="subtotal-valor" id="sub-cantidad">0</div></div>
@@ -389,14 +357,17 @@ const COLUMNAS = [
 ];
 
 let listaTemp = [], editandoIdx = null, historialAll = [], proveedores = [], productos = [], igvPct = 18;
-let scanStream = null, scanAnimationId = null;
+let scanStream = null, scanInterval = null;
 let filtroFecha = '', filtroProveedorCompra = '', filtroTipo = '', filtroCategoria = '', filtroDocumento = '';
 
 const today = new Date().toISOString().split('T')[0];
 document.getElementById('c-fecha').value = today;
 
 function fechaSeleccionada(){
-  setTimeout(()=>{const next = document.getElementById('c-doc'); if(next) next.focus();}, 100);
+  setTimeout(()=>{
+    const next = document.getElementById('c-doc');
+    if(next) next.focus();
+  }, 100);
 }
 window.fechaSeleccionada = fechaSeleccionada;
 
@@ -409,11 +380,33 @@ document.getElementById('modal-igv').addEventListener('click',e=>{if(e.target===
 window.calcTotal=()=>{const c=parseFloat(document.getElementById('c-cantidad').value)||0,p=parseFloat(document.getElementById('c-precio').value)||0;document.getElementById('c-total-display').value=(c*p).toFixed(2);calcPVenta();}
 window.calcPVenta=()=>{const p=parseFloat(document.getElementById('c-precio').value)||0,pc=parseFloat(document.getElementById('c-pventa-pct').value)||0;const pv=p*(1+igvPct/100)*(1+pc/100);document.getElementById('c-pventa-precio').value=pv>0?pv.toFixed(2):'';}
 
-function mostrarScanner(){
-  document.getElementById('scanner-area').style.display='block';
-  document.getElementById('scanner-area').scrollIntoView({behavior:'smooth',block:'center'});
+async function iniciarEscaner(){
+  const area=document.getElementById('scanner-area');
+  area.style.display='block';
+  area.scrollIntoView({behavior:'smooth',block:'center'});
+  try{
+    scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:'environment'}}});
+    const video=document.getElementById('sc-video');
+    video.srcObject=scanStream;
+    await video.play();
+    document.getElementById('sc-status').textContent='Apunta al código de barras';
+    if('BarcodeDetector' in window){
+      const detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39']});
+      if(scanInterval) clearInterval(scanInterval);
+      scanInterval=setInterval(async()=>{
+        if(!scanStream)return;
+        try{
+          const codes=await detector.detect(video);
+          if(codes.length>0){
+            clearInterval(scanInterval); scanInterval=null;
+            await buscarPorUpcManual(codes[0].rawValue);
+          }
+        }catch(e){}
+      },300);
+    }else document.getElementById('sc-status').textContent='📝 Escanea o escribe el UPC manualmente';
+  }catch(e){document.getElementById('sc-status').textContent='📷 Cámara no disponible, usa el botón 📷';}
 }
-window.mostrarScanner = mostrarScanner;
+window.iniciarEscaner = iniciarEscaner;
 
 function cerrarScanner(){
   pararCamara();
@@ -421,91 +414,14 @@ function cerrarScanner(){
 }
 window.cerrarScanner = cerrarScanner;
 
-function pararCamara(){
-  if(scanAnimationId){cancelAnimationFrame(scanAnimationId);scanAnimationId=null;}
-  if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}
-}
-
-async function iniciarEscaneoCamara(){
-  const video = document.getElementById('sc-video');
-  const canvas = document.getElementById('sc-canvas');
-  const ctx = canvas.getContext('2d');
-  
-  try{
-    pararCamara();
-    scanStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:{exact:'environment'}}});
-    video.srcObject = scanStream;
-    await video.play();
-    document.getElementById('sc-status').textContent = 'Escaneando...';
-    
-    function tick(){
-      if(!scanStream || video.readyState !== video.HAVE_ENOUGH_DATA){
-        scanAnimationId = requestAnimationFrame(tick);
-        return;
-      }
-      if(video.videoWidth > 0 && video.videoHeight > 0){
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
-        if(code){
-          const upc = code.data;
-          pararCamara();
-          buscarPorUpc(upc);
-          return;
-        }
-      }
-      scanAnimationId = requestAnimationFrame(tick);
-    }
-    tick();
-  }catch(e){
-    document.getElementById('sc-status').textContent = 'Error: No se pudo acceder a la cámara';
-    showToast('No se pudo acceder a la cámara', 'err');
-  }
-}
-window.iniciarEscaneoCamara = iniciarEscaneoCamara;
-
-function subirFoto(){
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.onchange = async (e) => {
-    const file = e.target.files[0];
-    if(!file) return;
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
-        if(code){
-          buscarPorUpc(code.data);
-        }else{
-          showToast('No se detectó ningún código de barras en la imagen', 'err');
-        }
-        cerrarScanner();
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  };
-  input.click();
-}
-window.subirFoto = subirFoto;
-
-async function buscarPorUpc(upc){
-  if(!upc){showToast('Código no detectado','wrn');return;}
-  const upcLimpio = upc.toString().replace(/[^0-9]/g,'');
+async function buscarPorUpcManual(upc){
+  if(!upc){upc=document.getElementById('sc-upc').value.trim();}
+  if(!upc){showToast('Ingresa o escanea un UPC','wrn');return;}
+  const upcLimpio = upc.replace(/[^0-9]/g,'');
   const prod = productos.find(p => (p.upc||'').replace(/[^0-9]/g,'') === upcLimpio);
   
   if(!prod){
-    showToast(`❌ EAN NO REGISTRADO: ${upc}`, 'err');
+    showToast(`❌ EAN NO REGISTRADO: ${upc}`,'err');
     return;
   }
   
@@ -513,18 +429,14 @@ async function buscarPorUpc(upc){
   document.getElementById('ac-producto-input').dataset.prodKey = prod.key||'';
   document.getElementById('c-categoria').value = prod.categoria||'';
   
-  cerrarScanner();
+  pararCamara();
+  document.getElementById('scanner-area').style.display='none';
+  
   agregarALista();
-  showToast(`✅ Producto encontrado: ${prod.descripcion}`, 'ok');
 }
+window.buscarPorUpc = ()=>buscarPorUpcManual(null);
 
-async function buscarPorUpcManual(){
-  const upc = document.getElementById('sc-upc').value.trim();
-  if(!upc){showToast('Ingresa un código UPC','wrn');return;}
-  await buscarPorUpc(upc);
-  document.getElementById('sc-upc').value = '';
-}
-window.buscarPorUpcManual = buscarPorUpcManual;
+function pararCamara(){if(scanInterval){clearInterval(scanInterval);scanInterval=null;}if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null;}}
 
 const acState={proveedor:{list:[],idx:-1,data:[]},producto:{list:[],idx:-1,data:[]}};
 function acRender(type,labels,dataArr){const drop=document.getElementById(`ac-${type}-drop`);if(!drop)return;acState[type].list=labels;acState[type].data=dataArr;if(!labels.length){drop.classList.remove('open');return;}drop.innerHTML=labels.map((item,i)=>`<div class="ac-item" data-i="${i}" onmousedown="acSelect('${type}',${i})">${item}</div>`).join('');drop.classList.add('open');acState[type].idx=-1;}
@@ -560,7 +472,7 @@ function renderLista(){
     document.getElementById('total-val').textContent='S/ 0.00';
     return;
   }
-  tbody.innerHTML=listaTemp.map((it,i)=>`<tr><td>${i+1}</td>${visibles.map(c=>`<td>${c.fmt(it[c.key])}</td>`).join('')}</tr>`).join('');
+  tbody.innerHTML=listaTemp.map((it,i)=>`<tr>${i+1}${visibles.map(c=>`<td>${c.fmt(it[c.key])}</td>`).join('')}</tr>`).join('');
   const total=listaTemp.reduce((s,it)=>s+it.total,0);
   document.getElementById('total-val').textContent=`S/ ${total.toFixed(2)}`;
 }
@@ -699,6 +611,7 @@ function renderHistorial(){
   }
   tbody.innerHTML=filtered.map(r=>`<tr>${visibles.map(c=>`<td>${c.fmt(r[c.key])}</td>`).join('')}<td></td></tr>`).join('');
   
+  // SUBTOTALES
   const totalProductos = filtered.length;
   const totalCantidad = filtered.reduce((sum, r) => sum + (parseFloat(r.cantidad)||0), 0);
   const totalPrecioConIGV = filtered.reduce((sum, r) => sum + (parseFloat(r.precioConIGV)||0), 0);
