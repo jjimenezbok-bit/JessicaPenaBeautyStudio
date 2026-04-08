@@ -8,17 +8,20 @@
  * ╚══════════════════════════════════════════════════════════════════╝
  *
  *  INSTRUCCIONES PARA AGREGAR UN NUEVO MÓDULO:
- *  1. Copia uno de los bloques de ejemplo de abajo
- *  2. Cambia el "archivo", "nombre", "icono" y "grupo"
- *  3. Si el archivo aún no está listo, pon  activo: false
- *  4. Guarda este archivo — el menú se actualiza solo
+ *  1. Copia el bloque plantilla del final
+ *  2. Cambia "archivo", "nombre", "icono" y "grupo"
+ *  3. Si el archivo aún no está listo → pon  activo: false
+ *  4. Guarda este archivo — el menú se actualiza solo al recargar index
  *
- *  GRUPOS DISPONIBLES (puedes crear nuevos):
+ *  ⚠️  TODOS los archivos .html deben estar en la MISMA carpeta
+ *      que index.html y config-modulos.js
+ *
+ *  GRUPOS DISPONIBLES (puedes inventar nuevos escribiendo cualquier nombre):
  *    "Operaciones" | "Reportes" | "Maestros" | "Finanzas" | "Sistema" | "Móvil"
  *
  *  ESTADOS:
- *    activo: true  → aparece en el menú y se puede abrir
- *    activo: false → aparece en el menú en gris (bloqueado, en desarrollo)
+ *    activo: true  → se puede abrir normalmente
+ *    activo: false → aparece en gris con etiqueta "Dev" (archivo en desarrollo)
  */
 
 const MODULOS = [
@@ -119,15 +122,15 @@ const MODULOS = [
     grupo:   "Reportes",
     nombre:  "Reporte Ventas",
     icono:   "📈",
-    archivo: "reporte-ventas.html",       // ← archivo aún no creado
-    activo:  false
+    archivo: "reporte-ventas.html",
+    activo:  false                        // ← aún no creado
   },
   {
     grupo:   "Reportes",
     nombre:  "Reporte Compras",
     icono:   "📉",
-    archivo: "reporte-compras.html",      // ← archivo aún no creado
-    activo:  false
+    archivo: "reporte-compras.html",
+    activo:  false                        // ← aún no creado
   },
 
   // ════════════════════════════════════════
@@ -174,16 +177,16 @@ const MODULOS = [
   },
 
   // ════════════════════════════════════════
-  //  EJEMPLOS PARA TUS FUTUROS ARCHIVOS:
-  //  Solo copia este bloque y personalízalo
+  //  ✏️  PLANTILLA PARA FUTUROS ARCHIVOS
+  //  Copia este bloque, quita los /* */ y edita:
   // ════════════════════════════════════════
   /*
   {
-    grupo:   "Operaciones",       // ← el grupo donde quieres que aparezca
-    nombre:  "Mi Nuevo Módulo",   // ← el nombre que verás en el menú
-    icono:   "🆕",                // ← el emoji del botón
-    archivo: "mi-nuevo.html",     // ← nombre exacto de tu archivo
-    activo:  false                // ← false = en desarrollo (gris), true = activo
+    grupo:   "Operaciones",       // grupo donde aparecerá
+    nombre:  "Mi Nuevo Módulo",   // nombre visible en el menú
+    icono:   "🆕",                // emoji del ícono
+    archivo: "mi-nuevo.html",     // nombre EXACTO del archivo en tu carpeta
+    activo:  false                // false = gris, true = abre normalmente
   },
   */
 
