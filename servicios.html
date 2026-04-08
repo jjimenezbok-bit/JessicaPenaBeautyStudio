@@ -3,458 +3,303 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestión de Servicios — Jessica Peña Nails Spa</title>
+<title>Catálogo de Servicios — Jessica Peña Nails Spa</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  /* ══ PALETA CORPORATIVA 3 TONOS ══
-     Brillante : #BB19E2  → luz, acentos, hover
-     Base      : #8E04BB  → botones primarios, encabezados
-     Profundo  : #5A007F  → sombras, viñetado, fondos oscuros  */
-  :root{
-    --p-bright:#BB19E2;
-    --p-base:  #8E04BB;
-    --p-deep:  #5A007F;
-    --p-bg:    #0d0017;      /* fondo página */
-    --p-card:  rgba(94,0,127,.45);
-    --p-light: #ddb3f0;      /* texto suave */
-    --p-soft:  #f0d9ff;      /* texto claro */
-    --white:   #ffffff;
-    --success: #2ecc71;
-    --danger:  #e74c3c;
-    --warn:    #f39c12;
-  }
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:'Nunito',sans-serif;
-    min-height:100vh;
-    background:var(--p-bg);
-    color:var(--p-soft);
-    overflow-x:hidden;
-  }
+:root{
+  --pb:#BB19E2;--pm:#8E04BB;--pd:#5A007F;
+  --bg:#0d0017;--card:rgba(94,0,127,.45);
+  --lt:#ddb3f0;--sf:#f0d9ff;--wh:#fff;
+  --ok:#2ecc71;--err:#e74c3c;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Nunito',sans-serif;min-height:100vh;background:var(--bg);color:var(--sf);overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(187,25,226,.22) 0%,transparent 65%),
+             radial-gradient(ellipse 60% 50% at 0% 100%,rgba(90,0,127,.5) 0%,transparent 60%),
+             radial-gradient(ellipse 60% 50% at 100% 100%,rgba(142,4,187,.3) 0%,transparent 60%);}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:radial-gradient(circle,rgba(187,25,226,.07) 1px,transparent 1px);background-size:26px 26px;}
 
-  /* ── VIÑETADO ── */
-  body::before{
-    content:'';
-    position:fixed;inset:0;z-index:0;
-    background:
-      radial-gradient(ellipse 80% 60% at 50% 0%,   rgba(187,25,226,.22) 0%,transparent 65%),
-      radial-gradient(ellipse 60% 50% at 0%   100%, rgba(90,0,127,.5)   0%,transparent 60%),
-      radial-gradient(ellipse 60% 50% at 100% 100%, rgba(142,4,187,.3)   0%,transparent 60%);
-    pointer-events:none;
-  }
-  .bg-grid{
-    position:fixed;inset:0;z-index:0;
-    background-image:radial-gradient(circle,rgba(187,25,226,.07) 1px,transparent 1px);
-    background-size:26px 26px;
-    pointer-events:none;
-  }
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:50;height:50px;background:rgba(13,0,23,.92);
+  border-bottom:1px solid rgba(187,25,226,.3);display:flex;align-items:center;
+  padding:0 14px;gap:8px;backdrop-filter:blur(14px);}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--pb),transparent);opacity:.6;}
+.brand-ring{width:28px;height:28px;border-radius:50%;flex-shrink:0;font-size:13px;
+  background:linear-gradient(135deg,var(--pb),var(--pm));
+  display:flex;align-items:center;justify-content:center;box-shadow:0 0 14px rgba(187,25,226,.55);}
+.topbar h1{font-family:'Cinzel',serif;font-size:13px;font-weight:600;letter-spacing:.06em;flex:1;
+  background:linear-gradient(90deg,var(--sf),var(--pb));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.topbar-btns{display:flex;gap:5px;flex-shrink:0;}
+.tb-btn{height:30px;padding:0 10px;border-radius:7px;font-family:'Nunito',sans-serif;
+  font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;
+  border:none;transition:all .2s;white-space:nowrap;}
+.tb-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(187,25,226,.35)}
+.tb-new{background:linear-gradient(135deg,var(--pm),var(--pb));color:#fff}
+.tb-cat{background:rgba(187,25,226,.15);border:1px solid rgba(187,25,226,.35)!important;color:var(--lt)}
+.tb-close{background:rgba(90,90,90,.2);border:1px solid rgba(255,255,255,.12)!important;color:var(--lt)}
 
-  /* ── TOPBAR ── */
-  .topbar{
-    position:sticky;top:0;z-index:50;
-    height:56px;
-    background:rgba(13,0,23,.88);
-    border-bottom:1px solid rgba(187,25,226,.3);
-    display:flex;align-items:center;padding:0 18px;gap:10px;
-    backdrop-filter:blur(14px);
-  }
-  .topbar::after{
-    content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-    background:linear-gradient(90deg,transparent,var(--p-bright),transparent);
-    opacity:.6;
-  }
-  .brand-ring{
-    width:32px;height:32px;border-radius:50%;
-    background:linear-gradient(135deg,var(--p-bright),var(--p-base));
-    display:flex;align-items:center;justify-content:center;
-    font-size:15px;flex-shrink:0;
-    box-shadow:0 0 16px rgba(187,25,226,.55);
-  }
-  .topbar h1{
-    font-family:'Cinzel',serif;font-size:14px;font-weight:600;
-    letter-spacing:.06em;flex:1;
-    background:linear-gradient(90deg,var(--p-soft),var(--p-bright));
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  }
-  .topbar-btns{display:flex;gap:6px;flex-shrink:0}
-  .tb-btn{
-    height:32px;padding:0 12px;border-radius:7px;
-    font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;
-    cursor:pointer;display:flex;align-items:center;gap:5px;
-    border:none;transition:all .2s;white-space:nowrap;
-  }
-  .tb-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(187,25,226,.35)}
-  .tb-new{background:linear-gradient(135deg,var(--p-base),var(--p-bright));color:#fff}
-  .tb-dl{background:linear-gradient(135deg,#1a5276,#2980b9);color:#fff}
-  .tb-close{background:rgba(187,25,226,.1);border:1px solid rgba(187,25,226,.3)!important;color:var(--p-light)}
+/* Botón Excel con icono SVG verde en círculo blanco — mejora 05 */
+.tb-excel{
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.15)!important;
+  color:var(--lt);padding:0 8px;
+}
+.tb-excel:hover{background:rgba(255,255,255,.12);}
+.excel-icon{
+  width:22px;height:22px;border-radius:50%;
+  background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.excel-icon svg{width:14px;height:14px;}
 
-  /* ── PÁGINA ── */
-  .page{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:22px 16px 56px}
+/* PAGE */
+.page{position:relative;z-index:1;max-width:1600px;margin:0 auto;padding:10px 10px 36px}
 
-  /* ── CARD ── */
-  .card{
-    background:var(--p-card);
-    border:1px solid rgba(187,25,226,.25);
-    border-radius:14px;
-    padding:20px;
-    backdrop-filter:blur(16px);
-    position:relative;
-    margin-bottom:18px;
-    box-shadow:0 8px 32px rgba(90,0,127,.35);
-  }
-  .card::before{
-    content:'';position:absolute;top:0;left:15%;right:15%;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(187,25,226,.5),transparent);
-  }
-  .card-title{
-    font-family:'Cinzel',serif;font-size:13px;font-weight:600;
-    color:var(--p-soft);margin-bottom:16px;
-    display:flex;align-items:center;gap:8px;
-  }
+/* STATS */
+.stats-strip{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.stat-pill{flex:1;min-width:100px;background:rgba(90,0,127,.4);border:1px solid rgba(187,25,226,.25);
+  border-radius:10px;padding:7px 12px;text-align:center;}
+.sp-val{font-family:'Cinzel',serif;font-size:18px;font-weight:600;color:var(--wh);display:block;}
+.sp-lbl{font-size:9.5px;color:rgba(187,25,226,.7);text-transform:uppercase;letter-spacing:.1em;margin-top:1px;display:block}
 
-  /* ── STATS ── */
-  .stats-strip{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
-  .stat-pill{
-    flex:1;min-width:110px;
-    background:rgba(90,0,127,.4);
-    border:1px solid rgba(187,25,226,.25);
-    border-radius:10px;padding:10px 14px;text-align:center;
-  }
-  .sp-val{
-    font-family:'Cinzel',serif;font-size:20px;font-weight:600;
-    color:var(--white);display:block;
-  }
-  .sp-lbl{font-size:10px;color:rgba(187,25,226,.7);text-transform:uppercase;letter-spacing:.1em;margin-top:2px;display:block}
+/* FILTROS */
+.filter-bar{display:flex;gap:7px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.fi{height:33px;background:rgba(90,0,127,.3);border:1px solid rgba(187,25,226,.25);border-radius:8px;
+  color:var(--sf);font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;
+  padding:0 10px;outline:none;transition:border-color .2s,box-shadow .2s;}
+.fi::placeholder{color:rgba(187,25,226,.4);font-weight:400}
+.fi:focus{border-color:var(--pb);box-shadow:0 0 0 2px rgba(187,25,226,.15)}
+.fi-sel{height:33px;background:rgba(90,0,127,.3);border:1px solid rgba(187,25,226,.25);border-radius:8px;
+  color:var(--sf);font-family:'Nunito',sans-serif;font-size:12px;font-weight:600;
+  padding:0 24px 0 10px;outline:none;cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23BB19E2' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 7px center;}
+.fi-sel:focus{border-color:var(--pb)}
+.fi-sel option{background:#1a0030;color:var(--sf)}
 
-  /* ── FILTROS ── */
-  .filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
-  .fi{
-    height:38px;
-    background:rgba(90,0,127,.3);
-    border:1px solid rgba(187,25,226,.25);
-    border-radius:9px;
-    color:var(--p-soft);
-    font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;
-    padding:0 12px;outline:none;
-    transition:border-color .2s,box-shadow .2s;
-  }
-  .fi::placeholder{color:rgba(187,25,226,.4);font-weight:400}
-  .fi:focus{border-color:var(--p-bright);box-shadow:0 0 0 3px rgba(187,25,226,.2)}
-  .fi-sel{
-    height:38px;
-    background:rgba(90,0,127,.3);
-    border:1px solid rgba(187,25,226,.25);
-    border-radius:9px;
-    color:var(--p-soft);
-    font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;
-    padding:0 28px 0 12px;outline:none;cursor:pointer;
-    appearance:none;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23BB19E2' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat:no-repeat;background-position:right 9px center;
-    transition:border-color .2s;
-  }
-  .fi-sel:focus{border-color:var(--p-bright)}
-  .fi-sel option{background:#1a0030;color:var(--p-soft)}
+/* CARD */
+.card{background:var(--card);border:1px solid rgba(187,25,226,.25);border-radius:12px;
+  padding:11px 14px;backdrop-filter:blur(16px);position:relative;margin-bottom:12px;
+  box-shadow:0 6px 22px rgba(90,0,127,.3);}
+.card::before{content:'';position:absolute;top:0;left:12%;right:12%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(187,25,226,.5),transparent);}
+.card-title{font-family:'Cinzel',serif;font-size:11.5px;font-weight:600;color:var(--sf);
+  margin-bottom:9px;display:flex;align-items:center;gap:7px;}
 
-  /* ── TABLA ── */
-  .tbl-wrap{overflow-x:auto;border-radius:11px;border:1px solid rgba(187,25,226,.2)}
-  table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px}
-  thead th{
-    background:linear-gradient(90deg,var(--p-deep),var(--p-base));
-    color:var(--white);font-weight:700;letter-spacing:.07em;
-    text-transform:uppercase;padding:10px 10px;text-align:center;
-    white-space:nowrap;cursor:pointer;user-select:none;
-    border-bottom:1px solid rgba(187,25,226,.4);
-  }
-  thead th:hover{background:linear-gradient(90deg,var(--p-base),var(--p-bright))}
-  tbody tr{border-bottom:1px solid rgba(187,25,226,.1);cursor:pointer;transition:background .15s}
-  tbody tr:hover{background:rgba(187,25,226,.1)}
-  tbody tr.selected{background:rgba(187,25,226,.2);border-left:3px solid var(--p-bright)}
-  tbody td{padding:8px 10px;color:rgba(240,217,255,.85);text-align:center}
-  tbody td:nth-child(4){text-align:left;font-weight:600;color:var(--p-soft)}
-  .empty-row td{text-align:center;color:rgba(187,25,226,.4);padding:28px}
+/* TABLA — scroll horizontal */
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid rgba(187,25,226,.18);}
+/* ancho mínimo suficiente para todas las columnas */
+table{width:100%;border-collapse:collapse;font-size:10.8px;min-width:1600px;}
+thead th{background:linear-gradient(90deg,var(--pd),var(--pm));color:var(--wh);
+  font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:8px 7px;
+  text-align:center;white-space:nowrap;cursor:pointer;user-select:none;
+  border-bottom:1px solid rgba(187,25,226,.4);}
+thead th:hover{background:linear-gradient(90deg,var(--pm),var(--pb))}
+thead th.th-l{text-align:left;}
+tbody tr{border-bottom:1px solid rgba(187,25,226,.07);cursor:pointer;transition:background .12s}
+tbody tr:hover{background:rgba(187,25,226,.08)}
+tbody tr.selected{background:rgba(187,25,226,.17);border-left:3px solid var(--pb)}
+tbody td{padding:5px 7px;color:rgba(240,217,255,.88);text-align:center;white-space:nowrap;}
+tbody td.td-nombre{text-align:left;font-weight:600;color:var(--sf);max-width:297px;
+  overflow:hidden;text-overflow:ellipsis;}
+.empty-row td{text-align:center;color:rgba(187,25,226,.4);padding:24px}
+.cat-badge{display:inline-flex;font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:6px;
+  background:rgba(187,25,226,.18);color:var(--pb);border:1px solid rgba(187,25,226,.3);}
+.id-badge{font-size:9.5px;background:rgba(187,25,226,.14);padding:2px 5px;border-radius:4px;
+  color:var(--pb);font-family:'Cinzel',serif;}
+.price-val{color:#82e6a4;font-weight:700}
 
-  /* Category badge */
-  .cat-badge{
-    display:inline-flex;font-size:10px;font-weight:700;
-    padding:2px 8px;border-radius:10px;
-    background:rgba(187,25,226,.18);color:var(--p-bright);
-    border:1px solid rgba(187,25,226,.3);
-  }
-  /* Precio highlight */
-  .price-val{color:#82e6a4;font-weight:700}
+/* MODALES */
+.modal-ov{display:none;position:fixed;inset:0;z-index:200;background:rgba(13,0,23,.85);
+  backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px;}
+.modal-ov.show{display:flex}
+.modal-box{background:rgba(90,0,127,.94);border:1px solid rgba(187,25,226,.4);border-radius:13px;
+  padding:18px 16px;width:100%;max-width:480px;position:relative;
+  box-shadow:0 0 50px rgba(187,25,226,.18),0 20px 40px rgba(0,0,0,.5);
+  animation:mIn .22s ease both;max-height:90vh;overflow-y:auto;}
+@keyframes mIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.modal-box::before{content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
+  background:linear-gradient(90deg,transparent,var(--pb),transparent);}
+.modal-title{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--wh);
+  margin-bottom:13px;display:flex;align-items:center;gap:8px;}
+.modal-title .glow{color:var(--pb);text-shadow:0 0 10px rgba(187,25,226,.7);}
+.modal-close{position:absolute;top:10px;right:12px;background:none;border:none;
+  color:rgba(187,25,226,.45);cursor:pointer;font-size:17px;transition:color .15s;}
+.modal-close:hover{color:var(--pb)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:11px}
+.fg{display:flex;flex-direction:column;gap:2px;}.fg.full{grid-column:1/-1}
+.fl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(187,25,226,.7);}
+.mfi{height:34px;background:rgba(13,0,23,.5);border:1px solid rgba(187,25,226,.3);border-radius:7px;
+  color:var(--sf);font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:600;
+  padding:0 9px;outline:none;width:100%;transition:border-color .2s,box-shadow .2s;}
+.mfi::placeholder{color:rgba(187,25,226,.3);font-weight:400}
+.mfi:focus{border-color:var(--pb);box-shadow:0 0 0 2px rgba(187,25,226,.13)}
+.cat-list{margin-top:9px;max-height:240px;overflow-y:auto;}
+.cat-list-item{display:flex;align-items:center;justify-content:space-between;
+  padding:6px 9px;border-radius:6px;margin-bottom:4px;
+  background:rgba(13,0,23,.4);border:1px solid rgba(187,25,226,.16);font-size:11.5px;}
+.cat-list-item:hover{background:rgba(187,25,226,.07)}
+.cat-list-item .cat-name{font-weight:700;color:var(--sf)}
+.cat-list-item .cat-code{font-family:'Cinzel',serif;font-size:9.5px;color:var(--pb);margin-left:7px}
+.cat-list-item .cat-del{background:none;border:none;color:rgba(231,76,60,.55);cursor:pointer;
+  font-size:13px;padding:0 3px;transition:color .13s;}
+.cat-list-item .cat-del:hover{color:var(--err)}
+.modal-btns{display:flex;gap:6px;margin-top:11px;flex-wrap:wrap}
+.btn{height:33px;padding:0 13px;border:none;border-radius:7px;font-family:'Nunito',sans-serif;
+  font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;
+  transition:all .18s;white-space:nowrap;}
+.btn:hover:not(:disabled){transform:translateY(-1px)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-primary{background:linear-gradient(135deg,var(--pm),var(--pb));color:#fff;
+  box-shadow:0 3px 10px rgba(187,25,226,.26);}
+.btn-ghost{background:rgba(187,25,226,.07);border:1px solid rgba(187,25,226,.26);color:var(--lt);}
+.btn-ghost:hover{background:rgba(187,25,226,.16)}
+.modal-sep{border:none;border-top:1px solid rgba(187,25,226,.16);margin:11px 0}
 
-  /* ── MODAL FORMULARIO ── */
-  .modal-ov{
-    display:none;position:fixed;inset:0;z-index:200;
-    background:rgba(13,0,23,.82);backdrop-filter:blur(8px);
-    align-items:center;justify-content:center;padding:20px;
-  }
-  .modal-ov.show{display:flex}
-  .modal-box{
-    background:rgba(90,0,127,.92);
-    border:1px solid rgba(187,25,226,.4);
-    border-radius:16px;padding:28px 26px;
-    width:100%;max-width:540px;position:relative;
-    box-shadow:0 0 60px rgba(187,25,226,.25),0 24px 48px rgba(0,0,0,.5);
-    animation:mIn .28s ease both;
-    max-height:92vh;overflow-y:auto;
-  }
-  @keyframes mIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-  .modal-box::before{
-    content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
-    background:linear-gradient(90deg,transparent,var(--p-bright),transparent);
-  }
-  .modal-title{
-    font-family:'Cinzel',serif;font-size:16px;font-weight:700;
-    color:var(--white);margin-bottom:20px;
-    display:flex;align-items:center;gap:9px;
-  }
-  .modal-title .glow{
-    display:inline-block;
-    color:var(--p-bright);
-    text-shadow:0 0 12px rgba(187,25,226,.7);
-  }
-  .modal-close{
-    position:absolute;top:14px;right:16px;
-    background:none;border:none;
-    color:rgba(187,25,226,.5);cursor:pointer;font-size:19px;
-    transition:color .15s;
-  }
-  .modal-close:hover{color:var(--p-bright)}
-
-  /* Formulario modal */
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
-  .fg{display:flex;flex-direction:column;gap:4px}
-  .fg.full{grid-column:1/-1}
-  .fl{
-    font-size:10px;font-weight:700;letter-spacing:.13em;
-    text-transform:uppercase;color:rgba(187,25,226,.7);
-  }
-  .mfi{
-    height:40px;
-    background:rgba(13,0,23,.5);
-    border:1px solid rgba(187,25,226,.3);
-    border-radius:9px;color:var(--p-soft);
-    font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;
-    padding:0 12px;outline:none;width:100%;
-    transition:border-color .2s,box-shadow .2s;
-  }
-  .mfi::placeholder{color:rgba(187,25,226,.3);font-weight:400}
-  .mfi:focus{border-color:var(--p-bright);box-shadow:0 0 0 3px rgba(187,25,226,.18)}
-  .mfi.err{border-color:rgba(231,76,60,.6)}
-  .mfi-ro{
-    background:rgba(90,0,127,.35);color:rgba(187,25,226,.8);
-    cursor:default;font-family:'Cinzel',serif;
-  }
-  .mfi-sel{
-    height:40px;
-    background:rgba(13,0,23,.5);
-    border:1px solid rgba(187,25,226,.3);
-    border-radius:9px;color:var(--p-soft);
-    font-family:'Nunito',sans-serif;font-size:13px;font-weight:600;
-    padding:0 30px 0 12px;outline:none;width:100%;cursor:pointer;
-    appearance:none;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23BB19E2' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat:no-repeat;background-position:right 10px center;
-    transition:border-color .2s;
-  }
-  .mfi-sel:focus{border-color:var(--p-bright);box-shadow:0 0 0 3px rgba(187,25,226,.18)}
-  .mfi-sel option{background:#1a0030}
-
-  /* Precio calc display */
-  .calc-box{
-    display:flex;align-items:center;justify-content:center;
-    height:40px;border-radius:9px;
-    background:rgba(46,204,113,.08);
-    border:1px solid rgba(46,204,113,.25);
-    font-family:'Cinzel',serif;font-size:15px;font-weight:600;color:#82e6a4;
-  }
-  .calc-box.orange{
-    background:rgba(187,25,226,.1);
-    border-color:rgba(187,25,226,.3);
-    color:var(--p-bright);
-  }
-
-  /* Hint nombre */
-  .nombre-hint{
-    font-size:10px;color:rgba(187,25,226,.55);margin-top:2px;
-  }
-
-  /* Botones modal */
-  .modal-btns{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
-  .btn{
-    height:38px;padding:0 18px;border:none;border-radius:9px;
-    font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;
-    cursor:pointer;display:flex;align-items:center;gap:6px;
-    transition:all .2s;white-space:nowrap;
-  }
-  .btn:hover:not(:disabled){transform:translateY(-1px)}
-  .btn:disabled{opacity:.35;cursor:not-allowed}
-  .btn-primary{
-    background:linear-gradient(135deg,var(--p-base),var(--p-bright));
-    color:#fff;box-shadow:0 4px 16px rgba(187,25,226,.35);
-  }
-  .btn-primary:hover:not(:disabled){box-shadow:0 6px 22px rgba(187,25,226,.5)}
-  .btn-danger{background:linear-gradient(135deg,#a93226,var(--danger));color:#fff}
-  .btn-ghost{
-    background:rgba(187,25,226,.1);
-    border:1px solid rgba(187,25,226,.3);
-    color:var(--p-light);
-  }
-  .btn-ghost:hover{background:rgba(187,25,226,.2)}
-
-  /* ── TOAST ── */
-  .toast{
-    position:fixed;bottom:26px;left:50%;
-    transform:translateX(-50%) translateY(60px);
-    background:rgba(13,0,23,.97);
-    border:1px solid rgba(187,25,226,.35);
-    border-radius:10px;padding:11px 22px;
-    font-size:13px;color:var(--p-soft);
-    z-index:999;white-space:nowrap;
-    transition:transform .35s cubic-bezier(.2,.8,.3,1),opacity .35s;
-    opacity:0;pointer-events:none;
-    box-shadow:0 8px 24px rgba(90,0,127,.4);
-  }
-  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
-  .toast.ok{border-color:rgba(46,204,113,.45);color:#82e6a4}
-  .toast.err{border-color:rgba(231,76,60,.45);color:#f1948a}
-  .toast.wrn{border-color:rgba(243,156,18,.45);color:#f8c471}
-
-  .spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
-  @keyframes spin{to{transform:rotate(360deg)}}
+/* TOAST */
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(60px);
+  background:rgba(13,0,23,.97);border:1px solid rgba(187,25,226,.35);border-radius:8px;
+  padding:8px 16px;font-size:11.5px;color:var(--sf);z-index:999;white-space:nowrap;
+  transition:transform .28s cubic-bezier(.2,.8,.3,1),opacity .28s;opacity:0;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-color:rgba(46,204,113,.45);color:#82e6a4}
+.toast.err{border-color:rgba(231,76,60,.45);color:#f1948a}
+.toast.wrn{border-color:rgba(243,156,18,.45);color:#f8c471}
+.spin{width:12px;height:12px;border:2px solid rgba(255,255,255,.28);border-top-color:#fff;
+  border-radius:50%;animation:spin .65s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
 <div class="bg-grid"></div>
 
-<!-- ══ TOPBAR ══ -->
 <header class="topbar">
   <div class="brand-ring">💅</div>
-  <h1>Gestión de Servicios</h1>
+  <h1>Catálogo de Servicios</h1>
   <div class="topbar-btns">
-    <button class="tb-btn tb-new" onclick="abrirModal()">＋ Nuevo Servicio</button>
-    <button class="tb-btn tb-dl" onclick="descargarExcel()">📥 Descargar Excel</button>
-    <button class="tb-btn tb-close" onclick="window.close()">✕ Cerrar</button>
+    <button class="tb-btn tb-cat" onclick="abrirModalCategoria()">➕ Categoría</button>
+    <button class="tb-btn tb-new" onclick="abrirCalculadora()">＋ Nuevo Servicio</button>
+    <!-- MEJORA 05: icono Excel SVG verde en círculo blanco, sin texto "Excel" -->
+    <button class="tb-btn tb-excel" onclick="descargarExcel()" title="Descargar Excel">
+      <div class="excel-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="24" height="24" rx="3" fill="#1D6F42"/>
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" fill="#1D6F42"/>
+          <path d="M14 2v6h6" fill="#185C37"/>
+          <path d="M8 13l2 2.5L8 18M12 13v5M16 13l-2 2.5 2 2.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Flecha hacia abajo centrada -->
+          <path d="M12 20v3M10.5 21.5L12 23l1.5-1.5" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <!-- Sin texto, solo ícono -->
+    </button>
+    <button class="tb-btn tb-close" onclick="window.close()">✕</button>
   </div>
 </header>
 
-<!-- ══ PÁGINA ══ -->
 <div class="page">
-
-  <!-- STATS -->
+  <!-- STATS — sin precio promedio -->
   <div class="stats-strip">
-    <div class="stat-pill"><span class="sp-val" id="st-total">—</span><span class="sp-lbl">Total servicios</span></div>
-    <div class="stat-pill"><span class="sp-val" id="st-cats">—</span><span class="sp-lbl">Categorías</span></div>
-    <div class="stat-pill"><span class="sp-val" id="st-avg" style="color:#BB19E2">—</span><span class="sp-lbl">Precio promedio S/</span></div>
+    <div class="stat-pill"><span class="sp-val" id="st-total">—</span><span class="sp-lbl">Total Servicios</span></div>
+    <div class="stat-pill"><span class="sp-val" id="st-cats">—</span><span class="sp-lbl">Categorías activas</span></div>
   </div>
 
-  <!-- FILTROS -->
   <div class="filter-bar">
-    <input class="fi" id="s-q" placeholder="🔍 Buscar servicio o categoría..." oninput="filtrar()" style="flex:2;min-width:220px">
-    <select class="fi-sel" id="s-cat" onchange="filtrar()" style="max-width:200px">
+    <input class="fi" id="s-q" placeholder="🔍 Buscar servicio, ID o categoría..."
+      oninput="filtrar()" style="flex:2;min-width:200px">
+    <select class="fi-sel" id="s-cat" onchange="filtrar()" style="min-width:155px">
       <option value="">Todas las categorías</option>
     </select>
-    <button class="btn btn-ghost" style="height:38px;padding:0 14px;font-size:11px" onclick="limpiarFiltros()">✕ Limpiar</button>
+    <button class="btn btn-ghost" style="height:33px;padding:0 11px;font-size:11px"
+      onclick="limpiarFiltros()">✕ Limpiar</button>
   </div>
 
-  <!-- TABLA -->
   <div class="card">
     <div class="card-title">
-      <span>💅</span> Catálogo de Servicios
-      <button onclick="cargarServicios()" style="margin-left:auto;background:none;border:none;color:rgba(187,25,226,.5);cursor:pointer;font-size:16px;transition:color .15s" onmouseover="this.style.color='#BB19E2'" onmouseout="this.style.color='rgba(187,25,226,.5)'">↻</button>
+      <span>💅</span> Catálogo de Servicios — v_servicios
+      <button onclick="cargarServicios()" title="Recargar"
+        style="margin-left:auto;background:none;border:none;color:rgba(187,25,226,.5);
+               cursor:pointer;font-size:14px;transition:color .15s"
+        onmouseover="this.style.color='#BB19E2'"
+        onmouseout="this.style.color='rgba(187,25,226,.5)'">↻</button>
     </div>
     <div class="tbl-wrap">
       <table>
         <thead>
           <tr>
-            <th onclick="sortData(0)">ID ↕</th>
-            <th onclick="sortData(2)">Categoría ↕</th>
-            <th onclick="sortData(3)">Nombre Servicio ↕</th>
-            <th onclick="sortData(4)">Producto S/</th>
-            <th onclick="sortData(5)">Mano Obra S/</th>
-            <th onclick="sortData(6)">Margen %</th>
-            <th onclick="sortData(7)">Costo Base S/</th>
-            <th onclick="sortData(8)">P. Venta S/</th>
-            <th onclick="sortData(9)">P. Manual S/</th>
-            <th onclick="sortData(10)">P. Final S/</th>
+            <!-- MEJORA 02: columnas reemplazadas con todos los campos de v_servicios -->
+            <th onclick="sortData('servicioId')">ID Servicio ↕</th>
+            <th onclick="sortData('codigoCategoria')">Cód. Cat. ↕</th>
+            <th onclick="sortData('categoria')">Categoría ↕</th>
+            <th class="th-l" onclick="sortData('nombreServicio')">Nombre Servicio ↕</th>
+            <th onclick="sortData('horasProductivas')">H. Prod.</th>
+            <th onclick="sortData('duracionSesion')">Dur. (h)</th>
+            <th onclick="sortData('totalProductosS')">Total Prod. S/</th>
+            <th onclick="sortData('manoObraHora')">M. Obra S/h</th>
+            <th onclick="sortData('manoObraTotal')">M. Obra Total</th>
+            <th onclick="sortData('depreciacionEquipo')">Deprec. S/</th>
+            <th onclick="sortData('otrosDirectos')">Otros Dir. S/</th>
+            <th onclick="sortData('totalCostoDirecto')">Total C. Directo</th>
+            <th onclick="sortData('alquiler')">Alquiler</th>
+            <th onclick="sortData('electricidad')">Electric.</th>
+            <th onclick="sortData('agua')">Agua</th>
+            <th onclick="sortData('internet')">Internet</th>
+            <th onclick="sortData('publicidad')">Publicidad</th>
+            <th onclick="sortData('contador')">Contador</th>
+            <th onclick="sortData('limpieza')">Limpieza</th>
+            <th onclick="sortData('imprevistos')">Imprevist.</th>
+            <th onclick="sortData('otrosGenerales')">Otros GG</th>
+            <th onclick="sortData('totalGastosGG')">Total GG</th>
+            <th onclick="sortData('margenPct')">Margen %</th>
+            <th onclick="sortData('precioFinal')">💰 Precio Final</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody id="tbl-body">
-          <tr class="empty-row"><td colspan="11">Cargando servicios...</td></tr>
+          <tr class="empty-row"><td colspan="25">Cargando servicios...</td></tr>
         </tbody>
       </table>
     </div>
   </div>
 </div>
 
-<!-- ══ MODAL SERVICIO ══ -->
-<div class="modal-ov" id="modal-servicio">
+<!-- MODAL CATEGORÍAS -->
+<div class="modal-ov" id="modal-categoria">
   <div class="modal-box">
-    <button class="modal-close" onclick="cerrarModal()">✕</button>
-    <div class="modal-title">
-      <span class="glow">💅</span>
-      <span id="modal-titulo">Nuevo Servicio</span>
-    </div>
-
-    <div class="form-grid">
+    <button class="modal-close" onclick="cerrarModalCategoria()">✕</button>
+    <div class="modal-title"><span class="glow">🗂️</span><span>Gestionar Categorías</span></div>
+    <p style="font-size:10px;color:var(--lt);margin-bottom:10px">
+      Guarda en <code style="color:var(--pb)">/categorias</code>.
+    </p>
+    <div class="form-grid" style="grid-template-columns:2fr 1fr">
       <div class="fg">
-        <label class="fl">Categoría *</label>
-        <select class="mfi-sel" id="m-cat" onchange="onCatChange()" onkeydown="en(event,'m-nombre')">
-          <option value="">— Selecciona —</option>
-        </select>
+        <label class="fl">Nombre Categoría *</label>
+        <input class="mfi" id="nc-nombre" placeholder="Ej: EXTENSIONES"
+          onkeydown="if(event.key==='Enter'){document.getElementById('nc-codigo').focus()}">
       </div>
       <div class="fg">
-        <label class="fl">Código Categoría</label>
-        <input class="mfi mfi-ro" id="m-cod-cat" readonly placeholder="Auto">
-      </div>
-      <div class="fg">
-        <label class="fl">ID Servicio</label>
-        <input class="mfi mfi-ro" id="m-id" readonly placeholder="Auto">
-      </div>
-      <div class="fg full">
-        <label class="fl">Nombre Servicio * <span style="color:rgba(187,25,226,.5);font-weight:400;font-size:9px">(debe empezar con CATEGORÍA: nombre)</span></label>
-        <input class="mfi" id="m-nombre" placeholder="CATEGORÍA: nombre del servicio" onkeydown="en(event,'m-producto')">
-      </div>
-      <div class="fg">
-        <label class="fl">Producto S/</label>
-        <input class="mfi" type="number" id="m-producto" min="0" step="0.01" placeholder="0.00" oninput="calcularPrecios()" onkeydown="en(event,'m-mano-obra')">
-      </div>
-      <div class="fg">
-        <label class="fl">Mano de Obra S/</label>
-        <input class="mfi" type="number" id="m-mano-obra" min="0" step="0.01" placeholder="0.00" oninput="calcularPrecios()" onkeydown="en(event,'m-margen')">
-      </div>
-      <div class="fg">
-        <label class="fl">Margen %</label>
-        <input class="mfi" type="number" id="m-margen" min="0" max="999" step="1" placeholder="0" oninput="calcularPrecios()" onkeydown="en(event,'m-precio-manual')">
-      </div>
-      <div class="fg">
-        <label class="fl">Precio Manual S/ <span style="color:rgba(187,25,226,.45);font-size:9px">(0 = usa calculado)</span></label>
-        <input class="mfi" type="number" id="m-precio-manual" min="0" step="0.01" placeholder="0.00" oninput="actualizarPrecioFinal()" onkeydown="en(event,'btn-guardar-svc')">
-      </div>
-      <div class="fg">
-        <label class="fl">Costo Base S/</label>
-        <div class="calc-box orange" id="m-costo-base">S/ 0.00</div>
-      </div>
-      <div class="fg">
-        <label class="fl">Precio Venta S/ (calculado)</label>
-        <div class="calc-box" id="m-precio-venta">S/ 0.00</div>
-      </div>
-      <div class="fg full">
-        <label class="fl">Precio Final S/</label>
-        <div class="calc-box" id="m-precio-final" style="font-size:18px;background:rgba(187,25,226,.12);border-color:rgba(187,25,226,.4);color:var(--p-bright)">S/ 0.00</div>
+        <label class="fl">Código</label>
+        <input class="mfi" id="nc-codigo" placeholder="Ej: EXT"
+          onkeydown="if(event.key==='Enter'){guardarCategoria()}">
       </div>
     </div>
-
-    <div class="modal-btns">
-      <button class="btn btn-ghost" onclick="cerrarModal()">Cancelar</button>
-      <button class="btn btn-primary" id="btn-guardar-svc" onclick="guardarServicio()">
-        <span id="lbl-gs">💾 Guardar Servicio</span>
-        <div class="spin" id="sp-gs" style="display:none"></div>
+    <div class="modal-btns" style="margin-top:0">
+      <button class="btn btn-primary" id="btn-guardar-cat" onclick="guardarCategoria()">
+        <span id="lbl-gc">➕ Agregar</span>
+        <div class="spin" id="sp-gc" style="display:none"></div>
       </button>
+      <button class="btn btn-ghost" onclick="cerrarModalCategoria()">Cerrar</button>
+    </div>
+    <hr class="modal-sep">
+    <p style="font-size:9.5px;font-weight:700;color:var(--lt);margin-bottom:6px;text-transform:uppercase;letter-spacing:.08em">Registradas</p>
+    <div class="cat-list" id="cat-list-body">
+      <p style="color:rgba(187,25,226,.4);font-size:11px;text-align:center;padding:10px">Cargando...</p>
     </div>
   </div>
 </div>
@@ -462,11 +307,10 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-import { initializeApp }                         from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, set, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-/* ── Firebase config ── */
-const firebaseConfig={
+const firebaseConfig = {
   apiKey:"TU_API_KEY",
   authDomain:"jessicapenabeautystudio.firebaseapp.com",
   databaseURL:"https://jessicapenabeautystudio-default-rtdb.europe-west1.firebasedatabase.app",
@@ -478,330 +322,325 @@ const firebaseConfig={
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 
-/* ── ESTADO ── */
-let allServicios = [];
-let categorias   = {};          // { NombreCat: codigoCat }
-let selectedKey  = null;
-let editandoKey  = null;
-let sortCol = -1, sortAsc = true;
+let allServicios   = [];
+let categorias     = {};
+let categoriasKeys = {};
+let selectedKey    = null;
+let sortKey = '', sortAsc = true;
 
-const fmt2  = n => parseFloat(n||0).toFixed(2);
-const fmt0  = n => Math.round(parseFloat(n||0));
+const f2  = n => parseFloat(n||0).toFixed(2);
+const f0  = n => Math.round(parseFloat(n||0));
 
-/* ── TOAST ── */
-window.showToast = (msg, type='') => {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = `toast show ${type}`;
-  setTimeout(() => { t.className = 'toast'; }, 3500);
+const CAT_DEFAULTS=[['MANICURA','MAN'],['PEDICURA','PED'],['PESTAÑAS','PES'],
+  ['DEPILACIÓN','DEP'],['CABELLO','CAB'],['CEJAS','CEJ'],['FACIALES','FAC'],
+  ['MASAJES CORPORALES','MAS'],['MAQUILLAJE','MAQ']];
+
+window.showToast = (msg,type='')=>{
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast show ${type}`;
+  setTimeout(()=>{t.className='toast';},3400);
 };
 
-/* ── ENTER navega ── */
-window.en = (e, nextId) => {
-  if (e.key !== 'Enter') return;
-  e.preventDefault();
-  const el = document.getElementById(nextId);
-  if (!el) return;
-  if (el.tagName === 'BUTTON') el.click(); else el.focus();
+/* ABRIR servicio_calculadora.html en nueva PESTAÑA */
+window.abrirCalculadora = ()=>{
+  window.open('servicio_calculadora.html','_blank');
 };
 
-/* ══════════════════════════════════
-   CARGAR CATEGORÍAS desde /categorias
-══════════════════════════════════ */
-async function cargarCategorias() {
-  try {
-    const snap = await get(ref(db, 'categorias'));
-    categorias = {};
-    const DEFAULTS = [
-      ['MANICURA','1'],['PEDICURA','2'],['PESTAÑAS','3'],['DEPILACIÓN','4'],
-      ['CABELLO','5'],['CEJAS','6'],['UÑAS','7'],['TRATAMIENTOS','8'],
-      ['FACIALES','9'],['CORPORALES','10'],['MASAJES','11'],['MAQUILLAJE','12'],
-      ['INVENTARIO','13'],['MARKETING','14'],['OTROS','15']
-    ];
-    if (snap.exists()) {
-      snap.forEach(c => { const v = c.val(); categorias[v.nombre||c.key] = v.codigo||c.key; });
+/* CARGAR CATEGORÍAS */
+async function cargarCategorias(){
+  try{
+    const snap=await get(ref(db,'categorias'));
+    categorias={}; categoriasKeys={};
+    if(snap.exists()){
+      snap.forEach(c=>{
+        const v=c.val(); const n=v.nombre||c.key;
+        categorias[n]=v.codigo||''; categoriasKeys[n]=c.key;
+      });
     } else {
-      DEFAULTS.forEach(([n,c]) => { categorias[n] = c; });
+      CAT_DEFAULTS.forEach(([n,c])=>{ categorias[n]=c; });
     }
-    // Poblar selects de categoría
-    const cats = Object.keys(categorias).sort();
-    const catOpts = '<option value="">— Selecciona —</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
-    document.getElementById('m-cat').innerHTML = catOpts;
-    const filterCatOpts = '<option value="">Todas las categorías</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
-    document.getElementById('s-cat').innerHTML = filterCatOpts;
-  } catch(err) { console.error(err); }
+    poblarFiltro();
+  } catch(e){ console.error(e); }
 }
 
-/* ══════════════════════════════════
-   CARGAR SERVICIOS
-══════════════════════════════════ */
-window.cargarServicios = async () => {
-  try {
-    const snap = await get(ref(db, 'servicios'));
-    allServicios = [];
-    if (snap.exists()) {
-      snap.forEach(c => allServicios.push({ key: c.key, ...c.val() }));
+function poblarFiltro(){
+  const cats=Object.keys(categorias).sort();
+  document.getElementById('s-cat').innerHTML=
+    '<option value="">Todas las categorías</option>'+
+    cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+}
+
+/* ═══════════════════════════════════════
+   CARGAR SERVICIOS — MEJORA 04
+   Lee TODO el nodo v_servicios sin filtrar,
+   compatible con IDs numéricos, S-COD-XXXX y svc_* keys
+═══════════════════════════════════════ */
+window.cargarServicios = async ()=>{
+  try{
+    const snap=await get(ref(db,'v_servicios'));
+    allServicios=[];
+    if(snap.exists()){
+      snap.forEach(child=>{
+        const v=child.val();
+        // Normalizar campos que pueden venir en distintos formatos
+        allServicios.push({
+          key: child.key,
+          servicioId:       v.servicioId||v.idServicio||child.key,
+          codigoCategoria:  v.codigoCategoria||v.codCategoria||'',
+          categoria:        v.categoria||'',
+          nombreServicio:   v.nombreServicio||'',
+          horasProductivas: parseFloat(v.horasProductivas||v.parametros?.horasProductivas||0),
+          duracionSesion:   parseFloat(v.duracionSesion||v.parametros?.duracionSesion||0),
+          totalProductosS:  parseFloat(v.totalProductosS||v.producto||0),
+          manoObraHora:     parseFloat(v.manoObraHora||v.costosDirectos?.manoObraHora||0),
+          manoObraTotal:    parseFloat(v.manoObraTotal||v.manoObra||0),
+          depreciacionEquipo: parseFloat(v.depreciacionEquipo||v.costosDirectos?.depreciacionEquipo||0),
+          otrosDirectos:    parseFloat(v.otrosDirectos||v.costosDirectos?.otrosDirectos||0),
+          totalCostoDirecto:parseFloat(v.totalCostoDirecto||v.costoBase||v.resultados?.costoDirecto||0),
+          alquiler:         parseFloat(v.alquiler||v.gastosGenerales?.alquiler||0),
+          electricidad:     parseFloat(v.electricidad||v.gastosGenerales?.electricidad||0),
+          agua:             parseFloat(v.agua||v.gastosGenerales?.agua||0),
+          internet:         parseFloat(v.internet||v.gastosGenerales?.internet||0),
+          publicidad:       parseFloat(v.publicidad||v.gastosGenerales?.publicidad||0),
+          contador:         parseFloat(v.contador||v.gastosGenerales?.contador||0),
+          limpieza:         parseFloat(v.limpieza||v.gastosGenerales?.limpieza||0),
+          imprevistos:      parseFloat(v.imprevistos||v.gastosGenerales?.imprevistos||0),
+          otrosGenerales:   parseFloat(v.otrosGenerales||v.gastosGenerales?.otrosGenerales||0),
+          totalGastosGG:    parseFloat(v.totalGastosGG||v.resultados?.gastosGG||0),
+          margenPct:        v.margenPct!=null?parseFloat(v.margenPct):parseFloat((v.margen||0)*100),
+          precioFinal:      parseFloat(v.precioFinal||v.resultados?.precioFinal||0),
+          creadoEn:         v.creadoEn||'',
+          actualizadoEn:    v.actualizadoEn||'',
+        });
+      });
     }
-    allServicios.sort((a,b) => (a.categoria||'').localeCompare(b.categoria||'') || (a.nombreServicio||'').localeCompare(b.nombreServicio||''));
-    filtrar();
-    updateStats();
-    showToast('✅ Servicios cargados', 'ok');
-  } catch(err) { console.error(err); showToast('Error al cargar servicios', 'err'); }
+    allServicios.sort((a,b)=>
+      (a.categoria||'').localeCompare(b.categoria||'')||
+      (a.nombreServicio||'').localeCompare(b.nombreServicio||''));
+    filtrar(); updateStats();
+    showToast(`✅ ${allServicios.length} servicios cargados`,'ok');
+  } catch(e){ console.error(e); showToast('Error al cargar: '+e.message,'err'); }
 };
 
-function updateStats() {
-  document.getElementById('st-total').textContent = allServicios.length;
-  const cats = new Set(allServicios.map(s => s.categoria).filter(Boolean));
-  document.getElementById('st-cats').textContent = cats.size;
-  const precios = allServicios.map(s => parseFloat(s.precioFinal||s.precioVenta||0)).filter(p=>p>0);
-  const avg = precios.length ? precios.reduce((a,b)=>a+b,0)/precios.length : 0;
-  document.getElementById('st-avg').textContent = 'S/ ' + fmt2(avg);
+function updateStats(){
+  document.getElementById('st-total').textContent=allServicios.length;
+  const cats=new Set(allServicios.map(s=>s.categoria).filter(Boolean));
+  document.getElementById('st-cats').textContent=cats.size;
 }
 
-/* ══════════════════════════════════
-   RENDER TABLA
-══════════════════════════════════ */
-function renderTabla(list) {
-  const tbody = document.getElementById('tbl-body');
-  if (!list.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="11">Sin servicios registrados</td></tr>';
+/* RENDER TABLA — todos los campos (mejora 02) */
+function renderTabla(list){
+  const tbody=document.getElementById('tbl-body');
+  const colspan=25;
+  if(!list.length){
+    tbody.innerHTML=`<tr class="empty-row"><td colspan="${colspan}">Sin servicios registrados</td></tr>`;
     return;
   }
-  tbody.innerHTML = list.map(s => `
-    <tr data-key="${s.key}" class="${s.key===selectedKey?'selected':''}" onclick="selFila('${s.key}')" ondblclick="abrirModal('${s.key}')">
-      <td><code style="font-size:10px;background:rgba(187,25,226,.15);padding:2px 7px;border-radius:5px;color:var(--p-bright)">${s.servicioId||s.key.substring(0,8)}</code></td>
+  tbody.innerHTML=list.map(s=>`
+    <tr data-key="${s.key}" class="${s.key===selectedKey?'selected':''}"
+        onclick="selFila('${s.key}')" ondblclick="abrirEditar('${s.key}')">
+      <td><span class="id-badge">${s.servicioId}</span></td>
+      <td style="font-family:'Cinzel',serif;font-size:10px;color:rgba(187,25,226,.7)">${s.codigoCategoria||'—'}</td>
       <td><span class="cat-badge">${s.categoria||'—'}</span></td>
-      <td style="text-align:left;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.nombreServicio||''}">${s.nombreServicio||'—'}</td>
-      <td>${fmt2(s.producto)}</td>
-      <td>${fmt2(s.manoObra)}</td>
-      <td>${fmt0(s.margen*100)||0}%</td>
-      <td>${fmt2(s.costoBase)}</td>
-      <td>${fmt2(s.precioVenta)}</td>
-      <td>${fmt2(s.precioVentaManual)}</td>
-      <td class="price-val">S/ ${fmt2(s.precioFinal||s.precioVenta)}</td>
+      <td class="td-nombre" title="${s.nombreServicio}" style="max-width:297px">${s.nombreServicio||'—'}</td>
+      <td>${s.horasProductivas||'—'}</td>
+      <td>${s.duracionSesion||'—'}</td>
+      <td>${f2(s.totalProductosS)}</td>
+      <td>${f2(s.manoObraHora)}</td>
+      <td>${f2(s.manoObraTotal)}</td>
+      <td>${f2(s.depreciacionEquipo)}</td>
+      <td>${f2(s.otrosDirectos)}</td>
+      <td style="font-weight:700;color:#b8eaff">${f2(s.totalCostoDirecto)}</td>
+      <td>${f2(s.alquiler)}</td>
+      <td>${f2(s.electricidad)}</td>
+      <td>${f2(s.agua)}</td>
+      <td>${f2(s.internet)}</td>
+      <td>${f2(s.publicidad)}</td>
+      <td>${f2(s.contador)}</td>
+      <td>${f2(s.limpieza)}</td>
+      <td>${f2(s.imprevistos)}</td>
+      <td>${f2(s.otrosGenerales)}</td>
+      <td style="font-weight:700;color:#ffd6a5">${f2(s.totalGastosGG)}</td>
+      <td>${f0(s.margenPct)}%</td>
+      <td class="price-val">S/ ${f2(s.precioFinal)}</td>
       <td>
-        <button onclick="event.stopPropagation();abrirModal('${s.key}')"
-          style="background:rgba(187,25,226,.15);border:1px solid rgba(187,25,226,.3);border-radius:6px;color:var(--p-bright);cursor:pointer;font-size:11px;padding:3px 8px;margin-right:4px">✏️</button>
+        <button onclick="event.stopPropagation();abrirEditar('${s.key}')"
+          style="background:rgba(187,25,226,.14);border:1px solid rgba(187,25,226,.28);
+                 border-radius:4px;color:var(--pb);cursor:pointer;font-size:11px;
+                 padding:2px 6px;margin-right:2px">✏️</button>
         <button onclick="event.stopPropagation();eliminarServicio('${s.key}')"
-          style="background:rgba(231,76,60,.12);border:1px solid rgba(231,76,60,.25);border-radius:6px;color:#f1948a;cursor:pointer;font-size:11px;padding:3px 8px">🗑️</button>
+          style="background:rgba(231,76,60,.11);border:1px solid rgba(231,76,60,.22);
+                 border-radius:4px;color:#f1948a;cursor:pointer;font-size:11px;padding:2px 6px">🗑️</button>
       </td>
     </tr>`).join('');
 }
 
-window.filtrar = () => {
-  const q   = document.getElementById('s-q').value.toLowerCase();
-  const cat = document.getElementById('s-cat').value;
-  let list  = allServicios.filter(s =>
-    (!q   || (s.nombreServicio||'').toLowerCase().includes(q) || (s.categoria||'').toLowerCase().includes(q) || (s.servicioId||'').toLowerCase().includes(q)) &&
-    (!cat || s.categoria === cat)
+window.selFila = key=>{
+  selectedKey=key;
+  document.querySelectorAll('tbody tr').forEach(r=>r.classList.toggle('selected',r.dataset.key===key));
+};
+window.abrirEditar = key=>{
+  window.open(`servicio_calculadora.html?edit=${key}`,'_blank');
+};
+
+window.filtrar = ()=>{
+  const q=document.getElementById('s-q').value.toLowerCase();
+  const cat=document.getElementById('s-cat').value;
+  let list=allServicios.filter(s=>
+    (!q||(s.nombreServicio||'').toLowerCase().includes(q)||
+         (s.categoria||'').toLowerCase().includes(q)||
+         (s.servicioId||'').toLowerCase().includes(q))&&
+    (!cat||s.categoria===cat)
   );
-  // sort
-  if (sortCol >= 0) {
-    const keys = ['servicioId','codigoCategoria','categoria','nombreServicio','producto','manoObra','margen','costoBase','precioVenta','precioVentaManual','precioFinal'];
-    const k = keys[sortCol];
-    list.sort((a,b) => {
-      const av = a[k]||'', bv = b[k]||'';
-      return sortAsc ? String(av).localeCompare(String(bv),undefined,{numeric:true}) : -String(av).localeCompare(String(bv),undefined,{numeric:true});
-    });
+  if(sortKey){
+    list.sort((a,b)=>sortAsc
+      ?String(a[sortKey]||'').localeCompare(String(b[sortKey]||''),undefined,{numeric:true})
+      :-String(a[sortKey]||'').localeCompare(String(b[sortKey]||''),undefined,{numeric:true}));
   }
   renderTabla(list);
 };
 
-window.limpiarFiltros = () => {
-  document.getElementById('s-q').value = '';
-  document.getElementById('s-cat').value = '';
+window.limpiarFiltros=()=>{
+  document.getElementById('s-q').value='';
+  document.getElementById('s-cat').value='';
   filtrar();
 };
 
-window.sortData = col => {
-  if (sortCol === col) sortAsc = !sortAsc; else { sortCol = col; sortAsc = true; }
+window.sortData = k=>{
+  if(sortKey===k) sortAsc=!sortAsc; else{sortKey=k;sortAsc=true;}
   filtrar();
 };
 
-window.selFila = key => {
-  selectedKey = key;
-  document.querySelectorAll('tbody tr').forEach(r => r.classList.toggle('selected', r.dataset.key === key));
+window.eliminarServicio = async key=>{
+  const s=allServicios.find(x=>x.key===key);
+  if(!confirm(`¿Eliminar "${s?.nombreServicio}"?`)) return;
+  try{
+    await remove(ref(db,`v_servicios/${key}`));
+    showToast('🗑️ Servicio eliminado','ok'); selectedKey=null;
+    await cargarServicios();
+  } catch(e){ showToast('Error al eliminar','err'); }
 };
 
-/* ══════════════════════════════════
-   MODAL NUEVO / EDITAR
-══════════════════════════════════ */
-window.abrirModal = key => {
-  editandoKey = key || null;
-  document.getElementById('modal-titulo').textContent = key ? 'Editar Servicio' : 'Nuevo Servicio';
-  document.getElementById('lbl-gs').textContent = key ? '💾 Actualizar' : '💾 Guardar Servicio';
-
-  if (key) {
-    const s = allServicios.find(x => x.key === key);
-    if (!s) return;
-    document.getElementById('m-cat').value          = s.categoria      || '';
-    document.getElementById('m-cod-cat').value      = s.codigoCategoria|| '';
-    document.getElementById('m-id').value           = s.servicioId     || '';
-    document.getElementById('m-nombre').value       = s.nombreServicio  || '';
-    document.getElementById('m-producto').value     = fmt2(s.producto);
-    document.getElementById('m-mano-obra').value    = fmt2(s.manoObra);
-    document.getElementById('m-margen').value       = fmt0(s.margen*100);
-    document.getElementById('m-precio-manual').value= fmt2(s.precioVentaManual);
-    calcularPrecios();
-  } else {
-    // Reset
-    ['m-nombre','m-producto','m-mano-obra','m-precio-manual'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('m-margen').value = '0';
-    document.getElementById('m-cat').value = '';
-    document.getElementById('m-cod-cat').value = '';
-    document.getElementById('m-id').value = '';
-    ['m-costo-base','m-precio-venta','m-precio-final'].forEach(id => document.getElementById(id).textContent = 'S/ 0.00');
-  }
-
-  document.getElementById('modal-servicio').classList.add('show');
-  setTimeout(() => document.getElementById('m-cat').focus(), 100);
+/* ═══════════════════════════════════════
+   MODAL CATEGORÍAS
+═══════════════════════════════════════ */
+window.abrirModalCategoria=()=>{
+  document.getElementById('nc-nombre').value='';
+  document.getElementById('nc-codigo').value='';
+  document.getElementById('modal-categoria').classList.add('show');
+  renderCatList();
+  setTimeout(()=>document.getElementById('nc-nombre').focus(),80);
 };
-
-window.cerrarModal = () => {
-  document.getElementById('modal-servicio').classList.remove('show');
-  editandoKey = null;
-};
-document.getElementById('modal-servicio').addEventListener('click', e => {
-  if (e.target === document.getElementById('modal-servicio')) cerrarModal();
+window.cerrarModalCategoria=()=>document.getElementById('modal-categoria').classList.remove('show');
+document.getElementById('modal-categoria').addEventListener('click',e=>{
+  if(e.target===document.getElementById('modal-categoria')) cerrarModalCategoria();
 });
-
-/* ── Lógica de categoría → auto ID ── */
-window.onCatChange = async () => {
-  const cat = document.getElementById('m-cat').value;
-  if (!cat) return;
-  const codCat = categorias[cat] || '0';
-  document.getElementById('m-cod-cat').value = codCat;
-
-  if (!editandoKey) {
-    // Generar siguiente servicioId = codCat*100 + n
-    const cod = parseInt(codCat) || 0;
-    const base = cod * 100;
-    const existing = allServicios.filter(s => s.codigoCategoria === codCat).map(s => parseInt(s.servicioId)||0);
-    const maxN = existing.length ? Math.max(...existing) : base;
-    const nextId = maxN < base ? base + 1 : maxN + 1;
-    document.getElementById('m-id').value = String(nextId);
-  }
-
-  // Prefijo en nombre
-  const nombre = document.getElementById('m-nombre').value;
-  if (!editandoKey || !nombre.trim()) {
-    const partes = nombre.includes(':') ? nombre.split(':').slice(1).join(':').trim() : '';
-    document.getElementById('m-nombre').value = `${cat}: ${partes}`;
-  }
-
-  document.getElementById('m-nombre').focus();
-  calcularPrecios();
+function renderCatList(){
+  const div=document.getElementById('cat-list-body');
+  const cats=Object.keys(categorias).sort();
+  if(!cats.length){div.innerHTML='<p style="color:rgba(187,25,226,.4);font-size:11px;text-align:center;padding:9px">Sin categorías</p>';return;}
+  div.innerHTML=cats.map(n=>`
+    <div class="cat-list-item">
+      <span class="cat-name">${n}</span>
+      <span class="cat-code">[${categorias[n]}]</span>
+      <button class="cat-del" onclick="eliminarCategoria('${n}')" title="Eliminar">🗑️</button>
+    </div>`).join('');
+}
+window.guardarCategoria=async()=>{
+  const nombre=document.getElementById('nc-nombre').value.trim().toUpperCase();
+  const codigo=document.getElementById('nc-codigo').value.trim().toUpperCase();
+  if(!nombre){showToast('Escribe el nombre','err');return;}
+  if(!codigo){showToast('Escribe el código','err');return;}
+  const btn=document.getElementById('btn-guardar-cat'); btn.disabled=true;
+  document.getElementById('lbl-gc').style.display='none';
+  document.getElementById('sp-gc').style.display='block';
+  try{
+    if(categoriasKeys[nombre]){
+      await set(ref(db,`categorias/${categoriasKeys[nombre]}`),{nombre,codigo});
+    } else {
+      const nr=push(ref(db,'categorias'));
+      await set(nr,{nombre,codigo});
+      categoriasKeys[nombre]=nr.key;
+    }
+    categorias[nombre]=codigo;
+    document.getElementById('nc-nombre').value='';
+    document.getElementById('nc-codigo').value='';
+    renderCatList(); poblarFiltro();
+    showToast(`✅ "${nombre}" [${codigo}] guardada`,'ok');
+    document.getElementById('nc-nombre').focus();
+  } catch(e){console.error(e);showToast('Error al guardar','err');}
+  btn.disabled=false;
+  document.getElementById('lbl-gc').style.display='inline';
+  document.getElementById('sp-gc').style.display='none';
+};
+window.eliminarCategoria=async nombre=>{
+  if(!confirm(`¿Eliminar "${nombre}"?`)) return;
+  try{
+    const key=categoriasKeys[nombre];
+    if(key) await remove(ref(db,`categorias/${key}`));
+    delete categorias[nombre]; delete categoriasKeys[nombre];
+    renderCatList(); poblarFiltro();
+    showToast(`🗑️ "${nombre}" eliminada`,'ok');
+  } catch(e){showToast('Error','err');}
 };
 
-/* ── Cálculo de precios en tiempo real ── */
-window.calcularPrecios = () => {
-  const prod     = parseFloat(document.getElementById('m-producto').value)   || 0;
-  const mano     = parseFloat(document.getElementById('m-mano-obra').value)  || 0;
-  const margenPct= parseFloat(document.getElementById('m-margen').value)     || 0;
-  const margen   = margenPct / 100;
-  const costoBase  = prod + mano;
-  const precioVenta= costoBase * (1 + margen);
-  document.getElementById('m-costo-base').textContent  = 'S/ ' + fmt2(costoBase);
-  document.getElementById('m-precio-venta').textContent = 'S/ ' + fmt2(precioVenta);
-  actualizarPrecioFinal();
+/* ═══════════════════════════════════════
+   DESCARGAR EXCEL — MEJORA 05
+   Lee directamente de Firebase (no del array filtrado)
+   para garantizar que estén TODOS los registros
+═══════════════════════════════════════ */
+window.descargarExcel=async()=>{
+  showToast('📥 Preparando Excel...','');
+  try{
+    // Leer de Firebase en tiempo real
+    const snap=await get(ref(db,'v_servicios'));
+    const rows=[];
+    if(snap.exists()){
+      snap.forEach(child=>{
+        const v=child.val();
+        rows.push({
+          'ID Servicio':      v.servicioId||v.idServicio||child.key,
+          'Cód. Cat.':        v.codigoCategoria||v.codCategoria||'',
+          'Categoría':        v.categoria||'',
+          'Nombre Servicio':  v.nombreServicio||'',
+          'Horas Prod./mes':  parseFloat(v.horasProductivas||v.parametros?.horasProductivas||0),
+          'Duración (h)':     parseFloat(v.duracionSesion||v.parametros?.duracionSesion||0),
+          'Total Productos S/':parseFloat(v.totalProductosS||v.producto||0).toFixed(4),
+          'Mano Obra S/hora': parseFloat(v.manoObraHora||v.costosDirectos?.manoObraHora||0).toFixed(2),
+          'Mano Obra Total':  parseFloat(v.manoObraTotal||v.manoObra||0).toFixed(2),
+          'Deprec. S/':       parseFloat(v.depreciacionEquipo||v.costosDirectos?.depreciacionEquipo||0).toFixed(2),
+          'Otros Dir. S/':    parseFloat(v.otrosDirectos||v.costosDirectos?.otrosDirectos||0).toFixed(2),
+          'Total C. Directo': parseFloat(v.totalCostoDirecto||v.costoBase||v.resultados?.costoDirecto||0).toFixed(2),
+          'Alquiler':         parseFloat(v.alquiler||v.gastosGenerales?.alquiler||0).toFixed(2),
+          'Electricidad':     parseFloat(v.electricidad||v.gastosGenerales?.electricidad||0).toFixed(2),
+          'Agua':             parseFloat(v.agua||v.gastosGenerales?.agua||0).toFixed(2),
+          'Internet':         parseFloat(v.internet||v.gastosGenerales?.internet||0).toFixed(2),
+          'Publicidad':       parseFloat(v.publicidad||v.gastosGenerales?.publicidad||0).toFixed(2),
+          'Contador':         parseFloat(v.contador||v.gastosGenerales?.contador||0).toFixed(2),
+          'Limpieza':         parseFloat(v.limpieza||v.gastosGenerales?.limpieza||0).toFixed(2),
+          'Imprevistos':      parseFloat(v.imprevistos||v.gastosGenerales?.imprevistos||0).toFixed(2),
+          'Otros Gastos':     parseFloat(v.otrosGenerales||v.gastosGenerales?.otrosGenerales||0).toFixed(2),
+          'Total GG':         parseFloat(v.totalGastosGG||v.resultados?.gastosGG||0).toFixed(2),
+          'Margen %':         v.margenPct!=null?parseFloat(v.margenPct):Math.round(parseFloat(v.margen||0)*100),
+          'Precio Final S/':  parseFloat(v.precioFinal||v.resultados?.precioFinal||0).toFixed(2),
+          'Creado En':        v.creadoEn||'',
+          'Actualizado En':   v.actualizadoEn||'',
+        });
+      });
+    }
+    if(!rows.length){showToast('Sin datos en Firebase','wrn');return;}
+    const ws=XLSX.utils.json_to_sheet(rows);
+    ws['!cols']=[14,10,18,42,10,8,14,12,12,10,10,14,10,10,8,9,10,9,9,10,10,12,10,14,22,22]
+      .map(w=>({wch:w}));
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'v_servicios');
+    XLSX.writeFile(wb,`v_servicios_${new Date().toISOString().split('T')[0]}.xlsx`);
+    showToast(`📥 ${rows.length} servicios exportados`,'ok');
+  } catch(e){ console.error(e); showToast('Error al exportar','err'); }
 };
 
-window.actualizarPrecioFinal = () => {
-  const precioManual = parseFloat(document.getElementById('m-precio-manual').value) || 0;
-  const precioVentaTxt = document.getElementById('m-precio-venta').textContent.replace('S/ ','');
-  const pv = parseFloat(precioVentaTxt) || 0;
-  const final = precioManual > 0 ? precioManual : pv;
-  document.getElementById('m-precio-final').textContent = 'S/ ' + fmt2(final);
-};
-
-/* ══════════════════════════════════
-   GUARDAR SERVICIO
-══════════════════════════════════ */
-window.guardarServicio = async () => {
-  const cat       = document.getElementById('m-cat').value;
-  const codCat    = document.getElementById('m-cod-cat').value;
-  const svcId     = document.getElementById('m-id').value;
-  const nombre    = document.getElementById('m-nombre').value.trim();
-  const prod      = parseFloat(document.getElementById('m-producto').value)    || 0;
-  const mano      = parseFloat(document.getElementById('m-mano-obra').value)   || 0;
-  const margenPct = parseFloat(document.getElementById('m-margen').value)      || 0;
-  const manual    = parseFloat(document.getElementById('m-precio-manual').value)|| 0;
-
-  if (!cat)    { showToast('Selecciona una categoría', 'err'); return; }
-  if (!nombre) { showToast('El nombre del servicio es obligatorio', 'err'); return; }
-  if (!nombre.startsWith(`${cat}:`)) { showToast(`El nombre debe comenzar con "${cat}:"`, 'wrn'); return; }
-
-  const margen     = margenPct / 100;
-  const costoBase  = prod + mano;
-  const precioVenta= costoBase * (1 + margen);
-  const precioFinal= manual > 0 ? manual : precioVenta;
-
-  const data = {
-    servicioId: svcId, codigoCategoria: codCat, categoria: cat,
-    nombreServicio: nombre,
-    producto: prod, manoObra: mano, margen,
-    costoBase, precioVenta, precioVentaManual: manual, precioFinal,
-    actualizadoEn: new Date().toISOString()
-  };
-
-  const btn = document.getElementById('btn-guardar-svc'); btn.disabled = true;
-  document.getElementById('lbl-gs').style.display = 'none';
-  document.getElementById('sp-gs').style.display  = 'block';
-
-  try {
-    const nodeKey = editandoKey || `svc_${svcId}`;
-    await set(ref(db, `servicios/${nodeKey}`), { ...data, creadoEn: editandoKey ? (allServicios.find(x=>x.key===editandoKey)?.creadoEn||new Date().toISOString()) : new Date().toISOString() });
-    showToast(`✅ Servicio "${nombre.split(':')[1]?.trim()||nombre}" guardado`, 'ok');
-    cerrarModal();
-    await cargarServicios();
-  } catch(err) { console.error(err); showToast('Error al guardar en Firebase', 'err'); }
-
-  btn.disabled = false;
-  document.getElementById('lbl-gs').style.display  = 'inline';
-  document.getElementById('sp-gs').style.display   = 'none';
-};
-
-/* ══════════════════════════════════
-   ELIMINAR SERVICIO
-══════════════════════════════════ */
-window.eliminarServicio = async key => {
-  const s = allServicios.find(x => x.key === key);
-  if (!confirm(`¿Eliminar el servicio "${s?.nombreServicio}"?`)) return;
-  try {
-    await remove(ref(db, `servicios/${key}`));
-    showToast('🗑️ Servicio eliminado', 'ok');
-    selectedKey = null;
-    await cargarServicios();
-  } catch(err) { showToast('Error al eliminar', 'err'); }
-};
-
-/* ══════════════════════════════════
-   DESCARGAR EXCEL
-══════════════════════════════════ */
-window.descargarExcel = () => {
-  if (!allServicios.length) { showToast('Sin datos para exportar', 'wrn'); return; }
-  const rows = allServicios.map(s => ({
-    'ID':           s.servicioId   || '',
-    'Cód. Cat.':    s.codigoCategoria || '',
-    'Categoría':    s.categoria    || '',
-    'Nombre':       s.nombreServicio || '',
-    'Producto S/':  parseFloat(s.producto  ||0).toFixed(2),
-    'Mano Obra S/': parseFloat(s.manoObra  ||0).toFixed(2),
-    'Margen %':     Math.round((parseFloat(s.margen||0))*100),
-    'Costo Base':   parseFloat(s.costoBase ||0).toFixed(2),
-    'P. Venta':     parseFloat(s.precioVenta||0).toFixed(2),
-    'P. Manual':    parseFloat(s.precioVentaManual||0).toFixed(2),
-    'P. Final':     parseFloat(s.precioFinal||0).toFixed(2),
-  }));
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [8,10,14,34,12,14,10,12,12,12,12].map(w=>({wch:w}));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Servicios');
-  XLSX.writeFile(wb, `Servicios_${new Date().toISOString().split('T')[0]}.xlsx`);
-  showToast('📥 Excel descargado', 'ok');
-};
-
-/* ── INICIAR ── */
-(async () => {
+/* INICIO */
+(async()=>{
   await cargarCategorias();
   await cargarServicios();
 })();

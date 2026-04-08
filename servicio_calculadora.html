@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>💅 Calculadora de Costos | Jessica Peña</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pb:#BB19E2;--pm:#8E04BB;--pd:#5A007F;
+  --bg:#0d0017;--card:rgba(94,0,127,.45);
+  --lt:#ddb3f0;--sf:#f0d9ff;--wh:#fff;
+  --ok:#2ecc71;--err:#e74c3c;
+}
+html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(--sf);}
+body{padding:.45rem .55rem;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(187,25,226,.18) 0%,transparent 65%),
+             radial-gradient(ellipse 60% 50% at 0% 100%,rgba(90,0,127,.38) 0%,transparent 60%);}
+.wrap{max-width:1440px;margin:0 auto;position:relative;z-index:1;}
+
+/* HEADER */
+.ph{display:flex;align-items:center;gap:7px;background:rgba(13,0,23,.84);
+  border:1px solid rgba(187,25,226,.25);border-radius:9px;padding:6px 10px;margin-bottom:.4rem;
+  backdrop-filter:blur(12px);}
+.ph-brand{width:24px;height:24px;border-radius:50%;flex-shrink:0;font-size:11px;
+  background:linear-gradient(135deg,var(--pb),var(--pm));
+  display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px rgba(187,25,226,.5);}
+.ph h1{font-family:'Cinzel',serif;font-size:12.5px;font-weight:600;flex:1;
+  background:linear-gradient(90deg,var(--sf),var(--pb));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.ph-btns{display:flex;gap:4px;}
+.pbtn{height:26px;padding:0 9px;border-radius:6px;font-family:'Nunito',sans-serif;
+  font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:3px;
+  border:none;transition:all .15s;white-space:nowrap;}
+.pbtn:hover{transform:translateY(-1px)}
+.pbtn-import{background:rgba(29,111,66,.85);border:1px solid rgba(46,204,113,.4)!important;color:#fff;padding:0 6px;}
+.pbtn-import:hover{background:#1D6F42;}
+.excel-circle{width:22px;height:22px;border-radius:50%;background:#fff;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* MODAL IMPORTACIÓN */
+.imp-overlay{display:none;position:fixed;inset:0;z-index:300;background:rgba(13,0,23,.88);
+  backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:16px;}
+.imp-overlay.show{display:flex}
+.imp-box{background:rgba(10,0,30,.96);border:1px solid rgba(187,25,226,.45);border-radius:14px;
+  padding:22px 20px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;
+  position:relative;box-shadow:0 0 60px rgba(187,25,226,.2);animation:mIn .22s ease both;}
+.imp-title{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:var(--wh);
+  margin-bottom:14px;display:flex;align-items:center;gap:8px;
+  border-left:3px solid var(--pb);padding-left:8px;}
+.imp-close{position:absolute;top:10px;right:12px;background:none;border:none;
+  color:rgba(187,25,226,.5);cursor:pointer;font-size:18px;transition:color .15s;}
+.imp-close:hover{color:var(--pb)}
+.imp-section{margin-bottom:14px;}
+.imp-section h4{font-size:11px;font-weight:700;color:var(--lt);text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:7px;display:flex;align-items:center;gap:5px;}
+.imp-drop{border:2px dashed rgba(187,25,226,.4);border-radius:10px;padding:20px;
+  text-align:center;cursor:pointer;transition:all .18s;background:rgba(94,0,127,.15);}
+.imp-drop:hover,.imp-drop.drag-over{border-color:var(--pb);background:rgba(94,0,127,.3);}
+.imp-drop p{font-size:11.5px;color:var(--lt);margin-top:6px;}
+.imp-btn{height:32px;padding:0 14px;border:none;border-radius:7px;font-family:'Nunito',sans-serif;
+  font-size:11.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;
+  transition:all .18s;white-space:nowrap;}
+.imp-btn-dl{background:linear-gradient(135deg,#155724,#1e8449);color:#fff;}
+.imp-btn-dl:hover{background:#155724;transform:translateY(-1px);}
+.imp-btn-up{background:linear-gradient(135deg,var(--pm),var(--pb));color:#fff;
+  box-shadow:0 3px 10px rgba(187,25,226,.25);}
+.imp-btn-up:hover{transform:translateY(-1px);}
+.imp-btn-cancel{background:rgba(187,25,226,.08);border:1px solid rgba(187,25,226,.25);color:var(--lt);}
+.imp-progress{margin-top:10px;font-size:11px;color:var(--lt);min-height:16px;}
+.imp-progress.ok{color:#82e6a4} .imp-progress.err{color:#f1948a}
+.col-preview{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.col-tag{font-size:9.5px;padding:2px 7px;border-radius:10px;
+  background:rgba(187,25,226,.15);border:1px solid rgba(187,25,226,.28);color:var(--pb);
+  font-weight:600;}
+
+/* RESUMEN */
+.resumen{background:linear-gradient(135deg,var(--pd),var(--pm));border-radius:9px;
+  padding:.38rem .65rem;margin-bottom:.4rem;border:1px solid rgba(187,25,226,.22);}
+.res-grid{display:flex;flex-wrap:wrap;gap:.22rem;}
+.res-card{background:rgba(255,255,255,.11);border-radius:.5rem;padding:.25rem .38rem;
+  flex:1;min-width:65px;text-align:center;}
+.res-lbl{font-size:.5rem;font-weight:700;color:var(--lt);letter-spacing:.07em;text-transform:uppercase;}
+.res-val{font-size:.9rem;font-weight:800;color:var(--wh);font-family:'Cinzel',serif;}
+.res-sub{display:flex;justify-content:space-between;margin-top:3px;font-size:.5rem;color:var(--lt);}
+
+/* PANEL SERVICIO */
+.svc-panel{background:var(--card);backdrop-filter:blur(10px);border-radius:9px;
+  padding:.5rem .75rem;margin-bottom:.4rem;border:1px solid var(--pm);}
+.svc-panel h3{font-family:'Cinzel',serif;font-size:10.5px;font-weight:600;color:var(--sf);
+  margin-bottom:7px;display:flex;align-items:center;gap:5px;
+  border-left:3px solid var(--pb);padding-left:6px;}
+/* Grid: Categoría(160) | Nombre(1fr) | ID(115) | Cód(75) */
+.svc-grid{display:grid;grid-template-columns:160px 1fr 115px 75px;gap:7px;align-items:end;margin-bottom:6px;}
+.sf{display:flex;flex-direction:column;gap:2px;}
+.sf label{font-size:.55rem;font-weight:700;color:rgba(187,25,226,.75);text-transform:uppercase;letter-spacing:.09em;}
+.sf input,.sf select{background:rgba(13,0,23,.52);border:1px solid rgba(187,25,226,.28);
+  padding:4px 7px;border-radius:.55rem;color:var(--wh);font-size:.72rem;
+  font-family:'Nunito',sans-serif;outline:none;width:100%;
+  transition:border-color .15s,box-shadow .15s;}
+.sf input:focus,.sf select:focus{border-color:var(--pb);box-shadow:0 0 0 2px rgba(187,25,226,.14);}
+.sf select option{background:var(--pd);color:var(--wh);}
+.sf input[readonly]{background:rgba(90,0,127,.26);color:rgba(187,25,226,.8);
+  cursor:default;font-family:'Cinzel',serif;font-size:.68rem;}
+
+/* PARAMS */
+.params{background:var(--card);backdrop-filter:blur(10px);border-radius:9px;
+  padding:.38rem .75rem;margin-bottom:.4rem;display:flex;flex-wrap:wrap;gap:.55rem;
+  border:1px solid var(--pm);}
+.pi{flex:1;min-width:85px;}
+.pi label{font-size:.55rem;font-weight:700;color:var(--lt);display:block;margin-bottom:2px;}
+/* todos los inputs numéricos sin spinners — mejora 06 */
+input[type=number]{-moz-appearance:textfield;appearance:textfield;}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.pi input{width:100%;background:rgba(255,255,255,.09);border:1px solid var(--pm);
+  padding:4px 6px;border-radius:.55rem;color:var(--wh);font-size:.72rem;
+  font-family:'Nunito',sans-serif;outline:none;transition:border-color .15s;}
+.pi input:focus{border-color:var(--pb);}
+
+/* DOS COLUMNAS */
+.two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(370px,1fr));gap:.45rem;margin-bottom:.45rem;}
+.card{background:var(--card);backdrop-filter:blur(10px);border-radius:9px;
+  padding:.55rem .7rem;border:1px solid var(--pm);}
+.card h2{font-family:'Cinzel',serif;font-size:.75rem;margin-bottom:.5rem;
+  border-left:3px solid var(--pb);padding-left:6px;color:var(--lt);}
+
+/* PRODUCTOS */
+.prod-lbl{font-size:.62rem;font-weight:700;color:var(--lt);display:block;margin-bottom:4px;}
+.product-row{background:rgba(0,0,0,.26);border-radius:.55rem;padding:.35rem;margin-bottom:.35rem;
+  display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+.prod-name{flex:2;min-width:155px;position:relative;}
+.prod-name input{width:100%;background:rgba(255,255,255,.09);border:1px solid var(--pm);
+  padding:4px 6px;border-radius:.55rem;color:var(--wh);font-size:.66rem;
+  font-family:'Nunito',sans-serif;outline:none;transition:border-color .15s;}
+.prod-name input:focus{border-color:var(--pb);}
+.suggestions{position:absolute;background:var(--pd);border:1px solid var(--pb);
+  border-radius:.45rem;width:100%;max-height:130px;overflow-y:auto;z-index:50;margin-top:2px;}
+.suggestions div{padding:5px 7px;cursor:pointer;font-size:.63rem;color:var(--wh);
+  border-bottom:1px solid var(--pm);}
+.suggestions div:hover,.suggestions div.active{background:var(--pm);}
+.suggestions div:last-child{border-bottom:none;}
+/* info compra */
+.price-info{min-width:155px;background:rgba(0,0,0,.22);border-radius:.55rem;padding:3px 5px;
+  text-align:center;font-size:.56rem;color:var(--lt);line-height:1.35;}
+.price-info strong{color:var(--pb);font-size:.6rem;}
+/* cantidad — TEXT para no perder foco */
+.qty-wrap{width:95px;}
+.qty-wrap input{width:100%;background:rgba(255,255,255,.09);border:1px solid var(--pm);
+  padding:4px 6px;border-radius:.55rem;color:var(--wh);font-size:.68rem;
+  font-family:'Nunito',sans-serif;outline:none;transition:border-color .15s;}
+.qty-wrap input:focus{border-color:var(--pb);}
+.costo-info{min-width:68px;font-size:.66rem;font-weight:700;color:var(--ok);
+  background:rgba(46,204,113,.09);padding:4px 6px;border-radius:.55rem;text-align:center;}
+.del-prod{background:var(--pm);border:none;padding:4px 7px;border-radius:.8rem;
+  cursor:pointer;color:var(--wh);font-size:.6rem;transition:background .13s;}
+.del-prod:hover{background:var(--err);}
+.add-btn{background:var(--pm);border:none;padding:4px 11px;border-radius:.8rem;
+  color:var(--wh);font-weight:700;font-size:.63rem;cursor:pointer;
+  font-family:'Nunito',sans-serif;transition:background .13s;}
+.add-btn:hover{background:var(--pb);}
+
+/* CAMPOS ESTÁTICOS */
+.sf-row{display:flex;align-items:center;gap:4px;margin-bottom:4px;flex-wrap:wrap;}
+.sf-row label{font-size:.6rem;font-weight:600;color:var(--lt);min-width:165px;}
+.sf-row input{flex:1;background:rgba(255,255,255,.09);border:1px solid var(--pm);
+  padding:4px 6px;border-radius:.55rem;color:var(--wh);font-size:.66rem;
+  font-family:'Nunito',sans-serif;outline:none;transition:border-color .15s;}
+.sf-row input:focus{border-color:var(--pb);}
+.sf-row button{background:var(--ok);border:none;padding:4px 8px;border-radius:.55rem;
+  color:white;cursor:pointer;font-size:.56rem;font-family:'Nunito',sans-serif;
+  white-space:nowrap;transition:background .13s;}
+.sf-row button:hover{background:#27ae60;}
+
+/* BOTÓN GUARDAR */
+.save-wrap{display:flex;justify-content:flex-end;margin-top:9px;}
+.btn-save{height:32px;padding:0 16px;border:none;border-radius:7px;font-family:'Nunito',sans-serif;
+  font-size:11.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;
+  background:linear-gradient(135deg,var(--pm),var(--pb));color:#fff;
+  box-shadow:0 3px 10px rgba(187,25,226,.28);transition:all .18s;white-space:nowrap;}
+.btn-save:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(187,25,226,.42);}
+.btn-save:disabled{opacity:.38;cursor:not-allowed;}
+
+/* MODALES */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.82);
+  display:flex;align-items:center;justify-content:center;z-index:1000;
+  opacity:0;visibility:hidden;transition:all .16s;}
+.modal-overlay.active{opacity:1;visibility:visible;}
+.modal-content{background:var(--pd);border-radius:9px;max-width:400px;width:90%;
+  max-height:72vh;overflow-y:auto;padding:.9rem;border:1px solid var(--pb);
+  box-shadow:0 0 30px rgba(187,25,226,.25);}
+.modal-content h3{font-size:.88rem;color:var(--pb);margin-bottom:.65rem;font-family:'Cinzel',serif;}
+.compra-item{background:rgba(0,0,0,.28);border-radius:.55rem;padding:.45rem;margin-bottom:.45rem;
+  cursor:pointer;border:1px solid rgba(187,25,226,.14);transition:background .13s;}
+.compra-item:hover{background:var(--pm);}
+.c-fecha{font-size:.56rem;color:var(--pb);font-weight:600;}
+.c-precio{font-size:.76rem;font-weight:700;color:var(--ok);}
+.c-unidad{font-size:.56rem;color:var(--lt);}
+.mc-close{background:var(--pm);color:white;border:none;padding:5px 11px;
+  border-radius:.8rem;margin-top:.65rem;cursor:pointer;font-size:.65rem;
+  font-family:'Nunito',sans-serif;font-weight:700;transition:background .13s;}
+.mc-close:hover{background:var(--pb);}
+.cg{margin-bottom:.5rem;}
+.cg label{font-size:.6rem;font-weight:600;color:var(--lt);display:block;margin-bottom:2px;}
+.cg input{width:100%;padding:4px 6px;background:rgba(255,255,255,.09);border:1px solid var(--pm);
+  border-radius:.55rem;color:var(--wh);font-size:.66rem;font-family:'Nunito',sans-serif;
+  outline:none;transition:border-color .15s;}
+.cg input:focus{border-color:var(--pb);}
+.cg-result{margin-top:.65rem;padding:.42rem;background:rgba(0,0,0,.26);border-radius:.55rem;
+  text-align:center;font-size:.68rem;font-weight:bold;color:var(--ok);}
+
+/* TOAST */
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(60px);
+  background:rgba(13,0,23,.97);border:1px solid rgba(187,25,226,.35);border-radius:8px;
+  padding:8px 16px;font-size:11.5px;color:var(--sf);z-index:9999;white-space:nowrap;
+  transition:transform .28s cubic-bezier(.2,.8,.3,1),opacity .28s;opacity:0;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-color:rgba(46,204,113,.45);color:#82e6a4}
+.toast.err{border-color:rgba(231,76,60,.45);color:#f1948a}
+.toast.wrn{border-color:rgba(243,156,18,.45);color:#f8c471}
+.spin{width:11px;height:11px;border:2px solid rgba(255,255,255,.28);border-top-color:#fff;
+  border-radius:50%;animation:spin .65s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:760px){
+  .two-col{grid-template-columns:1fr;}
+  .svc-grid{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:480px){.svc-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- HEADER -->
+<div class="ph">
+  <div class="ph-brand">💅</div>
+  <h1>Calculadora de Costos de Servicio</h1>
+  <div class="ph-btns">
+    <!-- Mejora 06: icono Excel en círculo blanco con flecha arriba, abre modal -->
+    <button class="pbtn pbtn-import" onclick="abrirModalImport()" title="Carga masiva Excel">
+      <div class="excel-circle">
+        <svg viewBox="0 0 20 20" width="15" height="15" xmlns="http://www.w3.org/2000/svg">
+          <rect width="20" height="20" rx="3" fill="#1D6F42"/>
+          <text x="3" y="14" font-family="Arial" font-weight="bold" font-size="9" fill="#fff">XL</text>
+          <path d="M14 4 L14 1 M12.5 2.5 L14 1 L15.5 2.5" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </button>
+    <input type="file" id="fileImport" accept=".xlsx,.xls,.csv" style="display:none"
+      onchange="importarDesdeModal(event)">
+    <button class="pbtn pbtn-clean" onclick="limpiarTodo()">🧹 Limpiar</button>
+  </div>
+</div>
+
+<!-- RESUMEN -->
+<div class="resumen">
+  <div class="res-grid">
+    <div class="res-card"><div class="res-lbl">💰 COSTO DIRECTO</div><div class="res-val" id="resumenCD">S/ 0.00</div></div>
+    <div class="res-card"><div class="res-lbl">🏛️ GASTOS GG</div><div class="res-val" id="resumenGG">S/ 0.00</div></div>
+    <div class="res-card"><div class="res-lbl">📈 MARGEN</div><div class="res-val" id="resumenMargen">S/ 0.00</div></div>
+    <div class="res-card"><div class="res-lbl">🏷️ PRECIO FINAL</div><div class="res-val" id="resumenPrecio">S/ 0.00</div></div>
+  </div>
+  <div class="res-sub">
+    <span>📊 Subtotal: <strong id="subtotalResumen">S/ 0.00</strong></span>
+    <span>⚡ Gasto/hora: <strong id="gastoHoraRes">S/ 0.00</strong></span>
+  </div>
+</div>
+
+<!-- DATOS DEL SERVICIO -->
+<div class="svc-panel">
+  <h3>🗂️ Datos del Servicio</h3>
+  <div class="svc-grid">
+    <div class="sf">
+      <label>Categoría *</label>
+      <select id="categoriaServicio" onchange="cambiarCategoria()">
+        <option value="">— Seleccionar —</option>
+      </select>
+    </div>
+    <div class="sf">
+      <label>Nombre Servicio *</label>
+      <input type="text" id="nombreServicio" placeholder="CATEGORÍA: descripción del servicio"
+        onkeydown="navField(event,'horasProductivas')">
+    </div>
+    <div class="sf">
+      <label>ID Servicio</label>
+      <input type="text" id="idServicio" readonly placeholder="Auto">
+    </div>
+    <div class="sf">
+      <label>Cód. Cat.</label>
+      <input type="text" id="codigoCategoria" readonly placeholder="Auto">
+    </div>
+  </div>
+</div>
+
+<!-- PARÁMETROS -->
+<div class="params">
+  <div class="pi"><label>📆 Horas productivas/mes</label>
+    <input type="text" inputmode="decimal" id="horasProductivas" value="110"
+      onkeydown="navField(event,'duracionSesion')" oninput="soloNum(this);actualizarTodo()"></div>
+  <div class="pi"><label>⏱️ Duración sesión (h)</label>
+    <input type="text" inputmode="decimal" id="duracionSesion" value="1"
+      onkeydown="navField(event,'margenGanancia')" oninput="soloNum(this);actualizarTodo()"></div>
+  <div class="pi"><label>🎯 Margen ganancia (%)</label>
+    <input type="text" inputmode="decimal" id="margenGanancia" value="40"
+      onkeydown="navField(event,'agregarProductoBtn')" oninput="soloNum(this);actualizarTodo()"></div>
+</div>
+
+<!-- COSTOS + GASTOS -->
+<div class="two-col">
+  <!-- COSTOS DIRECTOS -->
+  <div class="card">
+    <h2>💎 COSTOS DIRECTOS</h2>
+    <span class="prod-lbl">🧴 Productos utilizados</span>
+    <div id="productosContainer"></div>
+    <button type="button" class="add-btn" id="agregarProductoBtn"
+      onclick="agregarProductoVacio()"
+      onkeydown="navField(event,'manoObraHora')">+ Agregar producto</button>
+    <div style="margin-top:7px">
+      <div class="sf-row">
+        <label>👩‍⚕️ Mano de obra (S/ hora)</label>
+        <input type="text" inputmode="decimal" id="manoObraHora" value="0"
+          onkeydown="navField(event,'depreciacionEquipo')" oninput="soloNum(this);actualizarTodo()">
+        <button onclick="abrirCalculadoraManoObra()">Calcular</button>
+      </div>
+      <div class="sf-row">
+        <label>⚡ Depreciación equipo (por sesión)</label>
+        <input type="text" inputmode="decimal" id="depreciacionEquipo" value="0"
+          onkeydown="navField(event,'otrosDirectos')" oninput="soloNum(this);actualizarTodo()">
+        <button onclick="abrirCalculadoraDepreciacion()">Calcular</button>
+      </div>
+      <div class="sf-row">
+        <label>📦 Otros costos directos</label>
+        <input type="text" inputmode="decimal" id="otrosDirectos" value="0"
+          onkeydown="navField(event,'alquiler')" oninput="soloNum(this);actualizarTodo()">
+      </div>
+    </div>
+  </div>
+
+  <!-- GASTOS GENERALES + botón guardar al final -->
+  <div class="card">
+    <h2>🏢 GASTOS GENERALES (mensuales)</h2>
+    <div class="sf-row"><label>🏠 Alquiler</label>
+      <input type="text" inputmode="decimal" id="alquiler" value="0"
+        onkeydown="navField(event,'electricidad')" oninput="soloNum(this);actualizarTodo()"></div>
+    <div class="sf-row"><label>💡 Electricidad</label>
+      <input type="text" inputmode="decimal" id="electricidad" value="0"
+        onkeydown="navField(event,'agua')" oninput="soloNum(this);actualizarTodo()"></div>
+    <div class="sf-row"><label>💧 Agua</label>
+      <input type="text" inputmode="decimal" id="agua" value="0"
+        onkeydown="navField(event,'internet')" oninput="soloNum(this);actualizarTodo()"></div>
+    <div class="sf-row"><label>🌐 Internet</label>
+      <input type="text" inputmode="decimal" id="internet" value="0"
+        onkeydown="navField(event,'publicidad')" oninput="soloNum(this);actualizarTodo()"></div>
+    <div class="sf-row"><label>📢 Publicidad</label>
+      <input type="text" inputmode="decimal" id="publicidad" value="0"
+        onkeydown="navField(event,'contador')" oninput="soloNum(this);actualizarTodo()"></div>
+    <div class="sf-row"><label>🧾 Contador</label>
+      <input type="text" inputmode="decimal" id="contador" value="0"
+        onkeydown="navField(event,'limpieza')" oninput="soloNum(this);actualizarTodo()"></div>
+    <div class="sf-row"><label>🧹 Limpieza</label>
+      <input type="text" inputmode="decimal" id="limpieza" value="0"
+        onkeydown="navField(event,'imprevistos')" oninput="soloNum(this);actualizarTodo()"></div>
+    <div class="sf-row"><label>⚠️ Imprevistos</label>
+      <input type="text" inputmode="decimal" id="imprevistos" value="0"
+        onkeydown="navField(event,'otrosGenerales')" oninput="soloNum(this);actualizarTodo()"></div>
+    <div class="sf-row"><label>➕ Otros gastos</label>
+      <input type="text" inputmode="decimal" id="otrosGenerales" value="0"
+        onkeydown="navField(event,'btn-save')" oninput="soloNum(this);actualizarTodo()"></div>
+    <!-- 💾 Guardar costos al final -->
+    <div class="save-wrap">
+      <button class="btn-save" id="btn-save" onclick="guardarServicio()">
+        <span id="lbl-save">💾 Guardar costos</span>
+        <div class="spin" id="sp-save" style="display:none"></div>
+      </button>
+    </div>
+  </div>
+</div>
+</div><!-- /wrap -->
+
+<!-- ══ MODAL CARGA MASIVA ══ -->
+<div class="imp-overlay" id="modalImport">
+  <div class="imp-box">
+    <button class="imp-close" onclick="cerrarModalImport()">✕</button>
+    <div class="imp-title">
+      <div class="excel-circle" style="width:26px;height:26px">
+        <svg viewBox="0 0 20 20" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+          <rect width="20" height="20" rx="3" fill="#1D6F42"/>
+          <text x="3" y="14" font-family="Arial" font-weight="bold" font-size="9" fill="#fff">XL</text>
+          <path d="M14 4 L14 1 M12.5 2.5 L14 1 L15.5 2.5" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      Carga Masiva de Servicios
+    </div>
+
+    <!-- PASO 1: Descargar plantilla -->
+    <div class="imp-section">
+      <h4>① Descargar plantilla Excel</h4>
+      <p style="font-size:10.5px;color:var(--lt);margin-bottom:8px">
+        Descarga la plantilla, llénala y súbela. Los campos de productos van del Producto 1 al Producto 7.
+      </p>
+      <div class="col-preview">
+        <span class="col-tag">Categoría</span><span class="col-tag">Cód. Cat.</span>
+        <span class="col-tag">Nombre Servicio</span><span class="col-tag">Horas Prod/mes</span>
+        <span class="col-tag">Duración (h)</span><span class="col-tag">Margen %</span>
+        <span class="col-tag">Prod1 Nombre</span><span class="col-tag">Prod1 Unidad</span>
+        <span class="col-tag">Prod1 Cantidad</span><span class="col-tag">Prod1 Costo S/</span>
+        <span class="col-tag">… Prod2–7 …</span>
+        <span class="col-tag">Mano Obra S/h</span><span class="col-tag">Depreciación S/</span>
+        <span class="col-tag">Otros Directos S/</span><span class="col-tag">Alquiler</span>
+        <span class="col-tag">Electricidad</span><span class="col-tag">Agua</span>
+        <span class="col-tag">Internet</span><span class="col-tag">Publicidad</span>
+        <span class="col-tag">Contador</span><span class="col-tag">Limpieza</span>
+        <span class="col-tag">Imprevistos</span><span class="col-tag">Otros Gastos</span>
+        <span class="col-tag">Total C. Directo</span><span class="col-tag">Total GG</span>
+        <span class="col-tag">Precio Final</span>
+      </div>
+      <br>
+      <button class="imp-btn imp-btn-dl" onclick="descargarPlantilla()">
+        <div class="excel-circle" style="width:18px;height:18px">
+          <svg viewBox="0 0 20 20" width="12" height="12"><rect width="20" height="20" rx="3" fill="#1D6F42"/><text x="3" y="14" font-family="Arial" font-weight="bold" font-size="9" fill="#fff">XL</text></svg>
+        </div>
+        📥 Descargar Plantilla
+      </button>
+    </div>
+
+    <!-- PASO 2: Subir archivo -->
+    <div class="imp-section">
+      <h4>② Subir archivo Excel con datos</h4>
+      <div class="imp-drop" id="impDrop"
+        onclick="document.getElementById('fileImport').click()"
+        ondragover="event.preventDefault();this.classList.add('drag-over')"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="event.preventDefault();this.classList.remove('drag-over');importarDesdeModal({target:{files:event.dataTransfer.files}})">
+        <div class="excel-circle" style="width:36px;height:36px;margin:0 auto">
+          <svg viewBox="0 0 20 20" width="22" height="22"><rect width="20" height="20" rx="3" fill="#1D6F42"/><text x="3" y="14" font-family="Arial" font-weight="bold" font-size="9" fill="#fff">XL</text></svg>
+        </div>
+        <p>Haz clic o arrastra tu archivo Excel aquí</p>
+        <p style="font-size:10px;color:rgba(187,25,226,.5);margin-top:3px">Acepta .xlsx · .xls · .csv</p>
+      </div>
+      <div class="imp-progress" id="impProgress"></div>
+    </div>
+
+    <div style="display:flex;gap:7px;justify-content:flex-end;margin-top:4px">
+      <button class="imp-btn imp-btn-cancel" onclick="cerrarModalImport()">Cerrar</button>
+      <button class="imp-btn imp-btn-up" onclick="document.getElementById('fileImport').click()">
+        📤 Seleccionar archivo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal compras -->
+<div class="modal-overlay" id="modalCompra">
+  <div class="modal-content">
+    <h3>📦 Últimas compras</h3>
+    <div id="listaComprasModal"></div>
+    <button class="mc-close" onclick="cerrarModalCompra()">Cancelar</button>
+  </div>
+</div>
+<!-- Modal mano de obra -->
+<div class="modal-overlay" id="modalManoObra">
+  <div class="modal-content">
+    <h3>👩‍⚕️ Calculadora Mano de Obra</h3>
+    <div class="cg"><label>Salario mensual (S/)</label><input type="number" id="calcSalario" value="2500"></div>
+    <div class="cg"><label>Días trabajados/mes</label><input type="number" id="calcDias" value="25"></div>
+    <div class="cg"><label>Horas por día</label><input type="number" id="calcHorasDia" value="8"></div>
+    <div class="cg"><label>Duración servicio (horas)</label><input type="number" id="calcDurSvc" value="1"></div>
+    <div class="cg-result" id="calcManoObraRes"></div>
+    <div style="display:flex;gap:5px;margin-top:.6rem">
+      <button class="btn-save" style="height:28px;padding:0 10px;font-size:10.5px" onclick="aplicarManoObra()">Aplicar</button>
+      <button class="mc-close" style="margin-top:0" onclick="cerrarModalManoObra()">Cancelar</button>
+    </div>
+  </div>
+</div>
+<!-- Modal depreciación -->
+<div class="modal-overlay" id="modalDepreciacion">
+  <div class="modal-content">
+    <h3>⚡ Calculadora Depreciación</h3>
+    <div class="cg"><label>Costo equipo (S/)</label><input type="number" id="calcCostoEq" value="15000"></div>
+    <div class="cg"><label>Vida útil (años)</label><input type="number" id="calcVida" value="5"></div>
+    <div class="cg"><label>Duración servicio (horas)</label><input type="number" id="calcDurDep" value="1"></div>
+    <div class="cg"><label>Horas productivas/mes</label><input type="number" id="calcHMesDep" value="110"></div>
+    <div class="cg-result" id="calcDepRes"></div>
+    <div style="display:flex;gap:5px;margin-top:.6rem">
+      <button class="btn-save" style="height:28px;padding:0 10px;font-size:10.5px" onclick="aplicarDepreciacion()">Aplicar</button>
+      <button class="mc-close" style="margin-top:0" onclick="cerrarModalDepreciacion()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════
+   FIREBASE CONFIG
+═══════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey:"TU_API_KEY",
+  authDomain:"jessicapenabeautystudio.firebaseapp.com",
+  databaseURL:"https://jessicapenabeautystudio-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId:"jessicapenabeautystudio",
+  storageBucket:"jessicapenabeautystudio.appspot.com",
+  messagingSenderId:"TU_SENDER_ID",
+  appId:"TU_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* ── ESTADO GLOBAL ── */
+const CAT_DEFAULTS=[['MANICURA','MAN'],['PEDICURA','PED'],['PESTAÑAS','PES'],
+  ['DEPILACIÓN','DEP'],['CABELLO','CAB'],['CEJAS','CEJ'],['FACIALES','FAC'],
+  ['MASAJES CORPORALES','MAS'],['MAQUILLAJE','MAQ']];
+
+let todasLasCompras   = [];
+let productos         = [];
+let nextProdId        = 1;
+let serviciosExistentes = [];
+let categoriasMap     = {};   // { nombre → codigoTexto }
+let editandoKey       = null; // key del servicio si venimos de ?edit=
+
+/* ── TOAST ── */
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className=`toast show ${type}`;
+  setTimeout(()=>{t.className='toast';},3400);
+}
+
+/* ── NAVEGAR CON ENTER ── */
+function navField(e,nextId){
+  if(e.key!=='Enter') return;
+  e.preventDefault();
+  const el=document.getElementById(nextId);
+  if(!el) return;
+  el.tagName==='BUTTON'?el.click():el.focus();
+}
+
+/* ── PERMITIR SOLO NÚMEROS Y PUNTO DECIMAL ── */
+function soloNum(el){
+  let v=el.value;
+  // Quitar todo excepto dígitos y un único punto decimal
+  v=v.replace(/[^0-9.]/g,'');
+  const partes=v.split('.');
+  if(partes.length>2) v=partes[0]+'.'+partes.slice(1).join('');
+  el.value=v;
+}
+
+/* ═══════════════════════════════════════
+   CARGAR CATEGORÍAS
+═══════════════════════════════════════ */
+async function cargarCategorias(){
+  try{
+    const snap=await db.ref('categorias').once('value');
+    categoriasMap={};
+    if(snap.exists()){
+      snap.forEach(c=>{
+        const v=c.val(); const n=v.nombre||c.key;
+        categoriasMap[n]=v.codigo||'';
+      });
+    } else {
+      CAT_DEFAULTS.forEach(([n,c])=>{ categoriasMap[n]=c; });
+    }
+    const sel=document.getElementById('categoriaServicio');
+    const cats=Object.keys(categoriasMap).sort();
+    sel.innerHTML='<option value="">— Seleccionar —</option>'+
+      cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+  } catch(e){ console.error('cargarCategorias:',e); }
+}
+
+/* ═══════════════════════════════════════
+   CAMBIAR CATEGORÍA
+═══════════════════════════════════════ */
+window.cambiarCategoria = async function(){
+  const cat=document.getElementById('categoriaServicio').value;
+  const cod=categoriasMap[cat]||'';
+  document.getElementById('codigoCategoria').value=cod;
+  if(cat){
+    await cargarServiciosExistentes();
+    const nuevoId=generarSiguienteId(cat,cod);
+    document.getElementById('idServicio').value=nuevoId;
+    // Prefijo en nombre
+    const nom=document.getElementById('nombreServicio').value;
+    const sufijo=nom.includes(':')?nom.split(':').slice(1).join(':').trimStart():'';
+    document.getElementById('nombreServicio').value=`${cat}: ${sufijo}`;
+    const inp=document.getElementById('nombreServicio');
+    inp.focus();
+    setTimeout(()=>{inp.selectionStart=inp.selectionEnd=inp.value.length;},10);
+  } else {
+    document.getElementById('idServicio').value='';
+    document.getElementById('codigoCategoria').value='';
+  }
+  actualizarTodo();
+};
+
+/* ═══════════════════════════════════════
+   GENERAR ID ÚNICO  S-COD-0001
+   Lee Firebase en tiempo real y usa el máximo real encontrado.
+   ESTRICTO: itera TODOS los nodos, extrae el número del patrón S-COD-NNNN.
+═══════════════════════════════════════ */
+function generarSiguienteId(cat,cod){
+  if(!cod) return '';
+  // Prefijo exacto en mayúsculas, con guion al final
+  const prefix=`S-${cod.toUpperCase()}-`;
+  let maxN=0;
+  serviciosExistentes.forEach(s=>{
+    // Revisar tanto servicioId como idServicio
+    const candidatos=[s.servicioId||'', s.idServicio||''];
+    candidatos.forEach(id=>{
+      if(!id) return;
+      if(id.toUpperCase().startsWith(prefix)){
+        // extraer la parte numérica después del prefijo
+        const numStr=id.substring(prefix.length).replace(/\D/g,'');
+        const n=parseInt(numStr,10);
+        if(!isNaN(n)&&n>maxN) maxN=n;
+      }
+    });
+  });
+  return `${prefix}${String(maxN+1).padStart(4,'0')}`;
+}
+
+/* ═══════════════════════════════════════
+   CARGAR SERVICIOS EXISTENTES (para generar IDs)
+   Siempre fresco desde Firebase
+═══════════════════════════════════════ */
+async function cargarServiciosExistentes(){
+  try{
+    const snap=await db.ref('v_servicios').once('value');
+    serviciosExistentes=[];
+    if(snap.exists()) snap.forEach(c=>serviciosExistentes.push({key:c.key,...c.val()}));
+  } catch(e){ console.error('cargarServiciosExistentes:',e); }
+}
+
+/* ═══════════════════════════════════════
+   ACTUALIZAR TOTALES
+═══════════════════════════════════════ */
+function actualizarTodo(){
+  const totalProd=productos.reduce((s,p)=>s+(p.costoPorSesion||0),0);
+  const moHora  =parseFloat(document.getElementById('manoObraHora').value)||0;
+  const dur     =parseFloat(document.getElementById('duracionSesion').value)||1;
+  const dep     =parseFloat(document.getElementById('depreciacionEquipo').value)||0;
+  const otros   =parseFloat(document.getElementById('otrosDirectos').value)||0;
+  const costoD  =totalProd+moHora*dur+dep+otros;
+
+  const alq=parseFloat(document.getElementById('alquiler').value)||0;
+  const ele=parseFloat(document.getElementById('electricidad').value)||0;
+  const agu=parseFloat(document.getElementById('agua').value)||0;
+  const int=parseFloat(document.getElementById('internet').value)||0;
+  const pub=parseFloat(document.getElementById('publicidad').value)||0;
+  const con=parseFloat(document.getElementById('contador').value)||0;
+  const lim=parseFloat(document.getElementById('limpieza').value)||0;
+  const imp=parseFloat(document.getElementById('imprevistos').value)||0;
+  const otG=parseFloat(document.getElementById('otrosGenerales').value)||0;
+  const totalMens=alq+ele+agu+int+pub+con+lim+imp+otG;
+
+  const hProd=parseFloat(document.getElementById('horasProductivas').value)||1;
+  const gxH  =totalMens/hProd;
+  const ggSes=gxH*dur;
+  const sub  =costoD+ggSes;
+  const mg   =parseFloat(document.getElementById('margenGanancia').value)||0;
+  const gan  =sub*(mg/100);
+  const final=sub+gan;
+
+  document.getElementById('resumenCD').innerText     =`S/ ${costoD.toFixed(2)}`;
+  document.getElementById('resumenGG').innerText     =`S/ ${ggSes.toFixed(2)}`;
+  document.getElementById('resumenMargen').innerText =`S/ ${gan.toFixed(2)}`;
+  document.getElementById('resumenPrecio').innerText =`S/ ${final.toFixed(2)}`;
+  document.getElementById('subtotalResumen').innerText=`S/ ${sub.toFixed(2)}`;
+  document.getElementById('gastoHoraRes').innerText  =`S/ ${gxH.toFixed(2)}`;
+}
+
+/* ═══════════════════════════════════════
+   EXTRAER NÚMERO DE UNIDAD DESDE prodUnidad
+   Ej: "500 ML" → 500  /  "1 L" → 1  /  "250ml" → 250
+═══════════════════════════════════════ */
+function extraerCantidadUnidad(u){
+  if(!u) return 1;
+  const m=u.match(/(\d+(?:\.\d+)?)/);
+  return m?parseFloat(m[1]):1;
+}
+
+/* ═══════════════════════════════════════
+   CARGAR COMPRAS
+═══════════════════════════════════════ */
+async function cargarCompras(){
+  try{
+    const snap=await db.ref('compras').once('value');
+    const data=snap.val();
+    if(!data) return [];
+    const arr=[];
+    for(let key in data){
+      const c=data[key];
+      let precio=parseFloat(c.precioConIGV)||0;
+      if(!precio&&c.precio){ const igv=c.igvPct?c.igvPct/100:0.18; precio=c.precio*(1+igv); }
+      if(!precio&&c.total) precio=parseFloat(c.total)||0;
+
+      // prodUnidad es el campo real de Firebase ("500 ML", "250 ML", etc.)
+      const prodUnidad=c.prodUnidad||c.unidad||'1';
+      const cantidadEnUnidad=extraerCantidadUnidad(prodUnidad);
+
+      arr.push({
+        key,
+        producto:   c.prodDescripcion||c.producto||'SIN NOMBRE',
+        fecha:      c.fecha||'',
+        cantidadComprada: parseFloat(c.cantidad)||1,
+        cantidadEnUnidad,   // número extraído (ej: 500)
+        unidadTexto:prodUnidad, // texto completo (ej: "500 ML")
+        precioConIGV:precio,
+        precioUnitario: precio / cantidadEnUnidad,  // S/ por unidad (ej: 0.0236)
+        proveedorCompra:c.proveedorCompra||''
+      });
+    }
+    return arr;
+  } catch(e){ console.error('cargarCompras:',e); return []; }
+}
+
+/* ═══════════════════════════════════════
+   RECALCULAR COSTO DE PRODUCTO
+   Fórmula: cantidadUsada × (precioConIGV / cantidadEnUnidad)
+   Ejemplo: 10 ml × (11.8 / 500) = 10 × 0.0236 = 0.236
+═══════════════════════════════════════ */
+function recalcularCosto(prod){
+  if(prod.compraSeleccionada && prod.cantidadUsada>0){
+    const ppu=prod.compraSeleccionada.precioConIGV/prod.compraSeleccionada.cantidadEnUnidad;
+    prod.costoPorSesion=prod.cantidadUsada*ppu;
+    prod.precioUnitario=ppu;
+  } else {
+    prod.costoPorSesion=0;
+    prod.precioUnitario=0;
+  }
+}
+
+/* ═══════════════════════════════════════
+   RENDER PRODUCTOS — mejora 06: input tipo TEXT para no perder foco
+═══════════════════════════════════════ */
+function renderProductos(){
+  const container=document.getElementById('productosContainer');
+  container.innerHTML='';
+  productos.forEach(prod=>{
+    const row=document.createElement('div');
+    row.className='product-row'; row.dataset.id=prod.id;
+
+    /* ── NOMBRE / AUTOCOMPLETE ── */
+    const nameDiv=document.createElement('div'); nameDiv.className='prod-name';
+    const inp=document.createElement('input');
+    inp.type='text'; inp.placeholder='Buscar producto...';
+    inp.value=prod.nombre; inp.autocomplete='off';
+    nameDiv.appendChild(inp);
+    const sugDiv=document.createElement('div');
+    sugDiv.className='suggestions'; sugDiv.style.display='none';
+    nameDiv.appendChild(sugDiv);
+
+    let tid,sugList=[],sugIdx=-1;
+    inp.addEventListener('input',e=>{
+      const term=e.target.value.trim(); prod.nombre=term;
+      if(tid) clearTimeout(tid);
+      if(term.length<2){sugDiv.style.display='none';return;}
+      tid=setTimeout(()=>{
+        const matches=todasLasCompras.filter(c=>
+          c.producto.toLowerCase().includes(term.toLowerCase()));
+        const uniq=[...new Map(matches.map(c=>[c.producto.toLowerCase(),c])).values()];
+        if(!uniq.length){sugDiv.style.display='none';return;}
+        sugList=uniq.slice(0,8); sugDiv.innerHTML=''; sugIdx=-1;
+        sugList.forEach(p=>{
+          const d=document.createElement('div'); d.textContent=p.producto;
+          d.onclick=()=>{
+            inp.value=p.producto; prod.nombre=p.producto;
+            sugDiv.style.display='none'; mostrarModalCompras(prod);
+          };
+          sugDiv.appendChild(d);
+        });
+        sugDiv.style.display='block';
+      },260);
+    });
+    inp.addEventListener('keydown',e=>{
+      const items=sugDiv.querySelectorAll('div');
+      if(sugDiv.style.display==='block'&&items.length){
+        if(e.key==='ArrowDown'){e.preventDefault();sugIdx=Math.min(sugIdx+1,items.length-1);items.forEach((d,i)=>d.classList.toggle('active',i===sugIdx));}
+        else if(e.key==='ArrowUp'){e.preventDefault();sugIdx=Math.max(sugIdx-1,0);items.forEach((d,i)=>d.classList.toggle('active',i===sugIdx));}
+        else if(e.key==='Enter'){
+          e.preventDefault();
+          if(sugIdx>=0&&sugList[sugIdx]){
+            inp.value=sugList[sugIdx].producto; prod.nombre=sugList[sugIdx].producto;
+            sugDiv.style.display='none'; mostrarModalCompras(prod);
+          } else if(prod.nombre.trim()){sugDiv.style.display='none';mostrarModalCompras(prod);}
+        } else if(e.key==='Escape') sugDiv.style.display='none';
+      } else if(e.key==='Enter'&&prod.nombre.trim()){e.preventDefault();mostrarModalCompras(prod);}
+    });
+    // Cerrar sugerencias al hacer clic fuera
+    document.addEventListener('click',(e)=>{if(!nameDiv.contains(e.target))sugDiv.style.display='none';},{once:false});
+
+    /* ── INFO COMPRA ── */
+    const priceDiv=document.createElement('div'); priceDiv.className='price-info';
+    if(prod.compraSeleccionada){
+      const c=prod.compraSeleccionada;
+      const ppu=c.precioConIGV/c.cantidadEnUnidad;
+      priceDiv.innerHTML=
+        `<strong>${c.fecha||'sin fecha'}</strong><br>`+
+        `S/ ${c.precioConIGV.toFixed(2)} / ${c.unidadTexto}<br>`+
+        `<span style="color:#82e6a4">S/ ${ppu.toFixed(4)}/u</span><br>`+
+        `<span>${c.proveedorCompra||''}</span>`;
+    } else { priceDiv.innerHTML='Selecciona una compra'; }
+
+    /* ── CANTIDAD — type="text" para no perder foco al escribir ── */
+    const qtyWrap=document.createElement('div'); qtyWrap.className='qty-wrap';
+    const qtyInp=document.createElement('input');
+    // MEJORA 06: usar type=text para evitar pérdida de foco con numbers
+    qtyInp.type='text';
+    qtyInp.inputMode='decimal';
+    qtyInp.placeholder=prod.compraSeleccionada
+      ?`Cant. en ${prod.compraSeleccionada.unidadTexto}`
+      :'Cantidad usada';
+    qtyInp.value=prod.cantidadUsada>0?prod.cantidadUsada:'';
+    qtyInp.addEventListener('input',e=>{
+      // Permitir solo números y punto decimal
+      const val=e.target.value.replace(/[^0-9.]/g,'');
+      if(e.target.value!==val) e.target.value=val;
+      prod.cantidadUsada=parseFloat(val)||0;
+      recalcularCosto(prod);
+      actualizarTodo();
+      // Actualizar solo el display de costo sin re-renderizar todo
+      const costoEl=row.querySelector('.costo-info');
+      if(costoEl) costoEl.innerHTML=`💰 S/ ${(prod.costoPorSesion||0).toFixed(3)}`;
+    });
+    qtyWrap.appendChild(qtyInp);
+
+    /* ── COSTO CALCULADO ── */
+    const costoDiv=document.createElement('div'); costoDiv.className='costo-info';
+    costoDiv.innerHTML=`💰 S/ ${(prod.costoPorSesion||0).toFixed(3)}`;
+
+    /* ── ELIMINAR ── */
+    const delBtn=document.createElement('button'); delBtn.className='del-prod';
+    delBtn.textContent='🗑️';
+    delBtn.onclick=()=>{
+      productos=productos.filter(p=>p.id!==prod.id);
+      renderProductos(); actualizarTodo();
+    };
+
+    row.appendChild(nameDiv); row.appendChild(priceDiv);
+    row.appendChild(qtyWrap); row.appendChild(costoDiv); row.appendChild(delBtn);
+    container.appendChild(row);
+  });
+}
+
+function agregarProductoVacio(){
+  productos.push({id:nextProdId++,nombre:'',compraSeleccionada:null,cantidadUsada:0,costoPorSesion:0,precioUnitario:0});
+  renderProductos(); actualizarTodo();
+  setTimeout(()=>{
+    const last=document.querySelector('.product-row:last-child .prod-name input');
+    if(last) last.focus();
+  },50);
+}
+
+/* ═══════════════════════════════════════
+   MODAL COMPRAS
+═══════════════════════════════════════ */
+function mostrarModalCompras(prod){
+  if(!prod.nombre) return;
+  const compras=todasLasCompras
+    .filter(c=>c.producto.toLowerCase()===prod.nombre.toLowerCase())
+    .sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5);
+  if(!compras.length){showToast(`Sin compras para "${prod.nombre}"`,'wrn');return;}
+  const modal=document.getElementById('modalCompra');
+  const lista=document.getElementById('listaComprasModal');
+  lista.innerHTML='';
+  compras.forEach(c=>{
+    const ppu=c.precioConIGV/c.cantidadEnUnidad;
+    const item=document.createElement('div'); item.className='compra-item';
+    item.innerHTML=
+      `<div class="c-fecha">📅 ${c.fecha||'sin fecha'}</div>`+
+      `<div class="c-precio">S/ ${c.precioConIGV.toFixed(2)} — ${c.unidadTexto}</div>`+
+      `<div class="c-unidad">📊 S/ ${ppu.toFixed(4)} por unidad | Prec/u: ${(1/ppu).toFixed(3)} u/S/</div>`+
+      `<div class="c-unidad">🏢 ${c.proveedorCompra||'Proveedor'}</div>`;
+    item.onclick=()=>{
+      prod.compraSeleccionada=c;
+      prod.cantidadUsada=prod.cantidadUsada||0;
+      recalcularCosto(prod);
+      cerrarModalCompra();
+      renderProductos(); actualizarTodo();
+      setTimeout(()=>{
+        const r=document.querySelector(`.product-row[data-id='${prod.id}'] .qty-wrap input`);
+        if(r) r.focus();
+      },80);
+    };
+    lista.appendChild(item);
+  });
+  modal.classList.add('active');
+}
+function cerrarModalCompra(){ document.getElementById('modalCompra').classList.remove('active'); }
+
+/* ═══════════════════════════════════════
+   GUARDAR EN v_servicios — MEJORA 01 y 08
+   Guarda todos los 30+ campos y usa un nodeKey ÚNICO basado en idServicio
+═══════════════════════════════════════ */
+window.guardarServicio = async function(){
+  const categoria   = document.getElementById('categoriaServicio').value;
+  const nombreSvc   = document.getElementById('nombreServicio').value.trim();
+  const codigoCat   = document.getElementById('codigoCategoria').value;
+
+  if(!categoria){showToast('⚠️ Selecciona una categoría','err');return;}
+  if(!nombreSvc){showToast('⚠️ Nombre obligatorio','err');return;}
+  if(!nombreSvc.toUpperCase().startsWith(categoria.toUpperCase())){
+    showToast(`⚠️ El nombre debe empezar con "${categoria}:"`,'wrn');return;
+  }
+
+  const btn=document.getElementById('btn-save'); btn.disabled=true;
+  document.getElementById('lbl-save').style.display='none';
+  document.getElementById('sp-save').style.display='block';
+
+  try{
+    // MEJORA 03: recarga SIEMPRE antes de generar el ID para validación estricta
+    await cargarServiciosExistentes();
+    
+    let idSvc;
+    if(editandoKey){
+      idSvc = document.getElementById('idServicio').value.trim();
+    } else {
+      // Generar ID fresco — ya tiene los datos más recientes de Firebase
+      idSvc = generarSiguienteId(categoria, codigoCat);
+      // Doble verificación: si por alguna razón ese ID ya existe, incrementar
+      let intentos=0;
+      while(
+        serviciosExistentes.some(s=>(s.servicioId||s.idServicio||'')===idSvc) &&
+        intentos < 100
+      ){
+        // Agregar temporalmente para forzar el siguiente número
+        serviciosExistentes.push({servicioId:idSvc});
+        idSvc = generarSiguienteId(categoria, codigoCat);
+        intentos++;
+      }
+    }
+
+    document.getElementById('idServicio').value=idSvc;
+
+    actualizarTodo();
+    const costoDirecto = parseFloat(document.getElementById('resumenCD').innerText.replace('S/ ',''))||0;
+    const gastosGG     = parseFloat(document.getElementById('resumenGG').innerText.replace('S/ ',''))||0;
+    const margenVal    = parseFloat(document.getElementById('resumenMargen').innerText.replace('S/ ',''))||0;
+    const precioFinal  = parseFloat(document.getElementById('resumenPrecio').innerText.replace('S/ ',''))||0;
+    const subtotal     = parseFloat(document.getElementById('subtotalResumen').innerText.replace('S/ ',''))||0;
+    const moHora       = parseFloat(document.getElementById('manoObraHora').value)||0;
+    const dur          = parseFloat(document.getElementById('duracionSesion').value)||1;
+    const margenPct    = parseFloat(document.getElementById('margenGanancia').value)||0;
+    const hProd        = parseFloat(document.getElementById('horasProductivas').value)||110;
+
+    // Campos de productos individuales (hasta N productos)
+    const productosCampos = {};
+    productos.forEach((p,i)=>{
+      const n=i+1;
+      productosCampos[`producto${n}_nombre`]       = p.nombre||'';
+      productosCampos[`producto${n}_unidad`]        = p.compraSeleccionada?.unidadTexto||'';
+      productosCampos[`producto${n}_cantidadUsada`] = p.cantidadUsada||0;
+      productosCampos[`producto${n}_precioUnitario`]= parseFloat((p.precioUnitario||0).toFixed(6));
+      productosCampos[`producto${n}_costo`]         = parseFloat((p.costoPorSesion||0).toFixed(4));
+    });
+    const totalProductosS = productos.reduce((s,p)=>s+(p.costoPorSesion||0),0);
+
+    // OBJETO COMPLETO — mejora 01: todos los 30 campos
+    const data = {
+      // Identificación
+      servicioId:       idSvc,
+      codigoCategoria:  codigoCat,
+      categoria,
+      nombreServicio:   nombreSvc,
+      // Parámetros
+      horasProductivas: hProd,
+      duracionSesion:   dur,
+      margenPct,
+      // Productos (campos planos + array)
+      totalProductosS:  parseFloat(totalProductosS.toFixed(4)),
+      ...productosCampos,
+      productosArray: productos.map(p=>({
+        nombre:          p.nombre||'',
+        unidad:          p.compraSeleccionada?.unidadTexto||'',
+        cantidadUsada:   p.cantidadUsada||0,
+        precioUnitario:  parseFloat((p.precioUnitario||0).toFixed(6)),
+        costoPorSesion:  parseFloat((p.costoPorSesion||0).toFixed(4)),
+        compraKey:       p.compraSeleccionada?.key||'',
+      })),
+      // Costos directos
+      manoObraHora:         moHora,
+      manoObraTotal:        parseFloat((moHora*dur).toFixed(4)),
+      depreciacionEquipo:   parseFloat(document.getElementById('depreciacionEquipo').value)||0,
+      otrosDirectos:        parseFloat(document.getElementById('otrosDirectos').value)||0,
+      totalCostoDirecto:    parseFloat(costoDirecto.toFixed(4)),
+      // Gastos generales
+      alquiler:      parseFloat(document.getElementById('alquiler').value)||0,
+      electricidad:  parseFloat(document.getElementById('electricidad').value)||0,
+      agua:          parseFloat(document.getElementById('agua').value)||0,
+      internet:      parseFloat(document.getElementById('internet').value)||0,
+      publicidad:    parseFloat(document.getElementById('publicidad').value)||0,
+      contador:      parseFloat(document.getElementById('contador').value)||0,
+      limpieza:      parseFloat(document.getElementById('limpieza').value)||0,
+      imprevistos:   parseFloat(document.getElementById('imprevistos').value)||0,
+      otrosGenerales:parseFloat(document.getElementById('otrosGenerales').value)||0,
+      totalGastosGG: parseFloat(gastosGG.toFixed(4)),
+      // Resultados
+      subtotal:      parseFloat(subtotal.toFixed(4)),
+      margen:        margenPct/100,
+      margenS:       parseFloat(margenVal.toFixed(4)),
+      precioFinal:   parseFloat(precioFinal.toFixed(4)),
+      precioVenta:   parseFloat(precioFinal.toFixed(4)),
+      precioVentaManual: 0,
+      costoBase:     parseFloat(costoDirecto.toFixed(4)),
+      // Meta
+      creadoEn:    editandoKey
+        ? (serviciosExistentes.find(s=>s.key===editandoKey)?.creadoEn || new Date().toISOString())
+        : new Date().toISOString(),
+      actualizadoEn: new Date().toISOString(),
+    };
+
+    // nodeKey = el propio idSvc limpio como key de Firebase
+    // Así S-CEJ-0001 y S-CEJ-0002 son keys distintos e irrepetibles
+    const nodeKey = editandoKey || idSvc.replace(/[.#$/[\]]/g,'_');
+    await db.ref(`v_servicios/${nodeKey}`).set(data);
+
+    showToast(`✅ "${nombreSvc}" guardado (${idSvc})`,'ok');
+
+    if(!editandoKey){
+      // Recargar y preparar siguiente
+      await cargarServiciosExistentes();
+      const nextId=generarSiguienteId(categoria,codigoCat);
+      document.getElementById('idServicio').value=nextId;
+      document.getElementById('nombreServicio').value=`${categoria}: `;
+      // Limpiar productos y costos
+      productos=[]; nextProdId=1; renderProductos();
+      ['manoObraHora','depreciacionEquipo','otrosDirectos','alquiler','electricidad','agua',
+       'internet','publicidad','contador','limpieza','imprevistos','otrosGenerales']
+        .forEach(id=>{ document.getElementById(id).value=0; });
+      actualizarTodo();
+      document.getElementById('nombreServicio').focus();
+    } else {
+      showToast('✅ Servicio actualizado','ok');
+    }
+  } catch(err){
+    console.error(err); showToast('❌ Error: '+err.message,'err');
+  }
+  btn.disabled=false;
+  document.getElementById('lbl-save').style.display='inline';
+  document.getElementById('sp-save').style.display='none';
+};
+
+/* ═══════════════════════════════════════
+   IMPORTAR EXCEL MASIVO — MEJORA 08
+   Valida IDs existentes antes de guardar
+═══════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   MODAL CARGA MASIVA — MEJORA 06
+═══════════════════════════════════════ */
+window.abrirModalImport = function(){
+  document.getElementById('modalImport').classList.add('show');
+  document.getElementById('impProgress').textContent='';
+  document.getElementById('impProgress').className='imp-progress';
+};
+window.cerrarModalImport = function(){
+  document.getElementById('modalImport').classList.remove('show');
+  document.getElementById('fileImport').value='';
+};
+document.getElementById('modalImport').addEventListener('click',e=>{
+  if(e.target===document.getElementById('modalImport')) cerrarModalImport();
+});
+
+/* ── PLANTILLA EXCEL ── */
+window.descargarPlantilla = function(){
+  // Cabeceras de la plantilla — todos los campos del formulario
+  const headers=[
+    'Categoría','Cód. Cat.','Nombre Servicio',
+    'Horas Prod/mes','Duración (h)','Margen %',
+    // 7 productos
+    'Prod1 Nombre','Prod1 Unidad','Prod1 Cantidad','Prod1 Precio Unitario','Prod1 Costo S/',
+    'Prod2 Nombre','Prod2 Unidad','Prod2 Cantidad','Prod2 Precio Unitario','Prod2 Costo S/',
+    'Prod3 Nombre','Prod3 Unidad','Prod3 Cantidad','Prod3 Precio Unitario','Prod3 Costo S/',
+    'Prod4 Nombre','Prod4 Unidad','Prod4 Cantidad','Prod4 Precio Unitario','Prod4 Costo S/',
+    'Prod5 Nombre','Prod5 Unidad','Prod5 Cantidad','Prod5 Precio Unitario','Prod5 Costo S/',
+    'Prod6 Nombre','Prod6 Unidad','Prod6 Cantidad','Prod6 Precio Unitario','Prod6 Costo S/',
+    'Prod7 Nombre','Prod7 Unidad','Prod7 Cantidad','Prod7 Precio Unitario','Prod7 Costo S/',
+    // Costos directos
+    'Mano Obra S/hora','Mano Obra Total S/','Depreciación S/','Otros Directos S/',
+    // Gastos generales
+    'Alquiler','Electricidad','Agua','Internet','Publicidad','Contador','Limpieza','Imprevistos','Otros Gastos',
+    // Totales
+    'Total C. Directo','Total GG','Total Productos S/','Precio Final S/'
+  ];
+
+  // Fila de ejemplo
+  const ejemplo={
+    'Categoría':'CEJAS','Cód. Cat.':'CEJ',
+    'Nombre Servicio':'CEJAS: 1X1 CLÁSICO',
+    'Horas Prod/mes':110,'Duración (h)':1,'Margen %':40,
+    'Prod1 Nombre':'TINTE ALFAPARF','Prod1 Unidad':'500 ML',
+    'Prod1 Cantidad':10,'Prod1 Precio Unitario':0.0236,'Prod1 Costo S/':0.236,
+    'Prod2 Nombre':'','Prod2 Unidad':'','Prod2 Cantidad':0,'Prod2 Precio Unitario':0,'Prod2 Costo S/':0,
+    'Prod3 Nombre':'','Prod3 Unidad':'','Prod3 Cantidad':0,'Prod3 Precio Unitario':0,'Prod3 Costo S/':0,
+    'Prod4 Nombre':'','Prod4 Unidad':'','Prod4 Cantidad':0,'Prod4 Precio Unitario':0,'Prod4 Costo S/':0,
+    'Prod5 Nombre':'','Prod5 Unidad':'','Prod5 Cantidad':0,'Prod5 Precio Unitario':0,'Prod5 Costo S/':0,
+    'Prod6 Nombre':'','Prod6 Unidad':'','Prod6 Cantidad':0,'Prod6 Precio Unitario':0,'Prod6 Costo S/':0,
+    'Prod7 Nombre':'','Prod7 Unidad':'','Prod7 Cantidad':0,'Prod7 Precio Unitario':0,'Prod7 Costo S/':0,
+    'Mano Obra S/hora':12.5,'Mano Obra Total S/':12.5,
+    'Depreciación S/':0,'Otros Directos S/':0,
+    'Alquiler':800,'Electricidad':120,'Agua':50,'Internet':80,
+    'Publicidad':200,'Contador':150,'Limpieza':80,'Imprevistos':50,'Otros Gastos':0,
+    'Total C. Directo':12.74,'Total GG':10.0,'Total Productos S/':0.236,'Precio Final S/':32.12
+  };
+
+  const ws=XLSX.utils.json_to_sheet([ejemplo],{header:headers});
+  // Anchos de columna
+  ws['!cols']=headers.map((_,i)=>{
+    if(i<3) return {wch:22};
+    if(i<6) return {wch:12};
+    return {wch:14};
+  });
+  // Estilo del encabezado (color verde)
+  const range=XLSX.utils.decode_range(ws['!ref']);
+  for(let c=range.s.c;c<=range.e.c;c++){
+    const cell=XLSX.utils.encode_cell({r:0,c});
+    if(!ws[cell]) continue;
+    ws[cell].s={
+      fill:{fgColor:{rgb:'1D6F42'}},
+      font:{color:{rgb:'FFFFFF'},bold:true},
+      alignment:{horizontal:'center'}
+    };
+  }
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Plantilla_Servicios');
+  XLSX.writeFile(wb,'Plantilla_Carga_Masiva_Servicios.xlsx');
+  showToast('📥 Plantilla descargada','ok');
+};
+
+/* ── IMPORTAR DESDE MODAL ── */
+window.importarDesdeModal = async function(event){
+  const file=event.target?.files?.[0]||event?.dataTransfer?.files?.[0];
+  if(!file) return;
+  const prog=document.getElementById('impProgress');
+  prog.className='imp-progress'; prog.textContent='⏳ Leyendo archivo...';
+  try{
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws);
+    if(!rows.length){prog.className='imp-progress err';prog.textContent='Sin filas de datos';return;}
+
+    // Recargar servicios antes de procesar para tener IDs frescos
+    await cargarServiciosExistentes();
+    let guardados=0, errores=0, fila=0;
+
+    for(const row of rows){
+      fila++;
+      try{
+        const cat   =(row['Categoría']||row['categoria']||'').toString().trim().toUpperCase();
+        const codCat=(row['Cód. Cat.']||row['codigoCategoria']||categoriasMap[cat]||'').toString().trim().toUpperCase();
+        const nombre=(row['Nombre Servicio']||row['nombreServicio']||'').toString().trim();
+        if(!cat||!nombre){ errores++; continue; }
+
+        // Generar ID único estricto
+        let idSvc=(row['ID Servicio']||'').toString().trim();
+        if(!idSvc) idSvc=generarSiguienteId(cat,codCat);
+        // Verificar colisión y reintentar
+        let intentos=0;
+        while(serviciosExistentes.some(s=>(s.servicioId||s.idServicio||'')===idSvc)&&intentos<200){
+          serviciosExistentes.push({servicioId:idSvc});
+          idSvc=generarSiguienteId(cat,codCat);
+          intentos++;
+        }
+
+        const p=n=>parseFloat(row[n]||0)||0;
+        // Construir productosArray desde los 7 slots
+        const productosArr=[];
+        for(let i=1;i<=7;i++){
+          const nm=row[`Prod${i} Nombre`]||'';
+          if(nm){
+            productosArr.push({
+              nombre:nm,
+              unidad:row[`Prod${i} Unidad`]||'',
+              cantidadUsada:p(`Prod${i} Cantidad`),
+              precioUnitario:p(`Prod${i} Precio Unitario`),
+              costoPorSesion:p(`Prod${i} Costo S/`),
+            });
+          }
+        }
+        // Campos planos de productos
+        const productosCampos={};
+        productosArr.forEach((pr,i)=>{
+          const n=i+1;
+          productosCampos[`producto${n}_nombre`]=pr.nombre;
+          productosCampos[`producto${n}_unidad`]=pr.unidad;
+          productosCampos[`producto${n}_cantidadUsada`]=pr.cantidadUsada;
+          productosCampos[`producto${n}_precioUnitario`]=pr.precioUnitario;
+          productosCampos[`producto${n}_costo`]=pr.costoPorSesion;
+        });
+
+        const totalProductosS=productosArr.reduce((s,pr)=>s+pr.costoPorSesion,0);
+        const moHora=p('Mano Obra S/hora');
+        const dur=p('Duración (h)')||1;
+        const margenPct=p('Margen %');
+        const costoDirecto=p('Total C. Directo')||(totalProductosS+moHora*dur+p('Depreciación S/')+p('Otros Directos S/'));
+        const gg=p('Total GG');
+        const sub=costoDirecto+gg;
+        const precioFinal=p('Precio Final S/')||(sub*(1+margenPct/100));
+
+        const data={
+          servicioId:idSvc, codigoCategoria:codCat, categoria:cat,
+          nombreServicio:nombre,
+          horasProductivas:p('Horas Prod/mes')||110,
+          duracionSesion:dur,
+          margenPct,
+          totalProductosS: parseFloat(totalProductosS.toFixed(4)),
+          ...productosCampos,
+          productosArray:productosArr,
+          manoObraHora:moHora,
+          manoObraTotal:parseFloat((moHora*dur).toFixed(4)),
+          depreciacionEquipo:p('Depreciación S/'),
+          otrosDirectos:p('Otros Directos S/'),
+          totalCostoDirecto:parseFloat(costoDirecto.toFixed(4)),
+          alquiler:p('Alquiler'),electricidad:p('Electricidad'),agua:p('Agua'),
+          internet:p('Internet'),publicidad:p('Publicidad'),contador:p('Contador'),
+          limpieza:p('Limpieza'),imprevistos:p('Imprevistos'),otrosGenerales:p('Otros Gastos'),
+          totalGastosGG:parseFloat(gg.toFixed(4)),
+          subtotal:parseFloat(sub.toFixed(4)),
+          margen:margenPct/100,
+          precioFinal:parseFloat(precioFinal.toFixed(4)),
+          precioVenta:parseFloat(precioFinal.toFixed(4)),
+          costoBase:parseFloat(costoDirecto.toFixed(4)),
+          creadoEn:new Date().toISOString(),
+          actualizadoEn:new Date().toISOString(),
+        };
+
+        // nodeKey = idSvc limpio
+        const nodeKey=idSvc.replace(/[.#$/[\]]/g,'_');
+        await db.ref(`v_servicios/${nodeKey}`).set(data);
+        // Registrar en array local para no reusar el ID en la misma sesión
+        serviciosExistentes.push({key:nodeKey,...data});
+        guardados++;
+        prog.className='imp-progress';
+        prog.textContent=`⏳ Procesando fila ${fila}... (${guardados} guardados)`;
+      } catch(e){ errores++; console.error(`Fila ${fila}:`,e); }
+    }
+
+    const msg=`✅ ${guardados} servicios importados${errores?` | ⚠️ ${errores} con error`:''}`;
+    prog.className='imp-progress ok'; prog.textContent=msg;
+    showToast(msg,'ok');
+    if(event.target) event.target.value='';
+  } catch(e){
+    console.error(e);
+    prog.className='imp-progress err'; prog.textContent='❌ Error al leer: '+e.message;
+  }
+};
+
+/* ═══════════════════════════════════════
+   CALCULADORAS
+═══════════════════════════════════════ */
+function abrirCalculadoraManoObra(){
+  document.getElementById('calcSalario').value=2500;
+  document.getElementById('calcDias').value=25;
+  document.getElementById('calcHorasDia').value=8;
+  document.getElementById('calcDurSvc').value=document.getElementById('duracionSesion').value;
+  calcManoObra(); document.getElementById('modalManoObra').classList.add('active');
+}
+function calcManoObra(){
+  const sal=parseFloat(document.getElementById('calcSalario').value)||0;
+  const dias=parseFloat(document.getElementById('calcDias').value)||1;
+  const hd=parseFloat(document.getElementById('calcHorasDia').value)||1;
+  const dur=parseFloat(document.getElementById('calcDurSvc').value)||1;
+  const vh=sal/(dias*hd);
+  document.getElementById('calcManoObraRes').innerHTML=
+    `Valor/hora: S/ ${vh.toFixed(2)}<br>Costo servicio: S/ ${(vh*dur).toFixed(2)}`;
+}
+function aplicarManoObra(){
+  const sal=parseFloat(document.getElementById('calcSalario').value)||0;
+  const dias=parseFloat(document.getElementById('calcDias').value)||1;
+  const hd=parseFloat(document.getElementById('calcHorasDia').value)||1;
+  document.getElementById('manoObraHora').value=(sal/(dias*hd)).toFixed(2);
+  cerrarModalManoObra(); actualizarTodo();
+}
+function cerrarModalManoObra(){ document.getElementById('modalManoObra').classList.remove('active'); }
+
+function abrirCalculadoraDepreciacion(){
+  document.getElementById('calcCostoEq').value=15000;
+  document.getElementById('calcVida').value=5;
+  document.getElementById('calcDurDep').value=document.getElementById('duracionSesion').value;
+  document.getElementById('calcHMesDep').value=document.getElementById('horasProductivas').value;
+  calcDep(); document.getElementById('modalDepreciacion').classList.add('active');
+}
+function calcDep(){
+  const ce=parseFloat(document.getElementById('calcCostoEq').value)||0;
+  const vu=parseFloat(document.getElementById('calcVida').value)||1;
+  const dur=parseFloat(document.getElementById('calcDurDep').value)||1;
+  const hm=parseFloat(document.getElementById('calcHMesDep').value)||1;
+  const d=(ce/vu/12/hm)*dur;
+  document.getElementById('calcDepRes').innerHTML=`Depreciación por sesión: S/ ${d.toFixed(4)}`;
+}
+function aplicarDepreciacion(){
+  const ce=parseFloat(document.getElementById('calcCostoEq').value)||0;
+  const vu=parseFloat(document.getElementById('calcVida').value)||1;
+  const dur=parseFloat(document.getElementById('calcDurDep').value)||1;
+  const hm=parseFloat(document.getElementById('calcHMesDep').value)||1;
+  document.getElementById('depreciacionEquipo').value=((ce/vu/12/hm)*dur).toFixed(4);
+  cerrarModalDepreciacion(); actualizarTodo();
+}
+function cerrarModalDepreciacion(){ document.getElementById('modalDepreciacion').classList.remove('active'); }
+
+function limpiarTodo(){
+  if(!confirm('¿Limpiar todos los datos del formulario?')) return;
+  ['manoObraHora','depreciacionEquipo','otrosDirectos','alquiler','electricidad','agua',
+   'internet','publicidad','contador','limpieza','imprevistos','otrosGenerales']
+    .forEach(id=>{ document.getElementById(id).value=0; });
+  document.getElementById('horasProductivas').value=110;
+  document.getElementById('duracionSesion').value=1;
+  document.getElementById('margenGanancia').value=40;
+  document.getElementById('nombreServicio').value='';
+  document.getElementById('idServicio').value='';
+  document.getElementById('codigoCategoria').value='';
+  document.getElementById('categoriaServicio').value='';
+  editandoKey=null;
+  productos=[]; nextProdId=1; renderProductos(); actualizarTodo();
+}
+
+/* EVENT LISTENERS — bind inputs text */
+['calcSalario','calcDias','calcHorasDia','calcDurSvc'].forEach(id=>
+  document.getElementById(id)?.addEventListener('input',calcManoObra));
+['calcCostoEq','calcVida','calcDurDep','calcHMesDep'].forEach(id=>
+  document.getElementById(id)?.addEventListener('input',calcDep));
+['modalCompra','modalManoObra','modalDepreciacion'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{
+    if(e.target!==document.getElementById(id)) return;
+    if(id==='modalCompra') cerrarModalCompra();
+    else if(id==='modalManoObra') cerrarModalManoObra();
+    else cerrarModalDepreciacion();
+  });
+});
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+async function init(){
+  await cargarCategorias();
+  todasLasCompras=await cargarCompras();
+  await cargarServiciosExistentes();
+  productos=[]; nextProdId=1;
+  renderProductos(); actualizarTodo();
+
+  // Cargar servicio si ?edit=KEY
+  const params=new URLSearchParams(window.location.search);
+  const editKey=params.get('edit');
+  if(editKey){
+    editandoKey=editKey;
+    try{
+      const snap=await db.ref(`v_servicios/${editKey}`).once('value');
+      if(snap.exists()){
+        const s=snap.val();
+        document.getElementById('categoriaServicio').value=s.categoria||'';
+        document.getElementById('codigoCategoria').value=s.codigoCategoria||'';
+        document.getElementById('idServicio').value=s.servicioId||'';
+        document.getElementById('nombreServicio').value=s.nombreServicio||'';
+        // Parámetros
+        if(s.horasProductivas) document.getElementById('horasProductivas').value=s.horasProductivas;
+        if(s.duracionSesion)   document.getElementById('duracionSesion').value=s.duracionSesion;
+        if(s.margenPct!=null)  document.getElementById('margenGanancia').value=s.margenPct;
+        // Costos directos
+        if(s.manoObraHora!=null)      document.getElementById('manoObraHora').value=s.manoObraHora;
+        if(s.depreciacionEquipo!=null) document.getElementById('depreciacionEquipo').value=s.depreciacionEquipo;
+        if(s.otrosDirectos!=null)      document.getElementById('otrosDirectos').value=s.otrosDirectos;
+        // Gastos generales
+        ['alquiler','electricidad','agua','internet','publicidad','contador',
+         'limpieza','imprevistos','otrosGenerales'].forEach(k=>{
+          if(s[k]!=null){ const el=document.getElementById(k); if(el) el.value=s[k]; }
+        });
+        // Cargar productos del array
+        if(s.productosArray&&s.productosArray.length){
+          productos=s.productosArray.map((p,i)=>({
+            id:nextProdId++,
+            nombre:p.nombre||'',
+            compraSeleccionada:null,  // se cargará al buscar compra
+            cantidadUsada:p.cantidadUsada||0,
+            costoPorSesion:p.costoPorSesion||0,
+            precioUnitario:p.precioUnitario||0,
+          }));
+          renderProductos();
+        }
+        actualizarTodo();
+        showToast(`📝 Editando: ${s.nombreServicio}`,'ok');
+      }
+    } catch(e){ console.error(e); }
+  }
+}
+init();
+</script>
+</body>
+</html>

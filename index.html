@@ -137,7 +137,6 @@
   }
   .sidebar.collapsed { width: var(--menu-col); }
 
-  /* Línea decorativa derecha */
   .sidebar::after {
     content: '';
     position: absolute;
@@ -158,7 +157,6 @@
   .sidebar-inner::-webkit-scrollbar { width: 3px; }
   .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(195,155,211,0.2); border-radius: 2px; }
 
-  /* Etiqueta de grupo */
   .g-label {
     font-size: 8.5px;
     font-weight: 700;
@@ -172,7 +170,6 @@
   }
   .collapsed .g-label { opacity: 0; height: 0; padding: 0; }
 
-  /* Botón menú */
   .mb {
     display: flex;
     align-items: center;
@@ -208,6 +205,33 @@
   .mb.active { background: rgba(195,155,211,0.14); color: var(--c-white); }
   .mb.active::before { transform: scaleY(1); }
 
+  /* Botón en desarrollo (activo: false) */
+  .mb.disabled {
+    cursor: not-allowed;
+    opacity: 0.42;
+    filter: grayscale(0.5);
+  }
+  .mb.disabled:hover { background: none; color: rgba(232,213,245,0.65); }
+  .mb.disabled:hover::before { transform: scaleY(0); }
+
+  /* Etiqueta "En desarrollo" */
+  .badge-dev {
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    background: rgba(155,89,182,0.2);
+    border: 1px solid rgba(155,89,182,0.35);
+    color: rgba(195,155,211,0.7);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-left: auto;
+    flex-shrink: 0;
+    transition: opacity var(--transition), max-width var(--transition);
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .collapsed .badge-dev { opacity: 0; max-width: 0; padding: 0; border: none; }
+
   .mi {
     width: 32px; height: 32px;
     border-radius: 8px;
@@ -228,7 +252,6 @@
   }
   .collapsed .mt { opacity: 0; max-width: 0; }
 
-  /* Tooltip colapsado */
   .sidebar.collapsed .mb { justify-content: center; padding: 0; }
   .sidebar.collapsed .mi { margin: 0; }
   .sidebar.collapsed .mb::after {
@@ -251,14 +274,12 @@
   }
   .sidebar.collapsed .mb:hover::after { opacity: 1; }
 
-  /* Divisor */
   .mdiv {
     height: 1px;
     background: rgba(195,155,211,0.1);
     margin: 5px 12px;
   }
 
-  /* Footer sidebar */
   .sidebar-foot {
     flex-shrink: 0;
     padding: 10px;
@@ -297,7 +318,6 @@
       linear-gradient(180deg, #1a0030 0%, #100020 100%);
   }
 
-  /* Patrón de puntos sutil */
   .content::before {
     content: '';
     position: absolute; inset: 0;
@@ -306,7 +326,6 @@
     pointer-events: none;
   }
 
-  /* Orbe central difuminado */
   .content::after {
     content: '';
     position: absolute;
@@ -323,7 +342,6 @@
     50%      { transform: translate(-50%,-50%) scale(1.12); opacity: 0.7; }
   }
 
-  /* Bloque principal */
   .day-block {
     position: relative; z-index: 1;
     text-align: center;
@@ -338,7 +356,6 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* Saludo */
   .greeting {
     font-size: 13px;
     font-weight: 600;
@@ -348,7 +365,6 @@
     margin-bottom: 10px;
   }
 
-  /* Hora grande */
   .big-time {
     font-family: 'Cinzel', serif;
     font-size: clamp(52px, 8vw, 86px);
@@ -360,7 +376,6 @@
     text-shadow: 0 0 60px rgba(155,89,182,0.35);
   }
 
-  /* Segundos */
   .big-secs {
     font-family: 'Cinzel', serif;
     font-size: clamp(18px, 3vw, 30px);
@@ -370,7 +385,6 @@
     margin-bottom: 18px;
   }
 
-  /* Fecha */
   .day-date {
     font-size: 14px;
     font-weight: 600;
@@ -379,7 +393,6 @@
     margin-bottom: 36px;
   }
 
-  /* Separador decorativo */
   .sep {
     display: flex; align-items: center; gap: 14px;
     width: 100%; max-width: 340px;
@@ -396,7 +409,6 @@
     flex-shrink: 0;
   }
 
-  /* Frase motivacional */
   .quote-wrap {
     max-width: 420px;
     text-align: center;
@@ -419,7 +431,6 @@
     transition: opacity 0.6s;
   }
 
-  /* Indicador de estado Firebase */
   .status-dot {
     position: absolute;
     bottom: 20px; right: 20px;
@@ -462,74 +473,11 @@
 <!-- ══ LAYOUT ══ -->
 <div class="layout">
 
-  <!-- ══ SIDEBAR ══ -->
+  <!-- ══ SIDEBAR — se construye automáticamente desde config-modulos.js ══ -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-inner">
-
-      <!-- OPERACIONES -->
-      <div class="g-label">Operaciones</div>
-      <button class="mb" data-tip="Ventas" onclick="go('modules/ventas.html','Ventas')">
-        <span class="mi">💰</span><span class="mt">Ventas</span>
-      </button>
-      <button class="mb" data-tip="Compras" onclick="go('modules/compras.html','Compras')">
-        <span class="mi">📋</span><span class="mt">Compras</span>
-      </button>
-      <button class="mb" data-tip="Tickets" onclick="go('modules/tickets.html','Tickets')">
-        <span class="mi">🎫</span><span class="mt">Tickets</span>
-      </button>
-
-      <div class="mdiv"></div>
-
-      <!-- REPORTES -->
-      <div class="g-label">Reportes</div>
-      <button class="mb" data-tip="Reporte Ventas" onclick="go('modules/reporte-ventas.html','Reporte Ventas')">
-        <span class="mi">📊</span><span class="mt">Reporte Ventas</span>
-      </button>
-      <button class="mb" data-tip="Reporte Compras" onclick="go('modules/reporte-compras.html','Reporte Compras')">
-        <span class="mi">📈</span><span class="mt">Reporte Compras</span>
-      </button>
-      <button class="mb" data-tip="Financiero" onclick="go('modules/financiero.html','Financiero')">
-        <span class="mi">📊</span><span class="mt">Financiero</span>
-      </button>
-
-      <div class="mdiv"></div>
-
-      <!-- MAESTROS -->
-      <div class="g-label">Maestros</div>
-      <button class="mb" data-tip="Clientes" onclick="go('modules/clientes.html','Clientes')">
-        <span class="mi">👥</span><span class="mt">Clientes</span>
-      </button>
-      <button class="mb" data-tip="Servicios" onclick="go('modules/servicios.html','Servicios')">
-        <span class="mi">💅</span><span class="mt">Servicios</span>
-      </button>
-      <button class="mb" data-tip="Inventario" onclick="go('modules/inventario.html','Inventario')">
-        <span class="mi">📦</span><span class="mt">Inventario</span>
-      </button>
-      <button class="mb" data-tip="Productos" onclick="go('modules/productos.html','Productos')">
-        <span class="mi">💎</span><span class="mt">Productos</span>
-      </button>
-      <button class="mb" data-tip="Proveedores" onclick="go('modules/proveedores.html','Proveedores')">
-        <span class="mi">🏢</span><span class="mt">Proveedores</span>
-      </button>
-
-      <div class="mdiv"></div>
-
-      <!-- FINANZAS -->
-      <div class="g-label">Finanzas</div>
-      <button class="mb" data-tip="Créditos" onclick="go('modules/creditos.html','Créditos')">
-        <span class="mi">💳</span><span class="mt">Créditos</span>
-      </button>
-
-      <div class="mdiv"></div>
-
-      <!-- SISTEMA -->
-      <div class="g-label">Sistema</div>
-      <button class="mb" data-tip="Cargas Masivas" onclick="go('modules/cargas.html','Cargas Masivas')">
-        <span class="mi">⚡</span><span class="mt">Cargas Masivas</span>
-      </button>
-
+    <div class="sidebar-inner" id="menuContainer">
+      <!-- El menú se genera automáticamente desde config-modulos.js -->
     </div>
-
     <div class="sidebar-foot">
       <button class="btn-logout" data-tip="Salir" onclick="logout()">
         <span class="mi" style="background:rgba(231,76,60,0.12)">🚪</span>
@@ -558,7 +506,6 @@
       </div>
     </div>
 
-    <!-- Indicador estado -->
     <div class="status-dot">
       <div class="dot" id="statusDot"></div>
       <span id="statusLabel">Conectado</span>
@@ -566,6 +513,9 @@
   </main>
 
 </div>
+
+<!-- ══ CARGA LA CONFIGURACIÓN DE MÓDULOS ══ -->
+<script src="config-modulos.js"></script>
 
 <script>
   // ── PROTECCIÓN: si no hay sesión → login ──
@@ -587,6 +537,64 @@
   document.getElementById('toggleBtn').addEventListener('click', () => {
     sidebar.classList.toggle('collapsed');
   });
+
+  // ══════════════════════════════════════════════════════════════
+  //  CONSTRUCCIÓN AUTOMÁTICA DEL MENÚ desde config-modulos.js
+  // ══════════════════════════════════════════════════════════════
+  function construirMenu() {
+    const container = document.getElementById('menuContainer');
+    container.innerHTML = '';
+
+    // Agrupa los módulos por su campo "grupo"
+    const grupos = {};
+    MODULOS.forEach(mod => {
+      if (!grupos[mod.grupo]) grupos[mod.grupo] = [];
+      grupos[mod.grupo].push(mod);
+    });
+
+    let primerGrupo = true;
+    Object.entries(grupos).forEach(([nombreGrupo, modulos]) => {
+
+      // Divisor entre grupos (no antes del primero)
+      if (!primerGrupo) {
+        const div = document.createElement('div');
+        div.className = 'mdiv';
+        container.appendChild(div);
+      }
+      primerGrupo = false;
+
+      // Etiqueta del grupo
+      const label = document.createElement('div');
+      label.className = 'g-label';
+      label.textContent = nombreGrupo;
+      container.appendChild(label);
+
+      // Botones de cada módulo
+      modulos.forEach(mod => {
+        const btn = document.createElement('button');
+        btn.className = 'mb' + (mod.activo ? '' : ' disabled');
+        btn.setAttribute('data-tip', mod.nombre);
+        btn.setAttribute('data-archivo', mod.archivo);
+
+        if (mod.activo) {
+          btn.onclick = () => go('modules/' + mod.archivo, mod.nombre);
+        } else {
+          btn.title = 'Módulo en desarrollo';
+        }
+
+        btn.innerHTML = `
+          <span class="mi">${mod.icono}</span>
+          <span class="mt">${mod.nombre}</span>
+          ${!mod.activo ? '<span class="badge-dev">Dev</span>' : ''}
+        `;
+
+        container.appendChild(btn);
+      });
+    });
+  }
+
+  // Ejecutar al cargar
+  construirMenu();
 
   // ── RELOJ GRANDE ──
   const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
